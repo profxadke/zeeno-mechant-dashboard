@@ -24,7 +24,7 @@ const ViewRegistration = () => {
           margin: 20px 0px;
           align-items: right;
           padding: 10px 35px;
-          background-color: #007bff;
+          background-color: #028248;
           color: #fff;
           border: none;
           border-radius: 5px;

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Chart from "react-apexcharts";
+import { FaDownload } from "react-icons/fa";
 
 const VoteByCountry = () => {
   const pieOptionsNepal = {
@@ -42,7 +43,9 @@ const VoteByCountry = () => {
     <div className="chart-container">
       <div className="header">
         <h2>Vote Breakdown</h2>
-        <button className="export-btn">Export</button>
+        <button style={{
+                        background: "#028248", 
+                      }} className="export-btn" >  <FaDownload className="export-icon" />Export</button>
       </div>
 
       <div className="charts">
@@ -110,158 +113,166 @@ const VoteByCountry = () => {
       </div>
 
       <style jsx>{`
-        .chart-container {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          width: 100%;
-        }
+  .chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    padding-bottom: 20px; 
+  }
 
-        .header {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-          margin-top: 30px;
-        }
+  .header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    margin-top: 30px;
+  }
 
-        .header h2 {
-          margin: 0;
-        }
+  .header h2 {
+    margin: 0;
+  }
 
-        .export-btn {
-          background-color: #007bff;
-          color: white;
-          padding: 8px 15px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
+  .export-btn {
+    background-color: #028248;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
 
-        .export-btn:hover {
-          background-color: #0056b3;
-        }
+  .export-btn:hover {
+    background-color:#028248;
+  }
 
-        .charts {
-          display: flex;
-          justify-content: space-between;
-          width: 100%;
-          gap: 20px;
-        }
+  .charts {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: px;
+    flex-wrap: wrap;
+  }
 
-        .report {
-          background-color: white;
-          padding: 20px;
-          border-radius: 8px;
-          width: 48%;
-          box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-        }
+  .report {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 48%;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: space-between; 
+  }
 
-        .chart-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
 
-        .dropdown {
-          position: relative;
-          display: inline-block;
-        }
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
 
-        .filter-btn {
-          background-color: #fff;
-          color: #000;
-          border: 1px solid #ddd;
-          padding: 8px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
+  .filter-btn {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
 
-        .dropdown-content {
-          display: none;
-          position: absolute;
-          background-color: #f9f9f9;
-          min-width: 160px;
-          box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-          z-index: 1;
-        }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+  }
 
-        .dropdown:hover .dropdown-content {
-          display: block;
-        }
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
 
-        .dropdown-content button {
-          color: black;
-          padding: 12px 16px;
-          text-decoration: none;
-          display: block;
-          width: 100%;
-          border: none;
-          background-color: #fff;
-          cursor: pointer;
-        }
+  .dropdown-content button {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    border: none;
+    background-color: #fff;
+    cursor: pointer;
+  }
 
-        .dropdown-content button:hover {
-          background-color: #ddd;
-        }
+  .dropdown-content button:hover {
+    background-color: #ddd;
+  }
 
-        .total-votes {
-          text-align: center;
-          font-size: 18px;
-          margin-top: 20px;
-        }
+  .total-votes {
+    text-align: center;
+    font-size: 18px;
+    margin-top: 20px;
+    padding: 10px; 
+    width: 100%;
+    box-sizing: border-box; 
+  }
 
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-          .charts {
-            flex-direction: column;
-          }
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .charts {
+      flex-direction: column;
+      gap: 20px; 
+      align-items: center;
+    }
 
-          .report {
-            width: 100%;
-            margin-bottom: 20px;
-          }
+    .report {
+      width: 90%; 
+      margin-bottom: 20px;
+    }
 
-          .filter-btn {
-            width: 100%;
-            text-align: left;
-            padding: 12px 16px;
-          }
+    .filter-btn {
+      display: none;
+    }
 
-          .export-btn {
-            padding: 10px 20px;
-          }
-        }
+    .export-btn {
+      padding: 10px 20px;
+    }
 
-        @media (max-width: 480px) {
-          .header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
+    .report .apexcharts-canvas {
+      height: 250px !important;
+    }
+  }
 
-          .charts {
-            gap: 10px;
-          }
-        }
-      `}</style>
+  @media (max-width: 480px) {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .charts {
+      gap: 10px;
+    }
+
+    .total-votes {
+      font-size: 16px; 
+    }
+
+    .report .apexcharts-canvas {
+      height: 200px !important;
+    }
+  }
+`}</style>
+
     </div>
   );
 };
 
 export default VoteByCountry;
-
-
-// dateRange
-//   votes: {
-//     nepal: {
-//       Esewa
-//       Khalti
-//       ImePay
-//       BankTransfer
-//     }
-//     global: {
-//       indiaVotes
-//       globalVotes: 
-//     }
-//   }

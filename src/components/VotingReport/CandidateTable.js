@@ -1,4 +1,3 @@
-// CandidateTable.js
 import React, { useState, useEffect } from "react";
 import "../../assets/table.css";
 import { useToken } from "../../context/TokenContext";
@@ -18,6 +17,7 @@ const CandidateTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const itemsPerPage = 10;
 
   const { token } = useToken();
@@ -42,7 +42,7 @@ const CandidateTable = () => {
 
       try {
         const response = await fetch(
-          `https://api.zeenopay.com/contestants/e/${event_id}`,
+          `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -80,21 +80,87 @@ const CandidateTable = () => {
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setSelectedCandidate(null);
+    setIsEditMode(false);
   };
 
   const handleView = (candidate) => {
     setSelectedCandidate(candidate);
     setIsModalVisible(true);
+    setIsEditMode(false);
   };
 
-  const filteredData = data.filter((candidate) => {
-    const isPeriodMatch =
-      filters.period === "" || candidate.period === filters.period;
-    const isStatusMatch =
-      filters.status === "" || candidate.status === filters.status;
+  const handleEdit = (candidate) => {
+    setSelectedCandidate(candidate);
+    setIsModalVisible(true);
+    setIsEditMode(true);
+  };
 
-    return isPeriodMatch && isStatusMatch;
-  });
+  const handleUpdateCandidate = async (updatedCandidate) => {
+    try {
+      const response = await fetch(
+        `https://auth.zeenopay.com/events/contestants/${updatedCandidate.id}/`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(updatedCandidate),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update candidate. Please try again.");
+      }
+
+      const updatedData = data.map((candidate) =>
+        candidate.id === updatedCandidate.id ? updatedCandidate : candidate
+      );
+      setData(updatedData);
+      alert("Candidate updated successfully.");
+      handleCloseModal();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this candidate?")) return;
+
+    try {
+      const response = await fetch(
+        `https://auth.zeenopay.com/events/contestants/${id}/`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete candidate. Please try again.");
+      }
+
+      setData(data.filter((candidate) => candidate.id !== id));
+      alert("Candidate deleted successfully.");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const filteredData = Array.isArray(data)
+    ? data.filter((candidate) => {
+        const isPeriodMatch =
+          filters.period === "" || candidate.period === filters.period;
+        const isStatusMatch =
+          filters.status === "" || candidate.status === filters.status;
+
+        return isPeriodMatch && isStatusMatch;
+      })
+    : [];
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -107,7 +173,7 @@ const CandidateTable = () => {
 
   const handleExport = () => {
     const dataForExport = filteredData.map((candidate) => ({
-      ID: candidate.id,
+      ID: candidate.misc_kv,
       Avatar: candidate.avatar,
       Name: candidate.name,
       Status: candidate.status,
@@ -119,6 +185,13 @@ const CandidateTable = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Candidates");
     XLSX.writeFile(wb, "candidates_data.xlsx");
+  };
+
+  const statusMapping = {
+    O: "Ongoing",
+    E: "Eliminated",
+    H: "Hidden",
+    C: "Closed",
   };
 
   if (loading)
@@ -141,7 +214,9 @@ const CandidateTable = () => {
           <h3>Candidate List</h3>
         </div>
         <div className="actions">
-          <button className="export-btn" onClick={handleExport}>
+          <button className="export-btn" onClick={handleExport}  style={{
+                        background: "#028248", 
+                      }}>
             <FaDownload className="export-icon" /> Export
           </button>
         </div>
@@ -153,7 +228,7 @@ const CandidateTable = () => {
           <thead>
             <tr>
               <th>SN</th>
-              <th>ID</th>
+              <th>Contestant No.</th>
               <th>Avatar</th>
               <th>Name</th>
               <th>Status</th>
@@ -172,7 +247,7 @@ const CandidateTable = () => {
               paginatedData.map((candidate, index) => (
                 <tr key={candidate.id}>
                   <td>{startIndex + index + 1}</td>
-                  <td>{candidate.id}</td>
+                  <td>{candidate.misc_kv}</td>
                   <td>
                     <img
                       src={candidate.avatar}
@@ -180,12 +255,22 @@ const CandidateTable = () => {
                       style={{
                         width: "50px",
                         height: "50px",
-                        borderRadius: "50%",
+                        borderRadius: "50%", 
                       }}
                     />
                   </td>
                   <td>{candidate.name}</td>
-                  <td>{candidate.status}</td>
+                  <td>
+                    <span
+                      className={`status-badge 
+                        ${candidate.status === "O" ? "status-ongoing" :
+                        candidate.status === "E" ? "status-eliminated" :
+                        candidate.status === "H" ? "status-hidden" :
+                        candidate.status === "C" ? "status-closed" : ""}`}
+                    >
+                      {statusMapping[candidate.status] || "Unknown"}
+                    </span>
+                  </td>
                   <td>{candidate.votes}</td>
                   <td>
                     <div className="action-icons">
@@ -197,14 +282,14 @@ const CandidateTable = () => {
                         <FaEye />
                       </button>
                       <button
-                        onClick={() => console.log("Edit:", candidate)}
+                        onClick={() => handleEdit(candidate)}
                         title="Edit"
                         className="icon-btn edit-btn"
                       >
                         <FaEdit />
                       </button>
                       <button
-                        onClick={() => console.log("Delete:", candidate)}
+                        onClick={() => handleDelete(candidate.id)}
                         title="Delete"
                         className="icon-btn delete-btn"
                       >
@@ -236,11 +321,13 @@ const CandidateTable = () => {
 
       {/* Modal */}
       <CandidateModel
-  visible={isModalVisible}
-  onClose={handleCloseModal}
-  title="Candidate Details"
-  candidate={selectedCandidate} // Passing the candidate to the modal
-/>
+        visible={isModalVisible}
+        onClose={handleCloseModal}
+        title={isEditMode ? "Edit Candidate" : "Candidate Details"}
+        candidate={selectedCandidate}
+        isEditMode={isEditMode}
+        onUpdate={handleUpdateCandidate}
+      />
     </div>
   );
 };

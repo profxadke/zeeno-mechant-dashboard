@@ -17,14 +17,14 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
   const [error, setError] = useState("");
   const [votePricing, setVotePricing] = useState("");
   const [votingAccessPreference, setVotingAccessPreference] = useState("");
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState("");
   const [votingName, setVotingName] = useState(title);
-
+  const [successMessage, setSuccessMessage] = useState("");
   const { token } = useToken();
 
   const handleEventNameChange = (e) => {
     setFormData({ ...formData, title: e.target.value });
-    setVotingName(e.target.value); 
+    setVotingName(e.target.value);
   };
 
   const handleVotingRoundChange = (e) => {
@@ -34,7 +34,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     if (selectedRound && selectedRound !== "None") {
       setVotingName(`${title} - ${selectedRound}`);
     } else {
-      setVotingName(title); 
+      setVotingName(title);
     }
   };
 
@@ -91,9 +91,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
   };
 
   const handleServicesChange = (e) => {
-    const value = e.target.value;
-    const updatedServices = value.split(",").map((service) => service.trim());
-    setServices(updatedServices);
+    setServices(e.target.value);
   };
 
   useEffect(() => {
@@ -120,6 +118,11 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
       return;
     }
 
+    if (!token) {
+      setError("Authorization token is missing.");
+      return;
+    }
+
     const eventData = {
       title,
       votingRound,
@@ -136,10 +139,10 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     };
 
     try {
-      const response = await fetch("https://api.zeenopay.com/events/", {
+      const response = await fetch("https://auth.zeenopay.com/events/", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(eventData),
@@ -148,6 +151,8 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
       if (response.ok) {
         const result = await response.json();
         console.log("Event successfully created:", result);
+
+        setSuccessMessage("Event successfully created!");
 
         setFormData({
           title: "",
@@ -163,16 +168,19 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         setVotePricing("");
         setVotingAccessPreference("");
         setServices([]);
-
         setError("");
       } else {
         const error = await response.json();
         console.error("Error creating event:", error);
-        setError("Failed to create event. Please try again.");
+
+        if (error.code === "token_not_valid") {
+          setError("The token is not valid. Please re-authenticate.");
+        } else {
+          setError(error.message || "An error occurred while submitting the event.");
+        }
       }
     } catch (error) {
-      console.error("Network error:", error);
-      setError("Network error. Please try again.");
+      setError("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -240,8 +248,8 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         </div>
 
         {/* Set Voting Rules Section */}
+        <h2 className="section-title" style={{ fontSize: '14px' }}>Set Voting Rules</h2>
         <div className="voting-setup">
-          <h2 className="section-title">Set Voting Rules</h2>
           <div className="voting-form-grid">
             <div className="voting-form-field">
               <label>Voting Mode</label>
@@ -289,8 +297,8 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         </div>
 
         {/* Voting Options */}
+        <h2 className="section-title" style={{ fontSize: '14px' }}>Voting Options</h2>
         <div className="voting-options">
-          <h2 className="section-title">Voting Options</h2>
           <div className="voting-form-grid">
             <div className="voting-form-field">
               <label>Vote Pricing</label>
@@ -322,18 +330,31 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
                 type="text"
                 value={services}
                 onChange={handleServicesChange}
-                placeholder="Enter services separated by comma"
+                placeholder="Enter services separated by commas"
               />
             </div>
           </div>
         </div>
 
         {/* Submit Button */}
-        <button type="submit" className="confirm-btn">
+        <button className="confirm-btn" type="submit" style={{ background: '#028248' }}>
           Create Event
         </button>
-        {error && <p className="error-message">{error}</p>}
       </form>
+
+      {error && (
+        <p className="error-message">
+          <span className="error-icon">⚠️</span>
+          {error}
+        </p>
+      )}
+
+      {successMessage && (
+        <p className="success-message">
+          <span className="success-icon">🎉</span>
+          {successMessage}
+        </p>
+      )}
     </div>
   );
 };

@@ -30,7 +30,7 @@ h2 {
 }
 
 .add-field-btn:hover {
-  background-color: #007bff;
+  background-color: #028248;
   color: #fff;
 }
 
@@ -86,7 +86,7 @@ h2 {
 
 .field-icon {
   font-size: 30px;
-  color: #007bff;
+  color: #028248;
   margin-bottom: 10px;
 }
 
@@ -98,7 +98,7 @@ h2 {
 .close-modal-btn {
   margin-top: 20px;
   padding: 8px 16px;
-  background-color: #007bff;
+  background-color: #028248;
   color: white;
   border: none;
   border-radius: 5px;

@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useToken } from "../../context/TokenContext";
 
-
 const VotingCardComponent = () => {
-     const { token } = useToken();
+  const { token } = useToken();
   const { event_id } = useParams();
   const [totalVotes, setTotalVotes] = useState(null);
 
@@ -12,7 +11,7 @@ const VotingCardComponent = () => {
     totalVotes: {
       icon: "📊",
       title: "Total Votes",
-      value: totalVotes !== null ? ` ${totalVotes} Votes` : "Loading...",
+      value: totalVotes !== null ? ` ${totalVotes}` : "Loading...",
       subtext: "Votes fetched dynamically",
       subtextColor: totalVotes !== null && totalVotes > 0 ? "green" : "red",
     },
@@ -25,7 +24,7 @@ const VotingCardComponent = () => {
     },
     totalRevenue: {
       icon: "💵",
-      title: "Total Revenue",
+      title: "Top Perfomer",
       value: "-",
       subtext: "Data will be available soon",
       subtextColor: "green",
@@ -38,7 +37,7 @@ const VotingCardComponent = () => {
     const fetchVotes = async () => {
       try {
         const response = await fetch(
-          `https://api.zeenopay.com/contestants/e/${event_id}`,
+          `https://auth.zeenopay.com/contestants/${event_id}`,
           {
             method: "GET",
             headers: {
@@ -71,6 +70,10 @@ const VotingCardComponent = () => {
 
   return (
     <div className="cards-container">
+      <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+        rel="stylesheet"
+      />
       {cards.map((card, index) => (
         <div key={index} className="card">
           <div className="card-row">
@@ -99,6 +102,7 @@ const VotingCardComponent = () => {
           justify-content: space-between;
           margin: 0px 0;
           animation: fadeIn 0.6s ease-in-out;
+          font-family: 'Poppins', sans-serif;
         }
 
         .card {
@@ -106,8 +110,8 @@ const VotingCardComponent = () => {
           flex-direction: column;
           justify-content: space-between;
           width: 100%;
-          max-width: 300px;
-          padding: 20px;
+          max-width: 280px;
+          padding: 15px;
           border: 1px solid #e5e5e5;
           border-radius: 8px;
           background-color: #ffffff;
@@ -130,12 +134,12 @@ const VotingCardComponent = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           background-color: #f0f4ff;
-          font-size: 24px;
-          margin-right: 15px;
+          font-size: 20px;
+          margin-right: 12px;
         }
 
         .card-content {
@@ -146,21 +150,21 @@ const VotingCardComponent = () => {
         }
 
         .card-title {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 600;
           color: #4f4f4f;
           margin: 0;
         }
 
         .card-value {
-          font-size: 36px;
+          font-size: 30px;
           font-weight: 700;
           margin: 0;
         }
 
         .card-subtext {
-          font-size: 14px;
-          margin-top: 10px;
+          font-size: 12px;
+          margin-top: 8px;
         }
 
         .card-subtext.green {
@@ -175,7 +179,7 @@ const VotingCardComponent = () => {
           width: 100%;
           border: 0;
           border-top: 2px solid #f4f4f4;
-          margin-top: 10px;
+          margin: 20px 0 25px;
         }
 
         @keyframes fadeIn {
@@ -198,41 +202,33 @@ const VotingCardComponent = () => {
           }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
           .cards-container {
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom:30px;
           }
 
           .card {
             max-width: 100%;
-            width: 100%;
+            padding: 10px;
           }
 
           .card-title {
-            font-size: 14px;
+            font-size: 12px;
           }
 
           .card-value {
-            font-size: 30px;
+            font-size: 14px;
           }
 
           .card-subtext {
-            font-size: 12px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .card-row {
-            flex-direction: column;
-            align-items: flex-start;
+            font-size: 10px;
           }
 
-          .card-icon {
-            margin-bottom: 10px;
-          }
-
-          .card-content {
-            align-items: flex-start;
+          .horizontal-line {
+            display: none;
           }
         }
       `}</style>

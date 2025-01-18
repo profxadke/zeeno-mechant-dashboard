@@ -1,260 +1,196 @@
-import React, { useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-function OTP() {
-  const [otp, setOtp] = useState(new Array(6).fill(''));
-  const [resendTimer, setResendTimer] = useState(30);
+const OTPVerification = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { id, otp_id, operation } = location.state || {}; 
+  const [otp, setOtp] = useState(new Array(6).fill(''));
+  const [timer, setTimer] = useState(60);
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
 
-  const handleOtpChange = (e, index) => {
-    const value = e.target.value;
-    if (/^[0-9]$/.test(value) || value === '') {
+  useEffect(() => {
+    // Check if all OTP fields are filled
+    setIsSubmitDisabled(otp.includes('') || otp.length !== 6);
+  }, [otp]);
+
+  const handleChange = (value, index) => {
+    if (/^[0-9]$/.test(value)) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
 
-      if (value && index < 5) {
-        document.getElementById(`otp-input-${index + 1}`).focus();
+      // Move to next input field
+      if (index < otp.length - 1 && value) {
+        document.getElementById(`otp-${index + 1}`).focus();
       }
+    } else if (!value) {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
     }
   };
 
-  const handleResend = () => {
-    setResendTimer(30);
-    toast.info('OTP has been resent!');
-    // Logic to resend OTP can be added here
+  const handleResend = async () => {
+    try {
+      // Use the appropriate ID based on operation type
+      const payload = operation === 'signup' ? { id } : { otp_id };
+      await axios.post('https://auth.zeenopay.com/users/resend-otp/', payload);
+      toast.success('OTP resent successfully');
+      setTimer(60);
+      setIsResendDisabled(true);
+    } catch (error) {
+      toast.error('Failed to resend OTP');
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const otpValue = otp.join('');
+    const enteredOtp = otp.join('');
+    try {
+      // Use the appropriate ID based on operation type
+      const payload = {
+        otp: enteredOtp,
+        ...(operation === 'signup' ? { id } : { otp_id }),
+      };
+      const response = await axios.post('https://auth.zeenopay.com/users/verify-otp/', payload);
 
-    if (otpValue === '123456') {
-      toast.success('OTP Verified Successfully!');
-      setTimeout(() => {
-        navigate('/');
-      }, 700);
-    } else {
-      toast.error('Invalid OTP. Please try again.');
+      if (response.data.success) {
+        toast.success('OTP verified successfully');
+        navigate('/otp-verification'); 
+      } else {
+        toast.error('Invalid OTP');
+      }
+    } catch (error) {
+      toast.error('Failed to verify OTP');
     }
   };
 
-  React.useEffect(() => {
-    if (resendTimer > 0) {
-      const timer = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
-      return () => clearInterval(timer);
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+    } else {
+      setIsResendDisabled(false);
     }
-  }, [resendTimer]);
+    return () => clearInterval(interval);
+  }, [timer]);
 
   return (
-    <div className="otp-container">
-      <ToastContainer position="top-right" autoClose={2000} />
-      <div className="otp-box">
-        <img
-          className="otp-logo"
-          src="https://i.ibb.co/h8f3Mkt/Screenshot-2024-12-25-140415-removebg-preview.png"
-          alt="Logo"
-        />
-        <h1>OTP Verification</h1>
-        <p className="otp-instructions">Please enter the 6-digit OTP sent to your registered email or phone number.</p>
-        <form onSubmit={handleSubmit} className="otp-form">
-          <div className="otp-inputs">
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.heading}>Verify OTP</h2>
+        <p style={styles.subheading}>Please enter the 6-digit OTP sent to your email/phone.</p>
+        <form onSubmit={handleSubmit}>
+          <div style={styles.inputContainer}>
             {otp.map((digit, index) => (
               <input
                 key={index}
-                id={`otp-input-${index}`}
+                id={`otp-${index}`}
                 type="text"
-                className="otp-box-input"
+                maxLength="1"
                 value={digit}
-                onChange={(e) => handleOtpChange(e, index)}
-                maxLength={1}
+                onChange={(e) => handleChange(e.target.value, index)}
+                style={styles.input}
               />
             ))}
           </div>
-          <button type="submit" className="submit-button" disabled={otp.some((digit) => digit === '')}>
-            Verify
+          <button
+            type="submit"
+            style={styles.submitButton}
+            disabled={isSubmitDisabled}
+          >
+            Verify OTP
           </button>
         </form>
-        <div className="resend-container">
-          {resendTimer > 0 ? (
-            <p className="resend-timer">You can resend OTP in {resendTimer} seconds</p>
+        <div style={styles.resendContainer}>
+          {isResendDisabled ? (
+            <p style={styles.resendText}>Resend OTP in {timer} seconds</p>
           ) : (
-            <button onClick={handleResend} className="resend-button">
+            <button onClick={handleResend} style={styles.resendButton}>
               Resend OTP
             </button>
           )}
         </div>
       </div>
-      <style>{`
-        .otp-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          background: linear-gradient(to right, #6a11cb, #2575fc);
-          font-family: 'Poppins', sans-serif;
-          padding: 16px;
-        }
-
-        .otp-logo {
-          display: block;
-          margin: 0 auto 20px;
-          width: 100%;
-          max-width: 180px;
-          height: auto;
-        }
-
-        .otp-box {
-          background: #ffffff;
-          padding: 40px;
-          border-radius: 12px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-          text-align: center;
-          max-width: 400px;
-          width: 100%;
-        }
-
-        h1 {
-          font-size: 24px;
-          margin-bottom: 16px;
-          color: #333;
-        }
-
-        .otp-instructions {
-          font-size: 16px;
-          margin-bottom: 24px;
-          color: #555;
-        }
-
-        .otp-form {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .otp-inputs {
-          display: flex;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .otp-box-input {
-          width: 50px;
-          height: 50px;
-          font-size: 18px;
-          text-align: center;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          transition: border-color 0.3s ease;
-        }
-
-        .otp-box-input:focus {
-          outline: none;
-          border-color: #2575fc;
-        }
-
-        .submit-button {
-          padding: 12px 24px;
-          background-color: #2575fc;
-          color: #ffffff;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          cursor: pointer;
-          transition: background-color 0.3s ease;
-        }
-
-        .submit-button:disabled {
-          background-color: #ccc;
-          cursor: not-allowed;
-        }
-
-        .submit-button:hover:not(:disabled) {
-          background-color: #45a049;
-        }
-
-        .resend-container {
-          margin-top: 16px;
-        }
-
-        .resend-timer {
-          font-size: 14px;
-          color: #888;
-        }
-
-        .resend-button {
-          background: none;
-          border: none;
-          color: #007bff;
-          font-size: 14px;
-          text-decoration: underline;
-          cursor: pointer;
-          transition: color 0.3s ease;
-        }
-
-        .resend-button:hover {
-          color: #0056b3;
-        }
-
-        @media (max-width: 768px) {
-          .otp-box {
-            padding: 20px;
-          }
-
-          h1 {
-            font-size: 20px;
-          }
-
-          .otp-instructions {
-            font-size: 14px;
-          }
-
-          .otp-box-input {
-            width: 40px;
-            height: 40px;
-            font-size: 16px;
-          }
-
-          .submit-button {
-            padding: 10px 20px;
-            font-size: 14px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .otp-container {
-            padding: 8px;
-          }
-
-          .otp-box {
-            padding: 16px;
-          }
-
-          h1 {
-            font-size: 18px;
-          }
-
-          .otp-box-input {
-            width: 35px;
-            height: 35px;
-            font-size: 14px;
-          }
-
-          .submit-button {
-            padding: 8px 16px;
-            font-size: 12px;
-          }
-
-          .resend-timer {
-            font-size: 12px;
-          }
-        }
-      `}</style>
     </div>
   );
-}
+};
 
-export default OTP;
+const styles = {
+  container: {
+    padding: '30px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: '#f4f7fb',
+  },
+  card: {
+    backgroundColor: '#fff',
+    padding: '30px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    width: '400px',
+    textAlign: 'center',
+  },
+  heading: {
+    fontSize: '24px',
+    color: '#333',
+    marginBottom: '15px',
+  },
+  subheading: {
+    fontSize: '16px',
+    color: '#666',
+    marginBottom: '30px',
+  },
+  inputContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '10px',
+    marginBottom: '20px',
+  },
+  input: {
+    width: '50px',
+    height: '50px',
+    textAlign: 'center',
+    fontSize: '20px',
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    outline: 'none',
+    transition: 'border-color 0.3s',
+  },
+  submitButton: {
+    width: '100%',
+    padding: '12px',
+    backgroundColor: '#028248',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    marginTop: '20px',
+    transition: 'background-color 0.3s',
+  },
+  resendContainer: {
+    marginTop: '20px',
+  },
+  resendButton: {
+    padding: '12px 20px',
+    backgroundColor: '#007BFF',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '16px',
+  },
+  resendText: {
+    fontSize: '14px',
+    color: '#666',
+  },
+};
+
+export default OTPVerification;

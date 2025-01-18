@@ -22,8 +22,9 @@ import IndividualReportPage from "./pages/IndividualReportPage.js";
 
 function App() {
   return (
-    <TokenProvider>
-      <Router>
+    // Make sure Router is wrapping TokenProvider and all Routes
+    <Router>
+      <TokenProvider>
         <div>
           <Routes>
             {/* Unprotected Routes */}
@@ -154,8 +155,8 @@ function App() {
             />
           </Routes>
         </div>
-      </Router>
-    </TokenProvider>
+      </TokenProvider>
+    </Router>
   );
 }
 

@@ -25,8 +25,8 @@ const CreateVoting = () => {
       <style jsx>{`
         .dashboard {
           padding: 20px;
-          font-family: Arial, sans-serif;
-          background-color: #f9f9f9;
+          font-family: "Poppins", sans-serif;
+          // background-color: #f9f9f9;
         }
 
         .confirm-btn {

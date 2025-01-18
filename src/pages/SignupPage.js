@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
-    companyName: "",
     username: "",
     email: "",
-    phoneNumber: "",
+    mobile: "",
     password: "",
-    confirmPassword: "",
+    role: "RT",
   });
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -23,44 +23,43 @@ const SignupPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const {
-      companyName,
-      username,
-      email,
-      phoneNumber,
-      password,
-      confirmPassword,
-    } = formData;
-
-    if (
-      !companyName ||
-      !username ||
-      !email ||
-      !phoneNumber ||
-      !password ||
-      !confirmPassword
-    ) {
+    const { username, email, mobile, password, role } = formData;
+  
+    if (!username || !email || !mobile || !password) {
       setError("All fields are required.");
+      setSuccess("");
       return;
     }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+  
+    const registerData = { username, email, mobile, password, role };
+  
+    try {
+      const response = await fetch("https://auth.zeenopay.com/users/register/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registerData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Something went wrong. Please try again.");
+        return;
+      }
+  
+      const responseData = await response.json();
+      const { id } = responseData; // Extract ID from response
+      setSuccess("Account created successfully!");
+      navigate("/otp-verification", { state: { userId: id } }); // Pass ID to OTP page
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
     }
-
-    setError("");
-    alert(`Account created for ${username}`);
-  };
+  };  
 
   const togglePasswordVisibility = () => {
     setShowPassword((prevState) => !prevState);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword((prevState) => !prevState);
   };
 
   return (
@@ -73,19 +72,8 @@ const SignupPage = () => {
         />
         <h2>Create Your Account</h2>
         {error && <div className="error">{error}</div>}
+        {success && <div className="success">{success}</div>}
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="companyName">Company Name</label>
-            <input
-              type="text"
-              id="companyName"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleChange}
-              placeholder="Enter your company name"
-            />
-          </div>
-
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <input
@@ -111,12 +99,12 @@ const SignupPage = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="phoneNumber">Phone Number</label>
+            <label htmlFor="mobile">Phone Number</label>
             <input
               type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
+              id="mobile"
+              name="mobile"
+              value={formData.mobile}
               onChange={handleChange}
               placeholder="Enter your phone number"
             />
@@ -144,30 +132,6 @@ const SignupPage = () => {
             </div>
           </div>
 
-          <div className="form-group password-container">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <div className="password-input-container">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-              />
-              <button
-                type="button"
-                className="show-password-btn"
-                onClick={toggleConfirmPasswordVisibility}
-                aria-label={
-                  showConfirmPassword ? "Hide password" : "Show password"
-                }
-              >
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-          </div>
-
           <button type="submit" className="btn">
             Sign Up
           </button>
@@ -185,7 +149,7 @@ const SignupPage = () => {
           align-items: center;
           height: 100vh;
           padding: 0 20px;
-          background: linear-gradient(to right, #6a11cb, #2575fc);
+          background: #f7f9fc;
         }
 
         .signup-logo {
@@ -261,6 +225,13 @@ const SignupPage = () => {
 
         .error {
           color: red;
+          font-size: 0.9em;
+          text-align: center;
+          margin-bottom: 15px;
+        }
+
+        .success {
+          color: green;
           font-size: 0.9em;
           text-align: center;
           margin-bottom: 15px;

@@ -6,11 +6,11 @@ const UploadCandidateDetails = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [isBulk, setIsBulk] = useState(false);
-  const [candidates, setCandidates] = useState([{ name: "", photo: "", description: "", event_id: "" }]);
+  const [candidates, setCandidates] = useState([{ name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
   const [candidateDetails, setCandidateDetails] = useState([]);
-    const { token } = useToken();
-  
-  
+  const { token } = useToken();
+
+
   const openModal = (bulk = false) => {
     setIsBulk(bulk);
     setShowModal(true);
@@ -25,7 +25,7 @@ const UploadCandidateDetails = () => {
   };
 
   const addMoreCandidate = () => {
-    setCandidates([...candidates, { name: "", photo: "", description: "", event_id: "" }]);
+    setCandidates([...candidates, { name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
   };
 
   const addMorePhoto = () => {
@@ -34,20 +34,19 @@ const UploadCandidateDetails = () => {
 
   const handleSubmit = async () => {
     const candidatesData = candidates.map((candidate) => ({
-      addedAt: new Date().toISOString(),
       name: candidate.name,
+      misc_kv: candidate.misc_kv,  // Adding misc_kv for Contestant Number
       avatar: candidate.photo,
-      event_id: candidate.event_id,  // Take event_id from input field
       bio: candidate.description,
-      misc_kv: "", // You can add other details here if needed
-      status: "open",
-      shareable_link: "",  // Add the link if needed
+      status: "O",
+      shareable_link: "",
+      event: candidate.event_id,
     }));
 
     try {
       // Making API request
       for (const candidate of candidatesData) {
-        await fetch("https://api.zeenopay.com/contestants/", {
+        await fetch("https://auth.zeenopay.com/events/contestants/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -58,12 +57,13 @@ const UploadCandidateDetails = () => {
       }
 
       setCandidateDetails([...candidateDetails, ...candidates]);
-      setCandidates([{ name: "", photo: "", description: "", event_id: "" }]); 
+      setCandidates([{ name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
       closeModal();
     } catch (error) {
       console.error("Error submitting candidate details:", error);
     }
   };
+
 
   return (
     <div className="upload-candidate-container">
@@ -99,6 +99,12 @@ const UploadCandidateDetails = () => {
                         placeholder="Contestant Name"
                         value={candidate.name}
                         onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Contestant Number"
+                        value={candidate.misc_kv}  // New input for Contestant Number
+                        onChange={(e) => handleInputChange(index, "misc_kv", e.target.value)}
                       />
                       <textarea
                         placeholder="Contestant Description"
@@ -152,6 +158,7 @@ const UploadCandidateDetails = () => {
                   </div>
                   <div className="candidate-info">
                     <p className="candidate-name">{candidate.name}</p>
+                    <p className="candidate-number">{candidate.misc_kv}</p> 
                     <p className="candidate-description">{candidate.description}</p>
                   </div>
                 </div>
@@ -169,7 +176,7 @@ const UploadCandidateDetails = () => {
         }
 
         .section-title {
-          font-size: 20px;
+          font-size: 16px;
           font-weight: bold;
           margin-bottom: 15px;
           color: #333;
@@ -200,7 +207,7 @@ const UploadCandidateDetails = () => {
 
         .add-candidate-button, .add-bulk-candidate-button {
           padding: 10px 20px;
-          background-color: #007bff;
+          background-color: #028248;
           color: #fff;
           border: none;
           border-radius: 5px;
@@ -257,7 +264,7 @@ const UploadCandidateDetails = () => {
 
         .modal-actions button {
           padding: 10px 15px;
-          background-color: #007bff;
+          background-color: #028248;
           color: #fff;
           border: none;
           border-radius: 5px;
@@ -322,10 +329,39 @@ const UploadCandidateDetails = () => {
           font-size: 16px;
         }
 
+        .candidate-number {
+          font-size: 14px;
+          color: #888;
+        }
+
         .candidate-description {
           font-size: 14px;
           color: #666;
         }
+
+@media screen and (max-width: 768px) {
+  .upload-candidate-container {
+    // padding: 10px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .upload-candidate-box {
+    // padding: 15px 10px;
+    margin-bottom: 10px;
+  }
+
+  .candidate-forms-container {
+    // max-height: 250px;
+  }
+
+  .candidate-card {
+    width: 150px;
+  }
+}
       `}</style>
     </div>
   );
