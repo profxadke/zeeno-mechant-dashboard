@@ -22,7 +22,7 @@ import IndividualReportPage from "./pages/IndividualReportPage.js";
 
 function App() {
   return (
-    // Make sure Router is wrapping TokenProvider and all Routes
+
     <Router>
       <TokenProvider>
         <div>

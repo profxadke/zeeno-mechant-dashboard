@@ -61,7 +61,6 @@ const Navbar = ({ toggleSidebar }) => {
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("username");
 
-    // Show success toast
     toast.success("You have logged out successfully!", {
       position: "top-right",
       autoClose: 5000,
@@ -72,7 +71,6 @@ const Navbar = ({ toggleSidebar }) => {
       progress: undefined,
     });
 
-    // Wait before redirecting
     setTimeout(() => {
       navigate("/login");
     }, 2000);

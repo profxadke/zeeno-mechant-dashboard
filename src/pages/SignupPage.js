@@ -26,37 +26,37 @@ const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { username, email, mobile, password, role } = formData;
-  
+
     if (!username || !email || !mobile || !password) {
       setError("All fields are required.");
       setSuccess("");
       return;
     }
-  
+
     const registerData = { username, email, mobile, password, role };
-  
+
     try {
       const response = await fetch("https://auth.zeenopay.com/users/register/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registerData),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || "Something went wrong. Please try again.");
         return;
       }
-  
+
       const responseData = await response.json();
-      const { id } = responseData; // Extract ID from response
+      const { otp_id } = responseData;
       setSuccess("Account created successfully!");
-      navigate("/otp-verification", { state: { userId: id } }); // Pass ID to OTP page
+      navigate("/otp-verification", { state: { userId: otp_id } });
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
     }
-  };  
+  };
 
   const togglePasswordVisibility = () => {
     setShowPassword((prevState) => !prevState);
@@ -67,7 +67,7 @@ const SignupPage = () => {
       <div className="signup-box">
         <img
           className="signup-logo"
-          src="https://i.ibb.co/h8f3Mkt/Screenshot-2024-12-25-140415-removebg-preview.png"
+          src="https://i.ibb.co/HdffZky/zeenopay-logo-removebg-preview.png"
           alt="Logo"
         />
         <h2>Create Your Account</h2>
@@ -150,6 +150,7 @@ const SignupPage = () => {
           height: 100vh;
           padding: 0 20px;
           background: #f7f9fc;
+          animation: fadeIn 1s ease-in-out;
         }
 
         .signup-logo {
@@ -167,6 +168,7 @@ const SignupPage = () => {
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
           width: 100%;
           max-width: 400px;
+          animation: scaleUp 0.5s ease-in-out;
         }
 
         h2 {
@@ -203,7 +205,7 @@ const SignupPage = () => {
         .show-password-btn {
           background: none;
           border: none;
-          color: #2575fc;
+          color: #028248;
           font-size: 1.2em;
           cursor: pointer;
           position: absolute;
@@ -216,7 +218,7 @@ const SignupPage = () => {
           width: 100%;
           padding: 12px;
           font-size: 1em;
-          background-color: #2575fc;
+          background-color: #028248;
           color: white;
           border: none;
           border-radius: 8px;
@@ -243,7 +245,7 @@ const SignupPage = () => {
         }
 
         .login-container a {
-          color: #2575fc;
+          color: #028248;
           text-decoration: none;
           font-weight: 500;
         }

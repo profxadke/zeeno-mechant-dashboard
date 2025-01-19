@@ -1,196 +1,245 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const OTPVerification = () => {
+const OtpVerification = () => {
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { id, otp_id, operation } = location.state || {}; 
-  const [otp, setOtp] = useState(new Array(6).fill(''));
-  const [timer, setTimer] = useState(60);
-  const [isResendDisabled, setIsResendDisabled] = useState(true);
-  const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
+
+  const userId = location.state?.userId;
 
   useEffect(() => {
-    // Check if all OTP fields are filled
-    setIsSubmitDisabled(otp.includes('') || otp.length !== 6);
-  }, [otp]);
+    if (!userId) {
+      setError("User ID is missing.");
+    }
+  }, [userId]);
 
-  const handleChange = (value, index) => {
-    if (/^[0-9]$/.test(value)) {
-      const newOtp = [...otp];
-      newOtp[index] = value;
-      setOtp(newOtp);
-
-      // Move to next input field
-      if (index < otp.length - 1 && value) {
-        document.getElementById(`otp-${index + 1}`).focus();
-      }
-    } else if (!value) {
-      const newOtp = [...otp];
-      newOtp[index] = '';
-      setOtp(newOtp);
+  const handleOtpChange = (e, index) => {
+    const value = e.target.value;
+    if (value.match(/[0-9]/) || value === "") {
+      setOtp((prevOtp) => {
+        const newOtp = [...prevOtp];
+        newOtp[index] = value;
+        return newOtp;
+      });
     }
   };
 
-  const handleResend = async () => {
-    try {
-      // Use the appropriate ID based on operation type
-      const payload = operation === 'signup' ? { id } : { otp_id };
-      await axios.post('https://auth.zeenopay.com/users/resend-otp/', payload);
-      toast.success('OTP resent successfully');
-      setTimer(60);
-      setIsResendDisabled(true);
-    } catch (error) {
-      toast.error('Failed to resend OTP');
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    const enteredOtp = otp.join('');
-    try {
-      // Use the appropriate ID based on operation type
-      const payload = {
-        otp: enteredOtp,
-        ...(operation === 'signup' ? { id } : { otp_id }),
-      };
-      const response = await axios.post('https://auth.zeenopay.com/users/verify-otp/', payload);
 
-      if (response.data.success) {
-        toast.success('OTP verified successfully');
-        navigate('/otp-verification'); 
+    const otpValue = otp.join("");
+    if (!otpValue || !userId) {
+      setError("Please enter OTP and ensure user ID is available.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const payload = {
+      id: String(userId),
+      value: otpValue,
+    };
+
+    try {
+      const response = await axios.post("https://auth.zeenopay.com/users/verify-otp/", payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 200) {
+        alert("OTP Verified Successfully!");
+        navigate("/login");
       } else {
-        toast.error('Invalid OTP');
+        setError("Something went wrong. Please try again.");
       }
-    } catch (error) {
-      toast.error('Failed to verify OTP');
+    } catch (err) {
+      console.error("Error verifying OTP:", err);
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "An error occurred. Please try again.";
+
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let interval;
-    if (timer > 0) {
-      interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
-    } else {
-      setIsResendDisabled(false);
-    }
-    return () => clearInterval(interval);
-  }, [timer]);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.heading}>Verify OTP</h2>
-        <p style={styles.subheading}>Please enter the 6-digit OTP sent to your email/phone.</p>
-        <form onSubmit={handleSubmit}>
-          <div style={styles.inputContainer}>
+    <div className="screen">
+      <div className="container">
+        <img src="https://i.ibb.co/HdffZky/zeenopay-logo-removebg-preview.png" alt="Logo" className="logo" />
+        <h2>OTP Verification</h2>
+        {error && <p className="error">{error}</p>}
+        <form onSubmit={handleOtpSubmit} className="form">
+          <div className="otp-container">
             {otp.map((digit, index) => (
               <input
                 key={index}
-                id={`otp-${index}`}
                 type="text"
-                maxLength="1"
                 value={digit}
-                onChange={(e) => handleChange(e.target.value, index)}
-                style={styles.input}
+                onChange={(e) => handleOtpChange(e, index)}
+                maxLength="1"
+                className="input"
+                autoFocus={index === 0}
               />
             ))}
           </div>
-          <button
-            type="submit"
-            style={styles.submitButton}
-            disabled={isSubmitDisabled}
-          >
-            Verify OTP
+          <button type="submit" className="button" disabled={loading}>
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
-        <div style={styles.resendContainer}>
-          {isResendDisabled ? (
-            <p style={styles.resendText}>Resend OTP in {timer} seconds</p>
-          ) : (
-            <button onClick={handleResend} style={styles.resendButton}>
-              Resend OTP
-            </button>
-          )}
-        </div>
       </div>
+      <style jsx>{`
+/* General Styles */
+.screen {
+  background-color: #f7f9fc;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.container {
+  padding: 30px;
+  max-width: 400px;
+  margin: auto;
+  text-align: center;
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.error {
+  color: red;
+  margin-bottom: 10px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.otp-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.input {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 18px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 5px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #028248;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+  .screen {
+    padding: 0 10px;
+  }
+
+  .container {
+    padding: 20px;
+    margin: 20px 0;
+    width: 100%;
+  }
+
+  .input {
+    width: 40px;
+    height: 40px;
+  }
+
+  .button {
+    padding: 12px 25px;
+    font-size: 14px;
+  }
+
+  .otp-container {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+
+  .button {
+    padding: 15px 30px;
+    font-size: 15px;
+  }
+
+  .container {
+    padding: 15px;
+    margin: 15px 0;
+  }
+}
+
+/* Additional Media Query for Small Screens below 400px */
+@media (max-width: 400px) {
+  .input {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+
+  .button {
+    padding: 10px 25px;
+    font-size: 14px;
+  }
+
+  .container {
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+  .logo {
+    width: 150px;
+  }
+
+  .otp-container {
+    gap: 8px;
+  }
+}
+`}</style>
+
     </div>
   );
 };
 
-const styles = {
-  container: {
-    padding: '30px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: '#f4f7fb',
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-    width: '400px',
-    textAlign: 'center',
-  },
-  heading: {
-    fontSize: '24px',
-    color: '#333',
-    marginBottom: '15px',
-  },
-  subheading: {
-    fontSize: '16px',
-    color: '#666',
-    marginBottom: '30px',
-  },
-  inputContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '10px',
-    marginBottom: '20px',
-  },
-  input: {
-    width: '50px',
-    height: '50px',
-    textAlign: 'center',
-    fontSize: '20px',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    outline: 'none',
-    transition: 'border-color 0.3s',
-  },
-  submitButton: {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#028248',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    marginTop: '20px',
-    transition: 'background-color 0.3s',
-  },
-  resendContainer: {
-    marginTop: '20px',
-  },
-  resendButton: {
-    padding: '12px 20px',
-    backgroundColor: '#007BFF',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-  },
-  resendText: {
-    fontSize: '14px',
-    color: '#666',
-  },
-};
-
-export default OTPVerification;
+export default OtpVerification;

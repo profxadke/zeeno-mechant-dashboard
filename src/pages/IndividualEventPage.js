@@ -14,7 +14,7 @@ const ViewRegistration = () => {
         <RealtimeVoting/>
       </div>
 
-      {/* Scoped Styles using styled-jsx */}
+      {/* Styling */}
     </DashboardLayout>
           <style jsx>{`
             .dashboard {

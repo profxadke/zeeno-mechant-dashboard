@@ -21,7 +21,6 @@ const NotificationDropdown = () => {
     setNotifications([newNotification, ...notifications]);
   };
 
-  // Example of triggering success notification
   const handleEventCreationSuccess = () => {
     addSuccessNotification("Your event has been created successfully!");
   };

@@ -1,15 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToken } from "../../context/TokenContext";
-
+import { MdArrowDropDown } from 'react-icons/md';
 
 const UploadCandidateDetails = () => {
-
   const [showModal, setShowModal] = useState(false);
   const [isBulk, setIsBulk] = useState(false);
   const [candidates, setCandidates] = useState([{ name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
   const [candidateDetails, setCandidateDetails] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState("");
   const { token } = useToken();
 
+  // Fetch event list on component mount
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch("https://auth.zeenopay.com/events/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        setEvents(data);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+    fetchEvents();
+  }, [token]);
 
   const openModal = (bulk = false) => {
     setIsBulk(bulk);
@@ -25,22 +43,32 @@ const UploadCandidateDetails = () => {
   };
 
   const addMoreCandidate = () => {
-    setCandidates([...candidates, { name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
+    setCandidates([...candidates, { name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent }]);
   };
 
-  const addMorePhoto = () => {
-    setCandidates([...candidates, { photo: "", event_id: "" }]);
+  const handleImageUpload = (index, file) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+
+      const updatedCandidateList = [...candidates];
+      updatedCandidateList[index].photo = reader.result;  
+      setCandidates(updatedCandidateList);
+    };
+    if (file) {
+      reader.readAsDataURL(file); 
+    }
   };
+  
 
   const handleSubmit = async () => {
     const candidatesData = candidates.map((candidate) => ({
       name: candidate.name,
-      misc_kv: candidate.misc_kv,  // Adding misc_kv for Contestant Number
+      misc_kv: candidate.misc_kv, 
       avatar: candidate.photo,
       bio: candidate.description,
       status: "O",
       shareable_link: "",
-      event: candidate.event_id,
+      event: selectedEvent, 
     }));
 
     try {
@@ -57,13 +85,15 @@ const UploadCandidateDetails = () => {
       }
 
       setCandidateDetails([...candidateDetails, ...candidates]);
-      setCandidates([{ name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
+      setCandidates([{ name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent }]);
       closeModal();
     } catch (error) {
       console.error("Error submitting candidate details:", error);
     }
   };
-
+  const addMorePhoto = () => {
+    setCandidates([...candidates, { photo: "", event_id: "" }]); 
+  };
 
   return (
     <div className="upload-candidate-container">
@@ -90,51 +120,72 @@ const UploadCandidateDetails = () => {
             <span className="close-icon" onClick={closeModal}>&times;</span>
             <h3>{isBulk ? "Add Bulk Candidate Details" : "Add Candidate Details"}</h3>
             <div className="candidate-forms-container">
+              {/* Event dropdown */}
+              <div className="event-dropdown">
+      <label htmlFor="event">Select Event</label>
+      <div className="dropdown-container">
+        <select
+          id="event"
+          value={selectedEvent}
+          onChange={(e) => setSelectedEvent(e.target.value)}
+        >
+          <option value="">Select Event</option>
+          {events.map((event) => (
+            <option key={event.id} value={event.id}>
+              {event.title}
+            </option>
+          ))}
+        </select>
+        <MdArrowDropDown className="dropdown-icon" />
+      </div>
+    </div>
               {candidates.map((candidate, index) => (
                 <div key={index} className="candidate-form">
                   {!isBulk ? (
                     <>
+                <label htmlFor="name">Contestant Name</label>
+
                       <input
+                      id="name"
                         type="text"
-                        placeholder="Contestant Name"
+                        placeholder="Enter Contestant Name"
                         value={candidate.name}
                         onChange={(e) => handleInputChange(index, "name", e.target.value)}
                       />
+                <label htmlFor="number">Contestant Number</label>
+
                       <input
+                      id="number"
+
                         type="text"
-                        placeholder="Contestant Number"
-                        value={candidate.misc_kv}  // New input for Contestant Number
+                        placeholder="Enter Contestant Number"
+                        value={candidate.misc_kv}  
                         onChange={(e) => handleInputChange(index, "misc_kv", e.target.value)}
                       />
+                <label htmlFor="description">Contestant Bio</label>
                       <textarea
-                        placeholder="Contestant Description"
+                        id="description"
+                        placeholder="Enter Contestant Bio"
                         value={candidate.description}
                         onChange={(e) => handleInputChange(index, "description", e.target.value)}
                       />
                     </>
                   ) : null}
-                  <input
-                    type="text"
-                    placeholder="Contestant Photo URL"
-                    value={candidate.photo}
-                    onChange={(e) => handleInputChange(index, "photo", e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Event ID"
-                    value={candidate.event_id}
-                    onChange={(e) => handleInputChange(index, "event_id", e.target.value)}
-                  />
+                <label htmlFor="photo">Select Contestant Photo</label>
+                 <input
+  id="photo"
+  type="file"
+  accept="image/*"
+  onChange={(e) => handleImageUpload(index, e.target.files[0])}
+/>
+
                 </div>
               ))}
             </div>
             <div className="modal-actions">
-              {!isBulk && (
-                <button onClick={addMoreCandidate}>Add Another Candidate</button>
-              )}
-              {isBulk && (
-                <button onClick={addMorePhoto}>Add Another Photo</button>
-              )}
+            {isBulk && (
+                  <button onClick={addMorePhoto}>Add Another Photo</button>
+            )}
               <button onClick={handleSubmit}>Submit</button>
             </div>
           </div>
@@ -288,7 +339,6 @@ const UploadCandidateDetails = () => {
           color: #f00;
         }
 
-        /* Candidate details display */
         .candidate-details {
           margin-top: 20px;
         }
@@ -339,29 +389,79 @@ const UploadCandidateDetails = () => {
           color: #666;
         }
 
-@media screen and (max-width: 768px) {
-  .upload-candidate-container {
-    // padding: 10px;
-  }
+        /* Responsive styles */
+        @media screen and (max-width: 768px) {
+          .upload-candidate-container {
+            // padding: 10px;
+          }
 
-  .section-title {
-    font-size: 18px;
-    text-align: center;
-  }
+          .section-title {
+            font-size: 18px;
+            text-align: center;
+          }
 
-  .upload-candidate-box {
-    // padding: 15px 10px;
-    margin-bottom: 10px;
-  }
+          .upload-candidate-box {
+            // padding: 15px 10px;
+            margin-bottom: 10px;
+          }
 
-  .candidate-forms-container {
-    // max-height: 250px;
-  }
+          .candidate-forms-container {
+            // max-height: 250px;
+          }
 
-  .candidate-card {
-    width: 150px;
-  }
+          .modal-actions {
+            display: block;
+            text-align: center;
+          }
+
+          .modal-actions button {
+            width: 100%;
+            margin: 5px 0;
+          }
+        }
+
+        /* Event dropdown */
+
+.event-dropdown select:focus {
+  border-color: #028248;
 }
+
+.event-dropdown {
+  position: relative;
+}
+
+.event-dropdown select {
+  -webkit-appearance: none; 
+  -moz-appearance: none; 
+  appearance: none; 
+  padding: 10px;
+  font-size: 16px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 380px;
+  padding-right: 30px; 
+  margin-bottom: 10px;
+  outline: none;
+}
+
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #333;
+  pointer-events: none; 
+}
+
+
+
       `}</style>
     </div>
   );

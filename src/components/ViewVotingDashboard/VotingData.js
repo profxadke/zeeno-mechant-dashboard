@@ -22,12 +22,12 @@ const VotingData = () => {
     },
     xaxis: {
       categories: [
-        "12:00 am", "6:00 am", "12:00 am", "6:00 pm",
-      ],  
+        "12:00 am", "6:00 am", "12:00 pm", "6:00 pm",
+      ],
       labels: {
         style: {
-          colors: "#ffffff",  
-          fontWeight: "bold",  
+          colors: "#333333",
+          fontWeight: "bold",
         },
       },
     },
@@ -35,29 +35,29 @@ const VotingData = () => {
       title: { text: "Votes" },
       labels: {
         style: {
-          fontWeight: "bold",  
+          fontWeight: "bold",
         },
       },
     },
     stroke: {
       curve: "smooth",
     },
-    colors: ["#FFFFFF"],
+    colors: ["rgb(133, 219, 80)"],
     fill: {
       type: "gradient",
       gradient: {
-        shade: "dark",
+        shade: "light",
         type: "vertical",
-        gradientToColors: ["#4A90E2"],
-        stops: [0, 50],
+        gradientToColors: ["rgb(133, 219, 80)"],
+        stops: [0, 100],
       },
     },
-    grid: { borderColor: "#90A4AE" },
+    grid: { borderColor: "#ECEFF1" },
   });
 
   const [series] = useState([{
     name: "Votes",
-    data: [100, 750, 300, 750], 
+    data: [100, 750, 300, 750],
   }]);
 
   const [candidates, setCandidates] = useState([]);
@@ -100,7 +100,6 @@ const VotingData = () => {
     const options = { year: "numeric", month: "long", day: "numeric" };
     setCurrentDate(date.toLocaleDateString("en-US", options));
 
-    // Check if the screen width is mobile
     const handleResize = () => {
       if (window.innerWidth <= 768) {
         setIsMobile(true);
@@ -109,13 +108,10 @@ const VotingData = () => {
       }
     };
 
-    // Initial check
     handleResize();
 
-    // Add event listener on window resize
     window.addEventListener("resize", handleResize);
 
-    // Cleanup event listener
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -139,8 +135,8 @@ const VotingData = () => {
             box-sizing: border-box;
           }
           .chart-card {
-            background-color: #4a90e2;
-            color: #fff;
+            background-color: #f7f9fc;
+            // border: 1px solid #E0E0E0;
             border-radius: 10px;
             padding: 20px;
             flex: 2;
@@ -155,17 +151,18 @@ const VotingData = () => {
             font-family: 'Poppins', sans-serif;
           }
           .total-votes {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: bold;
             margin-bottom: 20px;
+            color: #333333;
             font-family: 'Poppins', sans-serif;
           }
           .candidate-card {
-            background-color: #e91e63;
-            color: #fff;
+            background-color: #f7f9fc;
+            // border: 1px solid #E0E0E0;
             border-radius: 10px;
             padding: 30px;
-            flex: 1;
+            flex: 2;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             font-family: 'Poppins', sans-serif;
           }
@@ -179,21 +176,30 @@ const VotingData = () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #d81b60;
+            background-color:rgb(133, 219, 80);
+            border: 1px solid #E0E0E0;
+            color: #fff;
+            font-weight: 600;
             border-radius: 8px;
             padding: 10px 15px;
             margin-bottom: 10px;
             font-family: 'Poppins', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+          }
+          .candidate-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
           }
           .candidate-image {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             margin-right: 10px;
+            border: 2px solid #90CAF9;
           }
           .candidate-button {
-            background-color: #fff;
-            color: #e91e63;
+            background-color: #1E88E5;
+            color: #FFFFFF;
             padding: 10px 15px;
             border: none;
             border-radius: 5px;
@@ -202,51 +208,50 @@ const VotingData = () => {
             font-weight: bold;
             font-family: 'Poppins', sans-serif;
           }
-          @media (max-width: 768px) {
-            .dashboard-container {
-              flex-direction: column;
-              padding: 0 0; 
-            }
-            .chart-card,
-            .candidate-card {
-              width: 100%;
-            }
-
-            .chart-card{
-            padding-right: 30px;
-            padding-left: 30px;
-            padding-top: 10px;
-            padding-bottom: 0px;
-            }
-            .chart-header h1{
-              font-size: 18px;
-            }
-            .date-display {
-              display: none;
-            }
-            .total-votes {
-              font-size: 1.5rem; 
-            }
-            .dashboard-container {
-              padding-right: 50px;
-            }
-            .voting-h3{
-              display: none;
-            }
-              .top-h3{
-              font-size:16px
-              }
-            /* Decrease chart height on mobile */
-            .chart {
-              height: ${isMobile ? '250px' : '300px'};
-            }
+          .candidate-button:hover {
+            background-color: #1565C0;
           }
+         @media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    padding: 0 5px; /* Add equal gap on both sides */
+  }
+  .chart-card,
+  .candidate-card {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box; 
+  }
+  .chart-card {
+    padding-top: 10px;
+    padding-bottom: 0;
+  }
+  .chart-header h1 {
+    font-size: 18px;
+  }
+  .date-display {
+    display: none;
+  }
+  .total-votes {
+    font-size: 1.5rem;
+  }
+  .voting-h3 {
+    display: none;
+  }
+  .top-h3 {
+    font-size: 16px;
+  }
+  .chart {
+    height: ${isMobile ? '250px' : '300px'};
+  }
+}
+
         `}
       </style>
       <div className="chart-card">
         <h3 className="voting-h3">Voting Activity by Time Intervals</h3>
         <div className="chart-header">
-          <h1>Today's Votes</h1>
+          <h3>Today's Votes</h3>
           <div className="date-display">{currentDate}</div>
         </div>
         <Chart options={chartOptions} series={series} type="line" height={isMobile ? 240 : 300} className="chart" />
