@@ -154,7 +154,7 @@ const ParticipantDemographics = () => {
 
         /* Gender breakdown section enhancements */
         .gender-breakdown {
-          background-color: #da1f63;
+          background-color: #028248;
           color: white;
           padding: 25px;
         }
@@ -210,52 +210,69 @@ const ParticipantDemographics = () => {
           margin-top: 40px;
         }
 
-        /* Responsive styles */
-        @media (max-width: 768px) {
-          .participant-container {
-            flex-direction: column;
-            gap: 15px;
-          }
+       /* Responsive styles */
+  @media (max-width: 768px) {
+  .participant-container {
+    flex-direction: column;
+    gap: 15px;
+  }
 
-          .age-distribution,
-          .gender-breakdown {
-          padding: 15px 15px;
-            width: 100%;
-          }
+  .age-distribution,
+  .gender-breakdown {
+    padding: 15px;
+    width: 100%;
+  }
 
-          .header {
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 10px;
-          }
+  .header {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+  }
 
-          .export-button {
-            width: auto;
-            text-align: center;
-          }
-        }
+  .export-button {
+    width: auto;
+    text-align: center;
+  }
+}
 
-        @media (max-width: 480px) {
-          .gender-stats {
-            flex-direction: column;
-            gap: 10px;
-          }
+@media (max-width: 480px) {
+  .participant-demographics-container {
+    padding: 0 15px; 
+  }
 
-          .stat {
-            width: 80%;
-            margin: 10px 20px;
-            padding: 15px;
-          }
+  .participant-container {
+    flex-direction: column;
+    gap: 15px;
+    margin: 0 15px; 
+  }
 
-          .stat h4 {
-            font-size: 20px;
-          }
+  .age-distribution,
+  .gender-breakdown {
+    padding: 15px;
+    width: 100%;
+  }
 
-          .stat p {
-            font-size: 14px;
-          }
-        }
+  .gender-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat {
+    width: 80%;
+    margin: 10px auto; 
+    padding: 15px;
+  }
+
+  .stat h4 {
+    font-size: 20px;
+  }
+
+  .stat p {
+    font-size: 14px;
+  }
+}
+
       `}</style>
     </div>
   );

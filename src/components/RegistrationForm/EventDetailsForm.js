@@ -1,13 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../assets/eventdetails.css";
 
 const EventDetailsForm = () => {
-  const [image, setImage] = useState(null);
+  // Initial data from the JSON
+  const initialData = {
+    formImg: "",
+    formDate: "",
+    formLocation: "",
+    formFee: "",
+    female_only: false,
+    cash_payment: false,
+    formTitle: "",
+  };
+
+  const [image, setImage] = useState(initialData.formImg);
+  const [eventName, setEventName] = useState(initialData.formTitle);
+  const [eventDate, setEventDate] = useState(initialData.formDate.split("T")[0]);
+  const [eventLocation, setEventLocation] = useState(initialData.formLocation);
+  const [registrationFee, setRegistrationFee] = useState(initialData.formFee);
+  const [femaleOnly, setFemaleOnly] = useState(initialData.female_only);
+  const [cashPayment, setCashPayment] = useState(initialData.cash_payment);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Only accept image files (png, jpeg, jpg)
       if (file.type === "image/png" || file.type === "image/jpeg") {
         setImage(URL.createObjectURL(file));
       } else {
@@ -23,27 +39,49 @@ const EventDetailsForm = () => {
         <div className="form-grid">
           <div>
             <label>Event Name</label>
-            <input type="text" placeholder="Enter Event Name" />
+            <input
+              className="event-name"
+              type="text"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              placeholder="Enter Event Name"
+            />
           </div>
           <div>
             <label>Event Date</label>
-            <input type="date" />
+            <input
+              className="event-date"
+              type="date"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+            />
           </div>
           <div>
-            <label>Event Description</label>
-            <textarea placeholder="Write event description here"></textarea>
+            <label>Event Location</label>
+            <input
+              className="event-location"
+              type="text"
+              value={eventLocation}
+              onChange={(e) => setEventLocation(e.target.value)}
+              placeholder="Enter Event Location"
+            />
           </div>
           <div>
-            <label>Event Guidelines</label>
-            <textarea placeholder="Write event guidelines here"></textarea>
-          </div>
-          <div>
-            <label>Event Terms & Conditions</label>
-            <textarea placeholder="Write event terms & conditions here"></textarea>
+            <label>Registration Fee</label>
+            <input
+              className="event-location"
+              type="text"
+              value={registrationFee}
+              onChange={(e) => setRegistrationFee(e.target.value)}
+              placeholder="Enter Registration Fee"
+            />
           </div>
           <div>
             <label>Upload Event Photos/Banners</label>
-            <div className="upload-box" onClick={() => document.getElementById('file-input').click()}>
+            <div
+              className="upload-box"
+              onClick={() => document.getElementById('file-input').click()}
+            >
               {image ? (
                 <img src={image} alt="Uploaded" className="uploaded-image" />
               ) : (
@@ -54,12 +92,33 @@ const EventDetailsForm = () => {
               )}
             </div>
             <input
+              className="file-input"
               type="file"
               id="file-input"
               accept="image/png, image/jpeg"
               onChange={handleImageChange}
               style={{ display: "none" }}
             />
+          </div>
+          <div className="payment-checkboxes">
+            <div>
+              <input
+                className="cash-payment"
+                type="checkbox"
+                checked={cashPayment}
+                onChange={() => setCashPayment(!cashPayment)}
+              />
+              <label>Cash Payment Accepted</label>
+            </div>
+            <div>
+              <input
+                className="female-only"
+                type="checkbox"
+                checked={femaleOnly}
+                onChange={() => setFemaleOnly(!femaleOnly)}
+              />
+              <label>Female Only Event</label>
+            </div>
           </div>
         </div>
       </div>

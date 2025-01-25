@@ -11,7 +11,7 @@ const ViewRegistration = () => {
         <TableComponent />
       </div>
 
-      {/* Scoped Styles using styled-jsx */}
+      {/* styled-jsx */}
       <style jsx>{`
         .dashboard {
           padding: 20px;

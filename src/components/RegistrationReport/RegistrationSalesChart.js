@@ -28,7 +28,7 @@ const RegistrationSalesChart = () => {
         "Jan 10",
       ],
     },
-    colors: ["#007bff"],
+    colors: ["#028248"],
   };
 
   const barSeries = [
@@ -44,7 +44,7 @@ const RegistrationSalesChart = () => {
       height: 350,
     },
     labels: ["Esewa", "Khalti", "ImePay", "Bank Transfer", "Connect IPS"],
-    colors: ["#007bff", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"],
+    colors: ["#028248", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"],
     legend: { position: "bottom" },
   };
 
@@ -158,7 +158,7 @@ const RegistrationSalesChart = () => {
         }
 
         .export-btn {
-          background-color: #007bff;
+          background-color: #028248;
           color: white;
           padding: 8px 15px;
           border: none;

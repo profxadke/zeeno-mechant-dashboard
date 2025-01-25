@@ -2,7 +2,6 @@ import React from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import EventDetailsForm from '../../components/RegistrationForm/EventDetailsForm';
 import RegistrationFields from '../../components/RegistrationForm/RegistrationFields';
-import PaymentSetup from '../../components/RegistrationForm/PaymentSetup';
 
 const CreateRegistration = () => {
   return (
@@ -10,11 +9,10 @@ const CreateRegistration = () => {
       <div className="dashboard">
         <EventDetailsForm />
         <RegistrationFields />
-        <PaymentSetup />
         <button className="confirm-btn">Confirm</button>
       </div>
 
-      {/* Scoped Styles using styled-jsx */}
+      {/*styled-jsx */}
       <style jsx>{`
         .dashboard {
           padding: 20px;
@@ -27,7 +25,7 @@ const CreateRegistration = () => {
           margin: 20px 0px;
           align-items: right;
           padding: 10px 35px;
-          background-color: #007bff;
+          background-color: #028248;
           color: #fff;
           border: none;
           border-radius: 5px;
@@ -36,7 +34,7 @@ const CreateRegistration = () => {
         }
 
         .confirm-btn:hover {
-          background-color: #0056b3;
+          background-color:rgb(59, 177, 124);
         }
       `}</style>
     </DashboardLayout>
