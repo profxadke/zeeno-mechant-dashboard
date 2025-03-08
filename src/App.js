@@ -18,7 +18,9 @@ import KycVerification from "./pages/KycVerification";
 import ProfilePage from "./pages/ProfilePage";
 import { TokenProvider } from "../src/context/TokenContext";
 import IndividualEventPage from "./pages/IndividualEventPage.js";
+import IndividualView from "./pages/Registration Management/IndividualView.js";
 import IndividualReportPage from "./pages/IndividualReportPage.js";
+import IndividualReport from "./pages/Registration Management/IndividualReport.js";
 
 function App() {
   return (
@@ -134,6 +136,23 @@ function App() {
               element={
                 <ProtectedRoute>
                   <IndividualEventPage />
+                </ProtectedRoute>
+              }
+            />
+              <Route
+              path="/viewregistration/:form_id"
+              element={
+                <ProtectedRoute>
+                  <IndividualView />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/viewreport/:form_id"
+              element={
+                <ProtectedRoute>
+                  <IndividualReport />
                 </ProtectedRoute>
               }
             />

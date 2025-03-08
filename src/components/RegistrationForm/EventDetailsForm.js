@@ -1,128 +1,412 @@
-import React, { useState, useEffect } from "react";
-import "../../assets/eventdetails.css";
+import React, { useState, useContext } from 'react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { FaArrowUp, FaArrowDown, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useToken } from '../../context/TokenContext'; 
 
-const EventDetailsForm = () => {
-  // Initial data from the JSON
-  const initialData = {
-    formImg: "",
-    formDate: "",
-    formLocation: "",
-    formFee: "",
-    female_only: false,
-    cash_payment: false,
-    formTitle: "",
-  };
+const API_URL = 'https://auth.zeenopay.com/events/forms/';
 
-  const [image, setImage] = useState(initialData.formImg);
-  const [eventName, setEventName] = useState(initialData.formTitle);
-  const [eventDate, setEventDate] = useState(initialData.formDate.split("T")[0]);
-  const [eventLocation, setEventLocation] = useState(initialData.formLocation);
-  const [registrationFee, setRegistrationFee] = useState(initialData.formFee);
-  const [femaleOnly, setFemaleOnly] = useState(initialData.female_only);
-  const [cashPayment, setCashPayment] = useState(initialData.cash_payment);
+const initialFormState = {
+  title: '',
+  description: '',
+  org: '',
+  finaldate: '',
+  formImg: '',
+  formLocation: '',
+  formFee: '',
+  female_only: false,
+  cash_payment: false,
+  formTitle: '',
+  questions: [
+    {
+      title: 'Upload image',
+      type: 'image',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'What is your name?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'Gender',
+      type: 'radio',
+      isRequired: true,
+      options: ['Male', 'Female', 'Other'],
+      isVisible: true,
+    },
+    {
+      title: 'Height(in ft)',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'Weight(in kg)',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'What is your permanent address?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'What is your temporary address?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'What is your Guardian Name?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'What is your contact number?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'What is your optional contact number?',
+      type: 'text',
+      isRequired: false,
+      isVisible: true,
+    },
+    {
+      title: 'What is your email address?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'Date of birth',
+      type: 'date',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'Why do you want to participate in this event?',
+      type: 'textarea',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
+      title: 'How do you know about this program?',
+      type: 'dropdown',
+      isRequired: true,
+      options: ['Facebook', 'Instagram', 'TikTok'],
+      isVisible: true,
+    },
+  ],
+  shareable_link: '',
+};
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.type === "image/png" || file.type === "image/jpeg") {
-        setImage(URL.createObjectURL(file));
-      } else {
-        alert("Please upload a PNG or JPEG image.");
-      }
-    }
+const QuestionCard = ({ question, index, moveCard, totalQuestions, updateQuestion, toggleQuestionVisibility }) => {
+  const [{ isDragging }, drag] = useDrag({
+    type: 'QUESTION',
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  const [, drop] = useDrop({
+    accept: 'QUESTION',
+    hover: (item, monitor) => {
+      if (!monitor.isOver({ shallow: true })) return;
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
+      moveCard(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  const moveQuestion = (direction) => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    moveCard(index, newIndex);
   };
 
   return (
-    <div className="event-details-container">
-      <h2 className="form-title">Fill Event Details</h2>
-      <div className="event-details-form">
-        <div className="form-grid">
-          <div>
-            <label>Event Name</label>
-            <input
-              className="event-name"
-              type="text"
-              value={eventName}
-              onChange={(e) => setEventName(e.target.value)}
-              placeholder="Enter Event Name"
-            />
-          </div>
-          <div>
-            <label>Event Date</label>
-            <input
-              className="event-date"
-              type="date"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>Event Location</label>
-            <input
-              className="event-location"
-              type="text"
-              value={eventLocation}
-              onChange={(e) => setEventLocation(e.target.value)}
-              placeholder="Enter Event Location"
-            />
-          </div>
-          <div>
-            <label>Registration Fee</label>
-            <input
-              className="event-location"
-              type="text"
-              value={registrationFee}
-              onChange={(e) => setRegistrationFee(e.target.value)}
-              placeholder="Enter Registration Fee"
-            />
-          </div>
-          <div>
-            <label>Upload Event Photos/Banners</label>
-            <div
-              className="upload-box"
-              onClick={() => document.getElementById('file-input').click()}
-            >
-              {image ? (
-                <img src={image} alt="Uploaded" className="uploaded-image" />
-              ) : (
-                <>
-                  <span>+</span>
-                  <p>Image should be in png/jpeg only</p>
-                </>
-              )}
-            </div>
-            <input
-              className="file-input"
-              type="file"
-              id="file-input"
-              accept="image/png, image/jpeg"
-              onChange={handleImageChange}
-              style={{ display: "none" }}
-            />
-          </div>
-          <div className="payment-checkboxes">
-            <div>
-              <input
-                className="cash-payment"
-                type="checkbox"
-                checked={cashPayment}
-                onChange={() => setCashPayment(!cashPayment)}
-              />
-              <label>Cash Payment Accepted</label>
-            </div>
-            <div>
-              <input
-                className="female-only"
-                type="checkbox"
-                checked={femaleOnly}
-                onChange={() => setFemaleOnly(!femaleOnly)}
-              />
-              <label>Female Only Event</label>
-            </div>
+    <div
+      ref={(node) => drag(drop(node))}
+      className={`question-card ${isDragging ? 'opacity-50' : ''}`}
+      style={{ cursor: 'move' }}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <div className="flex-1">
+          <div className="question-header">
+            <input type="text" className="input-field" value={question.title} disabled />
           </div>
         </div>
       </div>
+
+      <div className="checkbox-group">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={question.isRequired}
+            onChange={(e) => updateQuestion(index, 'isRequired', e.target.checked)}
+          />
+          Required
+        </label>
+      </div>
+
+      <div className="action-buttons">
+        <button type="button" className="icon-button" onClick={() => moveQuestion('up')} disabled={index === 0}>
+          <FaArrowUp size={14} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => moveQuestion('down')}
+          disabled={index === totalQuestions - 1}
+        >
+          <FaArrowDown size={14} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={() => toggleQuestionVisibility(index)}
+          title={question.isVisible ? 'Hide Question' : 'Show Question'}
+        >
+          {question.isVisible ? <FaEye size={14} /> : <FaEyeSlash size={14} />}
+        </button>
+      </div>
     </div>
+  );
+};
+
+const EventDetailsForm = () => {
+  const [formData, setFormData] = useState(initialFormState);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const token = useToken(); 
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Filter out invisible questions before submission
+      const visibleQuestions = formData.questions.filter((question) => question.isVisible);
+
+      const submissionData = {
+        title: formData.formTitle,
+        description: formData.description,
+        org: formData.org,
+        formImg: formData.formImg,
+        finaldate: formData.finaldate,
+        fields: JSON.stringify({
+          formLocation: formData.formLocation,
+          formFee: formData.formFee,
+          female_only: formData.female_only,
+          cash_payment: formData.cash_payment,
+          formTitle: formData.formTitle,
+          questions: visibleQuestions,
+          shareable_link: formData.shareable_link,
+        }),
+      };
+
+      const response = await fetch('https://auth.zeenopay.com/events/forms/', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token.token}`, 
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(submissionData),
+});
+      console.log('Auth Token:', token);
+
+      if (!response.ok) {
+        throw new Error('Failed to submit form');
+      }
+
+      const result = await response.json();
+      alert('Form submitted successfully!');
+      resetForm();
+    } catch (err) {
+      setError(err.message);
+      alert('Error submitting form: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateFormData = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const updateQuestion = (index, field, value) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[index] = { ...newQuestions[index], [field]: value };
+    updateFormData('questions', newQuestions);
+  };
+
+  const moveQuestion = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= formData.questions.length) return;
+    const newQuestions = [...formData.questions];
+    const [removed] = newQuestions.splice(fromIndex, 1);
+    newQuestions.splice(toIndex, 0, removed);
+    updateFormData('questions', newQuestions);
+  };
+
+  const toggleQuestionVisibility = (index) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[index] = { ...newQuestions[index], isVisible: !newQuestions[index].isVisible };
+    updateFormData('questions', newQuestions);
+  };
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <form onSubmit={handleSubmit} className="event-details-container">
+        <h2 className="form-title">Fill Event Details</h2>
+
+        <div className="event-details-form">
+          <div className="form-grid">
+            <div>
+              <label>Event Name</label>
+              <input
+                className="event-name"
+                type="text"
+                value={formData.formTitle}
+                onChange={(e) => updateFormData('formTitle', e.target.value)}
+                placeholder="Enter Event Name"
+                required
+              />
+            </div>
+
+            <div>
+              <label>Organiser Name</label>
+              <input
+                className="event-name"
+                type="text"
+                value={formData.org}
+                onChange={(e) => updateFormData('org', e.target.value)}
+                placeholder="Enter Event Name"
+                required
+              />
+            </div>
+
+            <div>
+              <label>Event Date</label>
+              <input
+                className="event-date"
+                type="datetime-local"
+                value={formData.finaldate}
+                onChange={(e) => updateFormData('finaldate', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label>Event Location</label>
+              <input
+                className="event-location"
+                type="text"
+                value={formData.formLocation}
+                onChange={(e) => updateFormData('formLocation', e.target.value)}
+                placeholder="Enter Event Location"
+                required
+              />
+            </div>
+            <div>
+              <label>Registration Fee</label>
+              <input
+                className="event-fee"
+                type="text"
+                value={formData.formFee}
+                onChange={(e) => updateFormData('formFee', e.target.value)}
+                placeholder="Enter Registration Fee"
+                required
+              />
+            </div>
+            <div>
+              <label>Upload Event Photos/Banners</label>
+              <input
+                className="event-location"
+                type="text"
+                id="file-input"
+                value={formData.formImg}
+                onChange={(e) => updateFormData('formImg', e.target.value)}
+                placeholder="Upload Image"
+              />
+            </div>
+            <div>
+              <label>Event Description</label>
+              <textarea
+                className="event-description"
+                value={formData.description}
+                onChange={(e) => updateFormData('description', e.target.value)}
+                placeholder="Enter Event Description"
+                required
+              />
+            </div>
+            <div className="payment-checkboxes">
+              <div>
+                <input
+                  className="cash-payment"
+                  type="checkbox"
+                  checked={formData.cash_payment}
+                  onChange={(e) => updateFormData('cash_payment', e.target.checked)}
+                />
+                <label>Cash Payment Accepted</label>
+              </div>
+              <div>
+                <input
+                  className="female-only"
+                  type="checkbox"
+                  checked={formData.female_only}
+                  onChange={(e) => updateFormData('female_only', e.target.checked)}
+                />
+                <label>Female Only Event</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="registration-fields-section">
+          <h2 className="form-title">Registration Form Fields</h2>
+          <div className="form-builder">
+            <div className="questions-grid">
+              {formData.questions.map((question, index) => (
+                <QuestionCard
+                  key={index}
+                  question={question}
+                  index={index}
+                  totalQuestions={formData.questions.length}
+                  moveCard={moveQuestion}
+                  updateQuestion={updateQuestion}
+                  toggleQuestionVisibility={toggleQuestionVisibility}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? 'Submitting...' : 'Create Event'}
+          </button>
+        </div>
+
+        {error && <div className="error-message">{error}</div>}
+      </form>
+    </DndProvider>
   );
 };
 

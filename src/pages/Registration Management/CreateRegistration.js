@@ -8,8 +8,6 @@ const CreateRegistration = () => {
     <DashboardLayout>
       <div className="dashboard">
         <EventDetailsForm />
-        <RegistrationFields />
-        <button className="confirm-btn">Confirm</button>
       </div>
 
       {/*styled-jsx */}

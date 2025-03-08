@@ -2,180 +2,7 @@ import React, { useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FaPlus, FaTrash, FaArrowUp, FaArrowDown, FaGripVertical } from 'react-icons/fa';
-
-const styles = {
-  container: `
-    .form-builder {
-      padding: 2rem;
-      max-width: 2400px;
-      margin: 1rem auto;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-    }
-
-    .title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #000;
-      font-family: 'Poppins', sans-serif;
-      margin-top: 20px;
-    }
-
-    .add-button {
-      background: #028248;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .add-button:hover {
-      background:rgb(59, 177, 124);
-    }
-
-    .questions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .question-card {
-      background: white;
-      border: 1px solid #e1e1e1;
-      border-radius: 8px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      transition: box-shadow 0.3s ease, opacity 0.2s ease;
-      height: fit-content;
-    }
-
-    .question-card:hover {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    .question-header {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-      width: 100%;
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #dcdde1;
-      border-radius: 4px;
-      font-size: 14px;
-      transition: border-color 0.3s ease;
-    }
-
-    .input-field:focus {
-      border-color: #028248;
-      outline: none;
-    }
-
-    .select-field {
-      padding: 10px;
-      border: 1px solid #dcdde1;
-      border-radius: 4px;
-      background: white;
-      width: 100%;
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 1rem 0;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-
-    .options-container {
-      margin-left: 0;
-      margin-top: 0.75rem;
-    }
-
-    .option-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .action-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 1rem;
-    }
-
-    .icon-button {
-      background: none;
-      border: none;
-      padding: 6px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .icon-button:hover {
-      background: #f5f6fa;
-    }
-
-    .icon-button.delete:hover {
-      color: #e74c3c;
-    }
-
-    .add-option-button {
-      background: none;
-      border: none;
-      color: #028248;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 12px;
-      border-radius: 4px;
-      transition: background 0.3s ease;
-    }
-
-    .add-option-button:hover {
-      background: #f5f6fa;
-    }
-
-    @media (max-width: 768px) {
-      .questions-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  `
-};
+import '../../assets/registrationfield.css';
 
 const QuestionCard = ({ question, index, moveCard, totalQuestions, ...props }) => {
   const [{ isDragging }, drag] = useDrag({
@@ -213,7 +40,6 @@ const QuestionCard = ({ question, index, moveCard, totalQuestions, ...props }) =
       style={{ cursor: 'move' }}
     >
       <div className="flex items-center gap-2 mb-4">
-        {/* <FaGripVertical className="text-gray-400" /> */}
         <div className="flex-1">
           <div className="question-header">
             <input
@@ -300,6 +126,7 @@ const QuestionCard = ({ question, index, moveCard, totalQuestions, ...props }) =
           <FaTrash size={14} />
         </button>
       </div>
+      
     </div>
   );
 };
@@ -313,7 +140,6 @@ const RegistrationFields = () => {
     { value: 'radio', label: 'Radio Buttons' },
     { value: 'dropdown', label: 'Dropdown' },
     { value: 'image', label: 'Image Upload' }
-
   ];
 
   const moveCard = (fromIndex, toIndex) => {
@@ -372,7 +198,6 @@ const RegistrationFields = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <style>{styles.container}</style>
       <h1 className="title">Form Builder</h1>
       <div className="form-builder">
         <div className="header">

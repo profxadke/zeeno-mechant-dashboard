@@ -1,71 +1,163 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
+import { useToken } from "../../context/TokenContext";
 
 const RegistrationSalesChart = () => {
+  const [registrationData, setRegistrationData] = useState([]);
+  const [paymentData, setPaymentData] = useState([]); // Updated to store payment amounts by type
+  const [eventId, setEventId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { token } = useToken();
+
+  // Fetch eventId from the URL
+  useEffect(() => {
+    const pathSegments = window.location.pathname.split("/");
+    const id = pathSegments[pathSegments.length - 1];
+
+    if (id && !isNaN(id)) {
+      setEventId(Number(id));
+      setError(null);
+    } else {
+      setError("Invalid eventId in URL");
+    }
+  }, []);
+
+  // Fetch registration data from API
+  const fetchRegistrationData = async () => {
+    if (!eventId) return;
+
+    try {
+      const response = await fetch(
+        `https://auth.zeenopay.com/events/form/responses/${eventId}/`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("Registration API Response:", data);
+
+      // Filter data for matching form ID
+      const filteredData = data.filter((item) => item.form === eventId);
+
+      setRegistrationData(filteredData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching registration data:", error);
+      setError("Failed to fetch registration data");
+      setLoading(false);
+    }
+  };
+
+  // Fetch payment data from API and filter for intent="V"
+  const fetchPaymentData = async () => {
+    try {
+      const response = await fetch("https://auth.zeenopay.com/payments/intents/", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("Payment API Response:", data);
+
+      // Filter payments with intent="V"
+      const filteredPayments = data.filter((payment) => payment.intent === "F");
+
+      // Calculate total amount by payment method
+      const paymentAmounts = {};
+      filteredPayments.forEach((payment) => {
+        const method = payment.payment_method;
+        const amount = parseFloat(payment.amount) || 0;
+        paymentAmounts[method] = (paymentAmounts[method] || 0) + amount;
+      });
+
+      setPaymentData(paymentAmounts);
+    } catch (error) {
+      console.error("Error fetching payment data:", error);
+      setError("Failed to fetch payment data");
+    }
+  };
+
+  useEffect(() => {
+    if (eventId) {
+      fetchRegistrationData();
+    }
+    fetchPaymentData();
+  }, [eventId]);
+
+  // Process registration data for bar chart
+  const processRegistrationData = () => {
+    const registrationCounts = {};
+
+    registrationData.forEach((item) => {
+      const date = new Date(item.created_at).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+      });
+
+      registrationCounts[date] = (registrationCounts[date] || 0) + 1;
+    });
+
+    return Object.keys(registrationCounts)
+      .map((date) => ({ date, count: registrationCounts[date] }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  };
+
+  const registrationCounts = processRegistrationData();
+
+  // Bar chart options
   const barOptions = {
-    chart: {
-      type: "bar",
-      height: 350,
-      toolbar: { show: false },
-    },
-    plotOptions: {
-      bar: {
-        columnWidth: "50%",
-      },
-    },
+    chart: { type: "bar", height: 350, toolbar: { show: false } },
+    plotOptions: { bar: { columnWidth: "50%" } },
     dataLabels: { enabled: false },
-    xaxis: {
-      categories: [
-        "Jan 1",
-        "Jan 2",
-        "Jan 3",
-        "Jan 4",
-        "Jan 5",
-        "Jan 6",
-        "Jan 7",
-        "Jan 8",
-        "Jan 9",
-        "Jan 10",
-      ],
-    },
+    xaxis: { categories: registrationCounts.map((item) => item.date) },
+    yaxis: { labels: { formatter: (value) => Math.floor(value) } },
     colors: ["#028248"],
   };
 
   const barSeries = [
     {
       name: "Registrations",
-      data: [10, 20, 40, 10, 10, 20, 15, 10, 35, 40],
+      data: registrationCounts.map((item) => Math.floor(item.count)),
     },
   ];
 
+  // Process payment data for pie chart
+  const paymentMethods = Object.keys(paymentData);
+  const pieSeries = paymentMethods.map((method) => paymentData[method]);
+
+  // Pie chart options
   const pieOptions = {
-    chart: {
-      type: "pie",
-      height: 350,
-    },
-    labels: ["Esewa", "Khalti", "ImePay", "Bank Transfer", "Connect IPS"],
+    chart: { type: "pie", height: 350 },
+    labels: paymentMethods,
     colors: ["#028248", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"],
     legend: { position: "bottom" },
+    dataLabels: { formatter: (value) => `Rs. ${Math.floor(value)}` },
   };
 
-  const pieSeries = [10, 20, 30, 15, 25];
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  const [registrationDateRange, setRegistrationDateRange] = useState("1 Jan - 10 Jan");
-  const [salesDateRange, setSalesDateRange] = useState("1 Jan - 10 Jan");
-
-  const dateRanges = [
-    { label: "1 Jan - 10 Jan", value: "1 Jan - 10 Jan" },
-    { label: "11 Jan - 20 Jan", value: "11 Jan - 20 Jan" },
-    { label: "21 Jan - 30 Jan", value: "21 Jan - 30 Jan" },
-  ];
-
-  const handleRegistrationDateChange = (event) => {
-    setRegistrationDateRange(event.target.value);
-  };
-
-  const handleSalesDateChange = (event) => {
-    setSalesDateRange(event.target.value);
-  };
+  if (error) {
+    return <div style={{ color: "red" }}>{error}</div>;
+  }
 
   return (
     <div className="chart-container">
@@ -77,62 +169,17 @@ const RegistrationSalesChart = () => {
       <div className="charts">
         {/* Registration Report */}
         <div className="registration-chart">
-          <div className="chart-header">
-            <h3>Registration Report</h3>
-            <div className="dropdown">
-              <button className="filter-btn">
-                Select Date Range: {registrationDateRange}
-              </button>
-              <div className="dropdown-content">
-                {dateRanges.map((range) => (
-                  <button
-                    key={range.value}
-                    value={range.value}
-                    onClick={handleRegistrationDateChange}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <Chart
-            options={barOptions}
-            series={barSeries}
-            type="bar"
-            height={350}
-          />
+          <h3 className="regis">Registration Report</h3>
+          <Chart options={barOptions} series={barSeries} type="bar" height={350} />
         </div>
 
         {/* Sales Report */}
         <div className="sales-report">
-          <div className="chart-header">
-            <h3>Sales Report</h3>
-            <div className="dropdown">
-              <button className="filter-btn">
-                Select Date Range: {salesDateRange}
-              </button>
-              <div className="dropdown-content">
-                {dateRanges.map((range) => (
-                  <button
-                    key={range.value}
-                    value={range.value}
-                    onClick={handleSalesDateChange}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <Chart
-            options={pieOptions}
-            series={pieSeries}
-            type="pie"
-            height={350}
-          />
+          <h3 className="regis">Sales Report</h3>
+          <Chart options={pieOptions} series={pieSeries} type="pie" height={350} />
           <div className="total-sales">
-            Rs. 35,000 <span>+18.5%</span>
+            Rs. {Math.floor(pieSeries.reduce((sum, amount) => sum + amount, 0))}{" "}
+            {/* <span>+18.5%</span> */}
           </div>
         </div>
       </div>
@@ -143,6 +190,7 @@ const RegistrationSalesChart = () => {
           flex-direction: column;
           align-items: flex-start;
           width: 100%;
+          border-radius: 8px;
         }
 
         .header {
@@ -155,6 +203,13 @@ const RegistrationSalesChart = () => {
 
         .header h2 {
           margin: 0;
+          font-size: 24px;
+          color: #333;
+        }
+
+        .regis{
+          padding: 10px;
+          font-size: 14px;
         }
 
         .export-btn {
@@ -164,10 +219,11 @@ const RegistrationSalesChart = () => {
           border: none;
           border-radius: 4px;
           cursor: pointer;
+          font-size: 14px;
         }
 
         .export-btn:hover {
-          background-color: #0056b3;
+          background-color: #026c3d;
         }
 
         .charts {
@@ -180,71 +236,21 @@ const RegistrationSalesChart = () => {
         .registration-chart,
         .sales-report {
           background-color: white;
-          padding: 20px;
+          padding: 0px;
           border-radius: 8px;
           width: 48%;
           box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        .chart-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .dropdown {
-          position: relative;
-          display: inline-block;
-        }
-
-        .filter-btn {
-          background-color: #fff;
-          color: #000;
-          border: 1px solid #ddd;
-          padding: 8px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        
-        .dropdown-content {
-          display: none;
-          position: absolute;
-          background-color: #f9f9f9;
-          min-width: 160px;
-          box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-          z-index: 1;
-        }
-
-        .dropdown:hover .dropdown-content {
-          display: block;
-        }
-
-        .dropdown-content button {
-          color: black;
-          padding: 12px 16px;
-          text-decoration: none;
-          display: block;
-          width: 100%;
-          border: none;
-          background-color: #fff;
-          cursor: pointer;
-        }
-
-        .dropdown-content button:hover {
-          background-color: #ddd;
-        }
-
         .total-sales {
-          text-align: center;
+          margin-top: 10px;
           font-size: 18px;
-          margin-top: 20px;
-        }
-
-        .total-sales span {
-          color: green;
           font-weight: bold;
+          color: #028248;
+          text-align: center;
         }
 
+        /* Mobile Responsive Styles */
         @media (max-width: 768px) {
           .charts {
             flex-direction: column;
@@ -253,51 +259,16 @@ const RegistrationSalesChart = () => {
           .registration-chart,
           .sales-report {
             width: 100%;
-            margin-bottom: 20px;
           }
 
-          .filter-btn {
-            font-size: 14px;
-            padding: 8px;
-          }
-          
-          .total-sales {
-            font-size: 16px;
-          }
-
-           .header {
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 50px;
-          }
-
-          .export-button {
-            width: auto;
-            text-align: center;
-          }
-        }
-
-        @media (max-width: 480px) {
           .header h2 {
-            font-size: 18px;
+            font-size: 20px;
+          
           }
 
           .export-btn {
             padding: 6px 12px;
-          }
-
-          .filter-btn {
             font-size: 12px;
-            padding: 6px 10px;
-          }
-
-          .dropdown-content button {
-            padding: 10px;
-          }
-
-          .total-sales {
-            font-size: 14px;
           }
         }
       `}</style>

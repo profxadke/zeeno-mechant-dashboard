@@ -1,0 +1,181 @@
+.dashboard-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Calendar Section */
+.calendar-section {
+  flex: 1;
+  max-width: 400px;
+  min-width: 300px;
+}
+
+.calendar-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+/* Ongoing Events Section */
+.ongoing-events-section {
+  flex: 2;
+  max-width: 800px;
+  min-width: 300px;
+}
+
+.ongoing-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Individual Event Card */
+.ongoing-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ongoing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Event Image */
+.events-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+/* Event Details */
+.event-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-details h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.event-details .category {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* View Event Button */
+.view-event-button {
+  background: #028248;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.view-event-button:hover {
+  background: #026c3d;
+}
+
+.arrow {
+  font-size: 16px;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.pagination-controls button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+  color: #028248;
+}
+
+.pagination-controls button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .calendar-section,
+  .ongoing-events-section {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-section {
+    display: none; /* Hide the calendar on mobile */
+  }
+
+  .ongoing-card {
+    flex-direction: row; /* Ensure the card layout remains the same as desktop */
+    align-items: center;
+    gap: 20px;
+  }
+
+  .events-image {
+    width: 80px; /* Maintain the image size */
+    height: 80px;
+  }
+
+  .view-event-button {
+    width: auto; /* Reset the button width */
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 10px;
+  }
+
+  .calendar-container,
+  .ongoing-card {
+    padding: 15px;
+  }
+
+  .event-details h3 {
+    font-size: 18px;
+  }
+
+  .event-details .category {
+    font-size: 13px;
+  }
+
+  .view-event-button {
+    padding: 8px 15px;
+    font-size: 13px;
+  }
+}

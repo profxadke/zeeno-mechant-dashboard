@@ -1,101 +1,59 @@
-import React, { useState, useEffect } from "react";
-import { useToken } from '../../context/TokenContext';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const CardComponent = () => {
-  const [data, setData] = useState([]);
-  const [eventId, setFormId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const { token } = useToken();
-
-  useEffect(() => {
-    const pathSegments = window.location.pathname.split("/");
-    const id = pathSegments[pathSegments.length - 1]; 
-    setFormId(id);
-  }, []);
+const DashboardCard = () => {
+  const [data, setData] = useState({
+    totalEvents: 0,
+    completedEvents: 0,
+    ongoingEvents: 0,
+    registrationEvents: 0,
+    votingEvents: 0,
+    ticketingEvents: 0,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        if (!eventId) {
-          throw new Error("Form ID is required");
-        }
-  
-        const response = await fetch(
-          `https://auth.zeenopay.com/events/form/responses/${eventId}/`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-  
-        if (!response.ok) {
-          throw new Error(`Network error: ${response.statusText}`);
-        }
-  
-        const apiData = await response.json();
-        console.log("apiData: ", apiData);
-  
-        // Convert eventId to a number for comparison
-        const eventIdNumber = Number(eventId);
-  
-        // Filter data based on matching form ID
-        const filteredData = apiData.filter(item => item.form === eventIdNumber);
-  
-        const transformedData = filteredData.map(item => ({
-          ...item,
-          createdAt: item.created_at,
-          payment: item.payment,
-        }));
-  
-        setData(transformedData);
-        setError(null);
+        const [registrationRes, votingRes, ticketingRes] = await Promise.all([
+          axios.get("https://auth.zeenopay.com/events/forms/"),
+          axios.get("https://auth.zeenopay.com/events"),
+          axios.get("https://auth.zeenopay.com/events/ticket-categories/"),
+        ]);
+
+        const registrationEvents = registrationRes.data.length;
+        const votingEvents = votingRes.data.length;
+        const ticketingEvents = ticketingRes.data.length;
+        const totalEvents = registrationEvents + votingEvents + ticketingEvents;
+
+        const completedEvents = votingRes.data.filter(
+          (event) => event.status === "completed"
+        ).length;
+
+        const ongoingEvents = totalEvents - completedEvents;
+
+        setData({
+          totalEvents,
+          completedEvents,
+          ongoingEvents,
+          registrationEvents,
+          votingEvents,
+          ticketingEvents,
+        });
       } catch (error) {
         console.error("Error fetching data:", error);
-        setError(error.message);
-        setData([]);
-      } finally {
-        setLoading(false);
       }
     };
-  
+
     fetchData();
-  }, [eventId, token]);
-  
-
-  // Calculate metrics
-  const totalRegistrations = data.length;
-  const registrationsToday = data.filter(item => {
-    const today = new Date().toISOString().split('T')[0];
-    return item.createdAt.split('T')[0] === today;
-  }).length;
-  const pendingPayments = data.filter(item => item.payment === null).length;
-
-  console.log("totalRegistrations:", totalRegistrations, "registrationsToday:", registrationsToday, "pendingPayments:", pendingPayments);
+  }, []);
 
   const cards = [
-    {
-      image: "https://i.ibb.co/r2cKTTHW/IMG-2040.png",
-      title: "Total Registrations",
-      value: totalRegistrations,
-      subtextColor: "green",
-    },
-    {
-      image: "https://i.ibb.co/XxQCCJmn/IMG-2039.png",
-      title: "Registrations Today",
-      value: registrationsToday,
-      subtextColor: "red",
-    },
-    {
-      image: "https://i.ibb.co/qQ15RmJ/IMG-2041.png",
-      title: "Pending Payments",
-      value: pendingPayments,
-      subtextColor: "red",
-    },
+    { image: "https://i.ibb.co/gFcnBhR0/IMG-2035.png", title: "Total Event Organized", value: data.totalEvents },
+    { image: "https://i.ibb.co/WNMZ72j7/IMG-2037.png", title: "Completed Events", value: data.completedEvents },
+    { image: "https://i.ibb.co/bjhM75JQ/IMG-2038.png", title: "Ongoing Event", value: data.ongoingEvents },
+    { image: "https://i.ibb.co/Zz89ZtHD/IMG-2044.png", title: "Total Registration Events", value: data.registrationEvents },
+    { image: "https://i.ibb.co/NdrtMFcC/IMG-2034.png", title: "Total Voting Events", value: data.votingEvents },
+    { image: "https://i.ibb.co/6JDmR2q4/IMG-2036.png", title: "Total Ticketing Events", value: data.ticketingEvents },
   ];
 
   return (
@@ -120,7 +78,7 @@ const CardComponent = () => {
           display: flex;
           flex-wrap: wrap;
           gap: 20px;
-          justify-content: flex-start;
+          justify-content: flex-start; /* Align cards to the start */
           margin: 0px 0;
           animation: fadeIn 0.6s ease-in-out;
         }
@@ -137,7 +95,7 @@ const CardComponent = () => {
           flex-direction: column;
           justify-content: space-between;
           width: 100%;
-          max-width: 310px;
+          max-width: 320px; /* Default max-width for desktop */
           padding: 20px;
           border: 1px solid #e5e5e5;
           border-radius: 8px;
@@ -169,8 +127,8 @@ const CardComponent = () => {
         }
 
         .icon-img {
-          width: 30px;
-          height: 30px;
+          width: 40px;
+          height: 40px;
         }
 
         .card-content {
@@ -206,12 +164,12 @@ const CardComponent = () => {
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
           .cards-container {
-            justify-content: space-between;
+            justify-content: space-between; 
           }
           .card {
-            flex: 1 1 calc(40% - 10px);
+            flex: 1 1 calc(50% - 10px); 
             max-width: calc(40% - 10px);
-            padding: 15px;
+            padding: 15px; 
           }
           .card-title { font-size: 12px; }
           .card-value { font-size: 20px; }
@@ -219,20 +177,21 @@ const CardComponent = () => {
 
         @media (max-width: 480px) {
           .card {
-            flex: 1 1 calc(40% - 10px);
-            max-width: calc(40% - 10px);
+            flex: 1 1 calc(40% - 10px); 
+            max-width: calc(50% - 10px);
+            // padding: 10px; 
           }
           .card-row {
             flex-direction: column;
             align-items: flex-start;
           }
-          .card-icon {
-            margin-bottom: 10px;
-            width: 40px;
+          .card-icon { 
+            margin-bottom: 10px; 
+            width: 40px; 
             height: 40px;
           }
           .icon-img {
-            width: 20px;
+            width: 20px; 
             height: 20px;
           }
           .card-content { align-items: flex-start; }
@@ -242,4 +201,4 @@ const CardComponent = () => {
   );
 };
 
-export default CardComponent;
+export default DashboardCard;

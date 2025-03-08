@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const TokenContext = createContext();
 
@@ -10,6 +11,18 @@ export const TokenProvider = ({ children }) => {
     console.log("Initial token from sessionStorage:", storedToken);
     return storedToken || null;
   });
+
+  const navigate = useNavigate(); 
+
+  const isTokenExpired = (token) => {
+    if (!token) return true;
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expirationTime = payload.exp * 1000; 
+    const currentTime = Date.now();
+
+    return currentTime > expirationTime;
+  };
 
   // Update token and store in sessionStorage
   const updateToken = (newToken) => {
@@ -28,11 +41,20 @@ export const TokenProvider = ({ children }) => {
     console.log("Logging out, clearing sessionStorage.");
     setToken(null);
     sessionStorage.removeItem("access_token");
-    sessionStorage.removeItem("username"); // Remove additional user-related session data if applicable
+    sessionStorage.removeItem("username");
+    navigate("/login"); 
   };
 
+  // Effect to check token expiry on component mount and token change
+  useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      console.log("Token expired, logging out...");
+      logoutUser();
+    }
+  }, [token]);
+
   return (
-    <TokenContext.Provider value={{ token, updateToken, logoutUser }}>
+    <TokenContext.Provider value={{ token, updateToken, logoutUser, isTokenExpired }}>
       {children}
     </TokenContext.Provider>
   );

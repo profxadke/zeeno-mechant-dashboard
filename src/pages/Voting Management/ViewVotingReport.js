@@ -124,7 +124,7 @@ const ViewReport = () => {
             style={styles.cardLink}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
+           >
             <div style={styles.card}>
               <div style={styles.imageWrapper}>
                 {event.img ? (

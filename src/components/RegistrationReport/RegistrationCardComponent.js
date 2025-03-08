@@ -1,26 +1,148 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useToken } from "../../context/TokenContext";
 
 const RegistrationCardComponent = () => {
+  const [averageAge, setAverageAge] = useState(0);
+  const [ageDistributionData, setAgeDistributionData] = useState([]);
+  const [feesCollected, setFeesCollected] = useState(0);
+  const [feesCollectedToday, setFeesCollectedToday] = useState(0);
+  const [error, setError] = useState(null);
+  const [eventId, setEventId] = useState(null);
+  const { token } = useToken();
+
+  useEffect(() => {
+    const pathSegments = window.location.pathname.split("/");
+    const id = pathSegments[pathSegments.length - 1];
+
+    if (id && !isNaN(id)) {
+      setEventId(Number(id));
+      setError(null);
+    } else {
+      setError("Invalid eventId in URL");
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!eventId) return;
+
+      try {
+        const response = await fetch(
+          `https://auth.zeenopay.com/events/form/responses/${eventId}/`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          const filteredData = data.filter((item) => item.form === eventId);
+
+          const ageCounts = {};
+          let totalAge = 0;
+          let totalParticipants = 0;
+
+          filteredData.forEach((participant) => {
+            const responseData = participant.response;
+            const age = Math.floor(parseFloat(responseData.additionalProp6));
+
+            if (!isNaN(age)) {
+              ageCounts[age] = (ageCounts[age] || 0) + 1;
+              totalAge += age;
+              totalParticipants++;
+            }
+          });
+
+          const ageArray = Object.keys(ageCounts).map((age) => ({
+            age: parseInt(age),
+            count: ageCounts[age],
+          }));
+
+          ageArray.sort((a, b) => a.age - b.age);
+          setAgeDistributionData(ageArray);
+
+          if (totalParticipants > 0) {
+            const avgAge = Math.floor(totalAge / totalParticipants);
+            setAverageAge(avgAge);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching participant data:", error);
+        setError("Failed to fetch participant data");
+      }
+    };
+
+    fetchData();
+  }, [eventId]);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const response = await fetch("https://auth.zeenopay.com/payments/intents/", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        const today = new Date().toISOString().split('T')[0];
+
+        const todayPayments = data.filter((item) => {
+          const updatedDate = new Date(item.updated_at).toISOString().split('T')[0];
+          return item.intent === "F" && updatedDate === today;
+        });
+
+        const totalFeesToday = todayPayments.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+        setFeesCollectedToday(totalFeesToday.toFixed(2));
+
+        const totalFees = data
+          .filter((item) => item.intent === "F")
+          .reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+        setFeesCollected(totalFees.toFixed(2));
+      } catch (error) {
+        console.error("Error fetching payment data:", error);
+        setError("Failed to fetch payment data");
+      }
+    };
+
+    fetchPayments();
+  }, []);
+
   const cards = [
     {
-      icon: "💰", 
-      title: "Fees Collected",
-      value: "Rs. 35000",
-      subtext: "28.5% Up from last week",
+      image: "https://i.ibb.co/1G76zF91/IMG-2042.png",
+      title: "Total Fees Collected",
+      value: `Rs. ${feesCollected}`,
       subtextColor: "green",
     },
     {
-      icon: "💸", 
-      title: "Refunds",
-      value: "Rs. 2000",
-      subtext: "7 Down from yesterday",
+      image: "https://i.ibb.co/m5tv29nV/IMG-2043.png",
+      title: "Fees Collected Today",
+      value: `Rs. ${feesCollectedToday}`,
       subtextColor: "red",
     },
     {
-      icon: "🔔", 
-      title: "Notification Insights",
-      value: "500",
-      subtext: "80% Open Rate | 60% Response Rate",
+      image: "https://i.ibb.co/j9zFzftJ/IMG-2044.png",
+      title: "Average Age",
+      value: averageAge.toString(),
       subtextColor: "green",
     },
   ];
@@ -30,39 +152,42 @@ const RegistrationCardComponent = () => {
       {cards.map((card, index) => (
         <div key={index} className="card">
           <div className="card-row">
-            <div className="card-icon">{card.icon}</div>
+            <div className="card-icon">
+              <img src={card.image} alt={card.title} className="icon-img" />
+            </div>
             <div className="card-content">
               <h4 className="card-title">{card.title}</h4>
               <h2 className="card-value">{card.value}</h2>
             </div>
           </div>
-          <p
-            className={`card-subtext ${card.subtextColor === "green" ? "green" : "red"}`}
-          >
-            {card.subtext}
-          </p>
         </div>
       ))}
       <hr className="horizontal-line" />
-      
+
       <style>{`
-        /* Container for all cards */
         .cards-container {
           display: flex;
           flex-wrap: wrap;
           gap: 20px;
-          justify-content: space-between;
+          justify-content: flex-start;
           margin: 0px 0;
           animation: fadeIn 0.6s ease-in-out;
         }
 
-        /* Individual card styles */
+        .horizontal-line {
+          width: 100%;
+          border: 0;
+          border-top: 2px solid #f4f4f4;
+          margin-top: 10px;
+          margin-bottom: 20px;
+        }
+
         .card {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           width: 100%;
-          max-width: 350px;
+          max-width: 310px;
           padding: 20px;
           border: 1px solid #e5e5e5;
           border-radius: 8px;
@@ -73,18 +198,15 @@ const RegistrationCardComponent = () => {
           animation: cardAppear 0.6s ease-in-out forwards;
         }
 
-        /* Hover effect for card */
         .card:hover {
           transform: translateY(-5px);
         }
 
-        /* Card row: Icon and content side by side */
         .card-row {
           display: flex;
           align-items: center;
         }
 
-        /* Icon styles */
         .card-icon {
           display: flex;
           justify-content: center;
@@ -93,11 +215,14 @@ const RegistrationCardComponent = () => {
           height: 48px;
           border-radius: 50%;
           background-color: #f0f4ff;
-          font-size: 24px;
           margin-right: 15px;
         }
 
-        /* Card content (title and value) */
+        .icon-img {
+          width: 30px;
+          height: 30px;
+        }
+
         .card-content {
           display: flex;
           flex-direction: column;
@@ -105,7 +230,6 @@ const RegistrationCardComponent = () => {
           gap: 5px;
         }
 
-        /* Card title */
         .card-title {
           font-size: 16px;
           font-weight: 600;
@@ -113,97 +237,55 @@ const RegistrationCardComponent = () => {
           margin: 0;
         }
 
-        /* Card value (large number) */
         .card-value {
-          font-size: 36px;
+          font-size: 30px;
           font-weight: 700;
           margin: 0;
         }
 
-        /* Subtext styles */
-        .card-subtext {
-          font-size: 14px;
-          margin-top: 10px;
-        }
-
-        /* Green and red colors for subtext */
-        .card-subtext.green {
-          color: #28a745;
-        }
-
-        .card-subtext.red {
-          color: #dc3545;
-        }
-
-        /* Horizontal line styling */
-        .horizontal-line {
-          width: 100%;
-          border: 0;
-          border-top: 2px solid #f4f4f4;
-          margin-top: 10px;
-          margin-bottom: 30px;
-        }
-
-        /* Fade-in animation */
         @keyframes fadeIn {
-          0% {
-            opacity: 0;
-          }
-          100% {
-            opacity: 1;
-          }
+          0% { opacity: 0; }
+          100% { opacity: 1; }
         }
 
-        /* Card appearance animation */
         @keyframes cardAppear {
-          0% {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          100% {
-            transform: translateY(0);
-            opacity: 1;
-          }
+          0% { transform: translateY(20px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
         }
 
-        /* Responsive styles */
+        /* Mobile Responsive Styles */
         @media (max-width: 768px) {
           .cards-container {
-            justify-content: center;
+            justify-content: space-between;
           }
-
-          /* Adjust card width for tablets and mobile */
           .card {
-            max-width: 100%;
-            width: 100%;
+            flex: 1 1 calc(40% - 10px);
+            max-width: calc(40% - 10px);
+            padding: 15px;
           }
-
-          .card-title {
-            font-size: 14px;
-          }
-
-          .card-value {
-            font-size: 30px;
-          }
-
-          .card-subtext {
-            font-size: 12px;
-          }
+          .card-title { font-size: 12px; }
+          .card-value { font-size: 20px; }
         }
 
         @media (max-width: 480px) {
+          .card {
+            flex: 1 1 calc(40% - 10px);
+            max-width: calc(40% - 10px);
+          }
           .card-row {
             flex-direction: column;
             align-items: flex-start;
           }
-
           .card-icon {
             margin-bottom: 10px;
+            width: 40px;
+            height: 40px;
           }
-
-          .card-content {
-            align-items: flex-start;
+          .icon-img {
+            width: 20px;
+            height: 20px;
           }
+          .card-content { align-items: flex-start; }
         }
       `}</style>
     </div>

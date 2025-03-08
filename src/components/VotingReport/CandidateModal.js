@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../../assets/modal.css";
+import { useToken } from '../../context/TokenContext';
 
 const CandidateModel = ({
   visible,
@@ -10,10 +11,61 @@ const CandidateModel = ({
   onUpdate,
 }) => {
   const [formData, setFormData] = useState(candidate || {});
+  const [voterDetails, setVoterDetails] = useState([]);
+  const { token } = useToken();
 
   useEffect(() => {
     setFormData(candidate || {});
+    if (candidate && candidate.id) {
+      fetchVoterDetails(candidate.id);
+    }
   }, [candidate]);
+
+  const fetchIntents = async (url) => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching intents from ${url}:`, error);
+      return [];
+    }
+  };
+
+  const fetchVoterDetails = async (contestantId) => {
+    const endpoints = [
+      "https://auth.zeenopay.com/payments/fonepay/intents/",
+      "https://auth.zeenopay.com/payments/esewa/intents/",
+      "https://auth.zeenopay.com/payments/khalti/intents/",
+      "https://auth.zeenopay.com/payments/payu/intents/",
+      "https://auth.zeenopay.com/payments/phonepe/intents/",
+      "https://auth.zeenopay.com/payments/prabhupay/intents/",
+      "https://auth.zeenopay.com/payments/stripe/intents/",
+    ];
+
+    try {
+      const allIntents = await Promise.all(endpoints.map(fetchIntents));
+      const flattenedIntents = allIntents.flat();
+
+      const matchedIntents = flattenedIntents.filter(
+        (intent) => intent.intent_id === contestantId && intent.intent === "V"
+      );
+
+      const voterDetails = matchedIntents.map((intent) => ({
+        name: intent.name,
+        phone_no: intent.phone_no,
+        email: intent.email,
+        votes: intent.amount / 10,
+      }));
+
+      setVoterDetails(voterDetails);
+    } catch (error) {
+      console.error("Error fetching voter details:", error);
+    }
+  };
 
   if (!visible) return null;
 
@@ -134,22 +186,24 @@ const CandidateModel = ({
                 <thead>
                   <tr>
                     <th>Voter Name</th>
+                    <th>Phone No</th>
+                    <th>Email</th> 
                     <th>Votes</th>
-                    <th>Payment Mode</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {candidate.voters && candidate.voters.length > 0 ? (
-                    candidate.voters.map((voter, index) => (
+                  {voterDetails.length > 0 ? (
+                    voterDetails.map((voter, index) => (
                       <tr key={index}>
                         <td>{voter.name}</td>
+                        <td>{voter.phone_no}</td>
+                        <td>{voter.email}</td>
                         <td>{voter.votes}</td>
-                        <td>{voter.paymentMode}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" style={{ textAlign: "center" }}>
+                      <td colSpan="4" style={{ textAlign: "center" }}>
                         No voters available.
                       </td>
                     </tr>

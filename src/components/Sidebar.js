@@ -62,6 +62,12 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
       section: "Ticket Management",
       path: "/view-ticket-report",
     },
+    {
+      title: "Customize Website",
+      icon: <FaRegFileAlt />,
+      section: "CMS",
+      path: "/view-ticket-report",
+    },
   ];
 
   return (
