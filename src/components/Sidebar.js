@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaChartBar, FaRegClipboard, FaRegFileAlt, FaCogs, FaVoteYea, FaTicketAlt, FaCalendarPlus } from "react-icons/fa";
 import "../assets/sidebar.css";
 
 const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
   const location = useLocation();
+  const sidebarRef = useRef(null); // Ref for the sidebar
 
   const menuItems = [
     { title: "Dashboard", icon: <FaChartBar />, section: "Home", path: "/" },
@@ -70,8 +71,28 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
     },
   ];
 
+  // Handle click outside the sidebar to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        if (open) {
+          toggleSidebar(); // Close the sidebar if it's open
+        }
+      }
+    };
+
+    // Add event listener for clicks outside the sidebar
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup the event listener
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open, toggleSidebar]);
+
   return (
     <div
+      ref={sidebarRef} // Attach the ref to the sidebar
       className={`sidebar ${collapsed ? "collapsed" : ""} ${open ? "open" : ""}`}
     >
       <div className="sidebar-header">

@@ -15,7 +15,6 @@ const Navbar = ({ toggleSidebar }) => {
   const location = useLocation();
   const { updateToken } = useToken();
   const navigate = useNavigate();
-
   const pageTitleMap = {
     "/": "Dashboard Analytics",
     "/kyc-verification": "KYC Verification",
@@ -31,7 +30,6 @@ const Navbar = ({ toggleSidebar }) => {
     "/view-ticket-report": "View Ticket Report",
     "/event-description": "Voice of Nepal - Season 6",
   };
-
   const pageTitle = pageTitleMap[location.pathname] || "Dashboard";
 
   useEffect(() => {
@@ -43,8 +41,22 @@ const Navbar = ({ toggleSidebar }) => {
         setUsername("Guest");
       }
     };
-
     fetchUsername();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const navbar = document.querySelector('.navbar');
+      if (window.scrollY > 50) { 
+        navbar.classList.add('sticky');
+      } else {
+        navbar.classList.remove('sticky');
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const toggleDropdown = () => {
@@ -60,7 +72,6 @@ const Navbar = ({ toggleSidebar }) => {
     updateToken(null);
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("username");
-
     toast.success("You have logged out successfully!", {
       position: "top-right",
       autoClose: 5000,
@@ -70,7 +81,6 @@ const Navbar = ({ toggleSidebar }) => {
       draggable: true,
       progress: undefined,
     });
-
     setTimeout(() => {
       navigate("/login");
     }, 2000);
@@ -80,14 +90,13 @@ const Navbar = ({ toggleSidebar }) => {
     <nav className="navbar">
       {/* Image for Mobile View */}
       <div className="navbar-mobile-image">
-        <img
+        {/* <img
           src="https://i.ibb.co/HdffZky/zeenopay-logo-removebg-preview.png"
           alt="Navbar Logo"
           className="mobile-logo"
-        />
-        <span className="merchant-text">|  &nbsp; Merchant</span>
+        /> */}
+        <span className="merchant-text">&nbsp; Merchant Dashboard</span>
       </div>
-
       {/* Left Section */}
       <div className="navbar-left">
         <div
@@ -97,7 +106,6 @@ const Navbar = ({ toggleSidebar }) => {
           {location.pathname === "/view-registration" && events.length === 0
             ? "View Registration"
             : pageTitle}
-
           {location.pathname === "/view-voting-dashboard" && events.length > 0 && (
             <>
               <FaChevronDown />
@@ -112,7 +120,6 @@ const Navbar = ({ toggleSidebar }) => {
           )}
         </div>
       </div>
-
       {/* Right Section (For Desktop and Mobile) */}
       <div className={`navbar-right ${isMobileMenuOpen ? "show" : ""}`}>
         <div className="user-info-container">
@@ -140,7 +147,6 @@ const Navbar = ({ toggleSidebar }) => {
           <FaBars style={{ fontSize: "20px" }} />
         </button>
       </div>
-
       <ToastContainer position="top-right" autoClose={5000} />
       <style jsx>{`
         .navbar {
@@ -150,15 +156,16 @@ const Navbar = ({ toggleSidebar }) => {
           padding: 15px 20px;
           background-color: white;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          position: sticky;
+          top: 0;
+          z-index: 1000; /* Ensure navbar stays on top */
         }
-
         .navbar-left {
           display: flex;
           align-items: center;
           justify-content: space-between;
           width: 100%;
         }
-
         .page-title {
           position: relative;
           font-size: 18px;
@@ -170,13 +177,11 @@ const Navbar = ({ toggleSidebar }) => {
           gap: 5px;
           cursor: pointer;
         }
-
         .page-title:hover .dropdown-menu,
         .page-title.open .dropdown-menu,
         .dropdown-menu:hover {
           display: block;
         }
-
         .dropdown-menu {
           display: none;
           position: absolute;
@@ -190,7 +195,6 @@ const Navbar = ({ toggleSidebar }) => {
           min-width: 200px;
           z-index: 10;
         }
-
         .dropdown-menu li {
           padding: 10px 15px;
           font-size: 14px;
@@ -198,43 +202,36 @@ const Navbar = ({ toggleSidebar }) => {
           cursor: pointer;
           transition: background-color 0.2s;
         }
-
         .dropdown-menu li:hover {
           background-color: #f5f5f5;
           color: #000;
         }
-
         .navbar-right {
           display: flex;
           align-items: center;
           gap: 15px;
         }
-
         .user-info-container {
           display: flex;
           align-items: center;
           gap: 10px;
         }
-
         .user-greeting {
           font-size: 14px;
           color: #555;
           white-space: nowrap;
         }
-
         .user-name {
           font-weight: 600;
           color: #000;
         }
-
         .profile-image {
           width: 40px;
           height: 40px;
           border-radius: 50%;
         }
-
         .hamburger-menu {
-          display: none; 
+          display: none;
           color: #028248;
           background-color: #f0f0f0;
           padding-bottom: 2px;
@@ -243,8 +240,7 @@ const Navbar = ({ toggleSidebar }) => {
           padding-right: 10px;
           border-radius: 50%;
         }
-
-        .notification-container{
+        .notification-container {
           color: #028248;
           background-color: #f0f0f0;
           padding-bottom: 6px;
@@ -253,17 +249,14 @@ const Navbar = ({ toggleSidebar }) => {
           padding-right: 10px;
           border-radius: 50%;
         }
-
         .navbar-mobile-image {
-          display: none; 
+          display: none;
         }
-
         .mobile-logo {
           width: 100px;
           margin: 0 auto;
           display: block;
         }
-
         .logout-button {
           display: flex;
           align-items: center;
@@ -277,35 +270,38 @@ const Navbar = ({ toggleSidebar }) => {
           cursor: pointer;
           transition: background-color 0.3s ease;
         }
-      
         .logout-button:hover {
           background-color: #026437;
         }
-      
         .logout-icon {
           font-size: 16px;
         }
-      
-
         /* Mobile-Responsive Navbar */
         @media (max-width: 768px) {
           .navbar {
-            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
             padding: 10px 15px;
+            flex-direction: column; 
+            align-items: stretch;
           }
-
-          .navbar-left {
-            width: 100%;
+          .navbar-mobile-image {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            justify-content: center;
+           
           }
-
-          .page-title {
+          .merchant-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+          }
+          .navbar-left {
             display: none; 
           }
-
           .navbar-right {
             display: flex;
             justify-content: space-between;
@@ -313,64 +309,28 @@ const Navbar = ({ toggleSidebar }) => {
             width: 100%;
             gap: 10px;
           }
-
-          .notification-container {
-            margin-left: auto;
-          }
-
           .user-info-container {
             display: flex;
             align-items: center;
             gap: 8px;
           }
-
           .profile-image {
             width: 35px;
             height: 35px;
             border-radius: 50%;
           }
-
+          .notification-container {
+            margin-left: auto; 
+          }
           .hamburger-menu {
             display: block; 
           }
-
-          .navbar-mobile-image {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          
-          .mobile-logo {
-            width: 120px;
-          }
-          
-          .merchant-text {
-            font-size: 14px;
-            font-weight: 600;
-            color: #000;
-          }
-
-          /* Sticky Navbar on Mobile */
-          .navbar.sticky {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-
-          .navbar.sticky .navbar-right,
-          .navbar.sticky .user-info-container,
-          .navbar.sticky .hamburger-menu {
-            display: none;
-          }
-
-          .navbar.sticky .navbar-mobile-image {
-            display: flex;
-          }
-
           .logout-button {
-            display: none; /* Hide on mobile */
+            display: none; 
+          }
+       
+          body {
+            padding-top: 90px;
           }
         }
       `}</style>

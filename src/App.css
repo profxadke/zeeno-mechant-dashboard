@@ -1,3 +1,7 @@
 button{
     background: #028248;
 }
+
+*{
+    scroll-behavior: smooth;
+}
