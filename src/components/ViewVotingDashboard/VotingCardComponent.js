@@ -6,67 +6,125 @@ const VotingCardComponent = () => {
   const { token } = useToken();
   const { event_id } = useParams();
   const [totalVotes, setTotalVotes] = useState(null);
+  const [eventData, setEventData] = useState(null);
+  const [topPerformer, setTopPerformer] = useState(null);
 
   const cardSchema = {
     totalVotes: {
-      icon: "📊",
+      image: "https://i.ibb.co/SwHs5b7g/IMG-2417.png", 
       title: "Total Votes",
       value: totalVotes !== null ? ` ${totalVotes}` : "Loading...",
-      subtext: "Votes fetched dynamically",
+      subtext: "Updated Recently",
       subtextColor: totalVotes !== null && totalVotes > 0 ? "green" : "red",
     },
-    uniqueVotes: {
-      icon: "🌟",
-      title: "Unique Votes",
-      value: "-",
-      subtext: "Data will be available soon",
-      subtextColor: "green",
-    },
-    totalRevenue: {
-      icon: "💵",
-      title: "Top Perfomer",
-      value: "-",
-      subtext: "Data will be available soon",
+    topPerformer: {
+      image: "https://i.ibb.co/by04tPM/IMG-2418.png", 
+      title: "Top Performer",
+      value: topPerformer ? topPerformer.name : "Loading...",
+      subtext: topPerformer ? `${topPerformer.votes.toFixed(2)} Votes` : "Data will be available soon",
       subtextColor: "green",
     },
   };
 
   const cards = Object.values(cardSchema);
 
+  
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await fetch(`https://auth.zeenopay.com/events/${event_id}/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch event data');
+        }
+
+        const result = await response.json();
+        setEventData(result);
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+      }
+    };
+
+    fetchEventData();
+  }, [token, event_id]);
+
+  // Fetch payment intents data and calculate total votes
   useEffect(() => {
     const fetchVotes = async () => {
+      if (!eventData) return;
+
       try {
-        const response = await fetch(
-          `https://auth.zeenopay.com/contestants/${event_id}`,
+        // Fetch payment intents
+        const paymentsResponse = await fetch(
+          `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
-            method: "GET",
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (!paymentsResponse.ok) {
+          throw new Error('Failed to fetch payment intents');
         }
 
-        const data = await response.json();
+        const paymentIntents = await paymentsResponse.json();
 
-        const totalVotesCalculated = data.reduce(
-          (sum, contestant) => sum + (contestant.votes || 0),
-          0
+        // Fetch contestants
+        const contestantsResponse = await fetch(
+          `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
+        if (!contestantsResponse.ok) {
+          throw new Error('Failed to fetch contestants');
+        }
+
+        const contestants = await contestantsResponse.json();
+
+        // Calculate total votes and find top performer
+        let totalVotesCalculated = 0;
+        const candidatesWithVotes = contestants.map((contestant) => {
+          let votes = 0;
+
+          // Match misc_kv with intent_id and calculate votes
+          paymentIntents.forEach((intent) => {
+            if (intent.intent_id.toString() === contestant.misc_kv) {
+              votes += parseFloat(intent.amount) / eventData.payment_info;
+            }
+          });
+
+          totalVotesCalculated += votes;
+
+          return {
+            ...contestant,
+            votes,
+          };
+        });
+
+        // Sort candidates by votes and get the top performer
+        const sortedCandidates = candidatesWithVotes.sort((a, b) => b.votes - a.votes);
+        const topPerformer = sortedCandidates[0];
+
         setTotalVotes(totalVotesCalculated);
+        setTopPerformer(topPerformer); // Set the top performer
       } catch (error) {
-        console.error("Error fetching votes:", error);
+        console.error("Error fetching data:", error);
         setTotalVotes("Error");
+        setTopPerformer(null);
       }
     };
 
     fetchVotes();
-  }, [event_id]);
+  }, [event_id, token, eventData]);
 
   return (
     <div className="cards-container">
@@ -77,7 +135,9 @@ const VotingCardComponent = () => {
       {cards.map((card, index) => (
         <div key={index} className="card">
           <div className="card-row">
-            <div className="card-icon">{card.icon}</div>
+            <div className="card-icon">
+              <img src={card.image} alt={card.title} className="icon-img" /> {/* Use image as icon */}
+            </div>
             <div className="card-content">
               <h4 className="card-title">{card.title}</h4>
               <h2 className="card-value">{card.value}</h2>
@@ -98,7 +158,7 @@ const VotingCardComponent = () => {
         .cards-container {
           display: flex;
           flex-wrap: wrap;
-          gap: 20px;
+          gap: 10px; /* Reduced gap between cards */
           justify-content: space-between;
           margin: 0px 0;
           animation: fadeIn 0.6s ease-in-out;
@@ -110,7 +170,7 @@ const VotingCardComponent = () => {
           flex-direction: column;
           justify-content: space-between;
           width: 100%;
-          max-width: 280px;
+          max-width: 400px; /* Increased max-width for desktop */
           padding: 15px;
           border: 1px solid #e5e5e5;
           border-radius: 8px;
@@ -134,12 +194,16 @@ const VotingCardComponent = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          width: 40px;
-          height: 40px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
           background-color: #f0f4ff;
-          font-size: 20px;
-          margin-right: 12px;
+          margin-right: 15px;
+        }
+
+        .icon-img {
+          width: 30px;
+          height: 30px;
         }
 
         .card-content {
@@ -150,14 +214,14 @@ const VotingCardComponent = () => {
         }
 
         .card-title {
-          font-size: 14px;
+          font-size: 16px;
           font-weight: 600;
           color: #4f4f4f;
           margin: 0;
         }
 
         .card-value {
-          font-size: 30px;
+          font-size: 36px;
           font-weight: 700;
           margin: 0;
         }
@@ -202,34 +266,38 @@ const VotingCardComponent = () => {
           }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
           .cards-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            margin-bottom:30px;
+            justify-content: space-between;
           }
-
           .card {
-            max-width: 100%;
-            padding: 10px;
+            flex: 1 1 calc(40% - 10px);
+            max-width: calc(40% - 10px);
+            padding: 15px;
           }
+          .card-title { font-size: 12px; }
+          .card-value { font-size: 20px; }
+        }
 
-          .card-title {
-            font-size: 12px;
+        @media (max-width: 480px) {
+          .card {
+            flex: 1 1 calc(40% - 10px);
+            max-width: calc(40% - 10px);
           }
-
-          .card-value {
-            font-size: 14px;
+          .card-row {
+            flex-direction: column;
+            align-items: flex-start;
           }
-
-          .card-subtext {
-            font-size: 10px;
+          .card-icon {
+            margin-bottom: 10px;
+            width: 40px;
+            height: 40px;
           }
-
-          .horizontal-line {
-            display: none;
+          .icon-img {
+            width: 20px;
+            height: 20px;
           }
+          .card-content { align-items: flex-start; }
         }
       `}</style>
     </div>

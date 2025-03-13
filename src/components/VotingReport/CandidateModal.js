@@ -1,67 +1,74 @@
 import React, { useState, useEffect } from "react";
 import "../../assets/modal.css";
-import { useToken } from '../../context/TokenContext';
+import { useToken } from "../../context/TokenContext";
 
-const CandidateModel = ({
-  visible,
-  onClose,
-  title,
-  candidate,
-  isEditMode,
-  onUpdate,
-}) => {
+const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
   const [voterDetails, setVoterDetails] = useState([]);
   const { token } = useToken();
 
   useEffect(() => {
     setFormData(candidate || {});
-    if (candidate && candidate.id) {
-      fetchVoterDetails(candidate.id);
+    if (candidate && candidate.misc_kv) {
+      fetchVoterDetails(candidate.misc_kv);
     }
   }, [candidate]);
 
-  const fetchIntents = async (url) => {
+  // Fetch voter details and calculate votes
+  const fetchVoterDetails = async (miscKv) => {
     try {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching intents from ${url}:`, error);
-      return [];
-    }
-  };
-
-  const fetchVoterDetails = async (contestantId) => {
-    const endpoints = [
-      "https://auth.zeenopay.com/payments/fonepay/intents/",
-      "https://auth.zeenopay.com/payments/esewa/intents/",
-      "https://auth.zeenopay.com/payments/khalti/intents/",
-      "https://auth.zeenopay.com/payments/payu/intents/",
-      "https://auth.zeenopay.com/payments/phonepe/intents/",
-      "https://auth.zeenopay.com/payments/prabhupay/intents/",
-      "https://auth.zeenopay.com/payments/stripe/intents/",
-    ];
-
-    try {
-      const allIntents = await Promise.all(endpoints.map(fetchIntents));
-      const flattenedIntents = allIntents.flat();
-
-      const matchedIntents = flattenedIntents.filter(
-        (intent) => intent.intent_id === contestantId && intent.intent === "V"
+      // Fetch payment intents data
+      const paymentsResponse = await fetch(
+        `https://auth.zeenopay.com/payments/intents/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      const voterDetails = matchedIntents.map((intent) => ({
-        name: intent.name,
-        phone_no: intent.phone_no,
-        email: intent.email,
-        votes: intent.amount / 10,
-      }));
+      if (!paymentsResponse.ok) {
+        throw new Error("Failed to fetch payment intents data");
+      }
 
-      setVoterDetails(voterDetails);
+      const paymentIntents = await paymentsResponse.json();
+
+      // Fetch events data
+      const eventsResponse = await fetch(
+        `https://auth.zeenopay.com/events/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!eventsResponse.ok) {
+        throw new Error("Failed to fetch events data");
+      }
+
+      const events = await eventsResponse.json();
+
+      // Filter payment intents by misc_kv and intent type
+      const matchedIntents = paymentIntents.filter(
+        (intent) => String(intent.intent_id) === String(miscKv) && intent.intent === "V"
+      );
+
+      const voterList = matchedIntents.map((intent) => {
+
+        const event = events.find((event) => event.id === intent.event_id);
+
+        const votes = event ? Number(intent.amount) / event.payment_info : 0;
+
+        return {
+          name: intent.name,
+          phone_no: intent.phone_no,
+          email: intent.email,
+          votes: votes,
+        };
+      });
+
+      setVoterDetails(voterList);
     } catch (error) {
       console.error("Error fetching voter details:", error);
     }
@@ -82,18 +89,11 @@ const CandidateModel = ({
   return (
     <div className="modal-overlay">
       <div className="modal-container">
-        {/* Close Button */}
-        <button className="modal-close-btn" onClick={onClose}>
-          &times;
-        </button>
-
-        {/* Modal Title */}
+        <button className="modal-close-btn" onClick={onClose}>&times;</button>
         <h2 className="modal-title">{title}</h2>
 
-        {/* Conditional Content */}
         {isEditMode ? (
           <form onSubmit={handleSubmit} className="edit-form">
-            {/* Candidate Avatar */}
             <div className="form-group">
               <label>Avatar URL:</label>
               <input
@@ -106,7 +106,6 @@ const CandidateModel = ({
               />
             </div>
 
-            {/* Name */}
             <div className="form-group">
               <label>Name:</label>
               <input
@@ -119,7 +118,6 @@ const CandidateModel = ({
               />
             </div>
 
-            {/* Status */}
             <div className="form-group">
               <label>Status:</label>
               <input
@@ -132,7 +130,6 @@ const CandidateModel = ({
               />
             </div>
 
-            {/* Bio */}
             <div className="form-group">
               <label>Bio:</label>
               <textarea
@@ -143,14 +140,10 @@ const CandidateModel = ({
               />
             </div>
 
-            {/* Submit Button */}
-            <button type="submit" className="modal-submit-btn">
-              Save Changes
-            </button>
+            <button type="submit" className="modal-submit-btn">Save Changes</button>
           </form>
         ) : (
           <div className="modal-content">
-            {/* Candidate Information */}
             <div className="candidate-info">
               <div className="candidate-avatar">
                 <img
@@ -159,27 +152,15 @@ const CandidateModel = ({
                   className="candidate-photo"
                 />
               </div>
-
               <div className="candidate-details">
-                <p>
-                  <strong>ID:</strong> {candidate.misc_kv}
-                </p>
-                <p>
-                  <strong>Name:</strong> {candidate.name}
-                </p>
-                <p>
-                  <strong>Status:</strong> {candidate.status}
-                </p>
-                <p>
-                  <strong>Total Votes:</strong> {candidate.votes}
-                </p>
-                <p>
-                  <strong>Bio:</strong> {candidate.bio || "Not provided"}
-                </p>
+                <p><strong>ID:</strong> {candidate.misc_kv}</p>
+                <p><strong>Name:</strong> {candidate.name}</p>
+                <p><strong>Status:</strong> {candidate.status}</p>
+                <p><strong>Total Votes:</strong> {candidate.votes}</p>
+                <p><strong>Bio:</strong> {candidate.bio || "Not provided"}</p>
               </div>
             </div>
 
-            {/* Voter Information Table */}
             <h3 className="modal-section-title">Voter Information</h3>
             <div className="table-wrapper">
               <table className="voters-table">
@@ -187,7 +168,7 @@ const CandidateModel = ({
                   <tr>
                     <th>Voter Name</th>
                     <th>Phone No</th>
-                    <th>Email</th> 
+                    <th>Email</th>
                     <th>Votes</th>
                   </tr>
                 </thead>
@@ -203,9 +184,7 @@ const CandidateModel = ({
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" style={{ textAlign: "center" }}>
-                        No voters available.
-                      </td>
+                      <td colSpan="4" style={{ textAlign: "center" }}>No voters available.</td>
                     </tr>
                   )}
                 </tbody>

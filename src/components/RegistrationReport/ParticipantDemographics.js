@@ -139,16 +139,22 @@ const ParticipantDemographics = () => {
 
         <div className="age-distribution">
           <h3 className="regis">Age Distribution</h3>
-          <Chart
-            options={ageDistributionOptions}
-            series={ageDistributionSeries}
-            type="bar"
-            height={200}
-          />
-          <p style={{ color: "#fff", paddingLeft: '10px' }}>Age Distribution</p>
-          <span style={{ color: "#fff", fontWeight: "bold", paddingLeft: '10px' }}>
-            Last Updated: {new Date().toLocaleTimeString()}
-          </span>
+          {ageDistributionData.length > 0 ? (
+            <>
+              <Chart
+                options={ageDistributionOptions}
+                series={ageDistributionSeries}
+                type="bar"
+                height={200}
+              />
+              <p style={{ color: "#fff", paddingLeft: '10px' }}>Age Distribution</p>
+              <span style={{ color: "#fff", fontWeight: "bold", paddingLeft: '10px' }}>
+                Last Updated: {new Date().toLocaleTimeString()}
+              </span>
+            </>
+          ) : (
+            <div className="no-data-message">No Demographics Data Available</div>
+          )}
         </div>
       </div>
 
@@ -226,10 +232,21 @@ const ParticipantDemographics = () => {
           font-family: 'Poppins', sans-serif;
         }
 
+        .no-data-message {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+          font-size: 16px;
+          color: #fff;
+          font-weight: bold;
+          font-family: 'Poppins', sans-serif;
+         
+        }
+
         /* Responsive styles */
         @media (max-width: 768px) {
-
-          .regis{
+          .regis {
             padding-left: 10px; 
           }
           
@@ -282,7 +299,7 @@ const ParticipantDemographics = () => {
             // padding: 0 10px;
           }
 
-          .regis{
+          .regis {
             padding-left: 10px; 
           }
 

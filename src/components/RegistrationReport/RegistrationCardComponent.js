@@ -86,6 +86,8 @@ const RegistrationCardComponent = () => {
 
   useEffect(() => {
     const fetchPayments = async () => {
+      if (!eventId) return;
+
       try {
         const response = await fetch("https://auth.zeenopay.com/payments/intents/", {
           method: "GET",
@@ -101,19 +103,21 @@ const RegistrationCardComponent = () => {
 
         const data = await response.json();
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
 
+        // Filter payments by event_id, intent="F", and today's date
         const todayPayments = data.filter((item) => {
-          const updatedDate = new Date(item.updated_at).toISOString().split('T')[0];
-          return item.intent === "F" && updatedDate === today;
+          const updatedDate = new Date(item.updated_at).toISOString().split("T")[0];
+          return item.event_id === eventId && item.intent === "F" && updatedDate === today;
         });
 
         const totalFeesToday = todayPayments.reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
         setFeesCollectedToday(totalFeesToday.toFixed(2));
 
+        // Filter payments by event_id and intent="F"
         const totalFees = data
-          .filter((item) => item.intent === "F")
+          .filter((item) => item.event_id === eventId && item.intent === "F")
           .reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
         setFeesCollected(totalFees.toFixed(2));
@@ -124,7 +128,7 @@ const RegistrationCardComponent = () => {
     };
 
     fetchPayments();
-  }, []);
+  }, [eventId]); // Add eventId as a dependency
 
   const cards = [
     {

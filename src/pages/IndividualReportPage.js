@@ -1,14 +1,16 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import CandidateTable from '../components/VotingReport/CandidateTable';
 import VoteByCountry from '../components/VotingReport/VoteByCountry';
 
 const ViewVotingReport = () => {
+  const { event_id } = useParams(); 
   return (
     <DashboardLayout>
       <div className="dashboard">
         <CandidateTable />
-        <VoteByCountry/>
+        <VoteByCountry id={event_id}/>
       </div>
 
       {/* Styling */}

@@ -4,7 +4,7 @@ import { useToken } from "../../context/TokenContext";
 
 const RegistrationSalesChart = () => {
   const [registrationData, setRegistrationData] = useState([]);
-  const [paymentData, setPaymentData] = useState([]); // Updated to store payment amounts by type
+  const [paymentData, setPaymentData] = useState({}); // Store payment amounts by processor
   const [eventId, setEventId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,7 +58,7 @@ const RegistrationSalesChart = () => {
     }
   };
 
-  // Fetch payment data from API and filter for intent="V"
+  // Fetch payment data from API and filter for matching event_id and intent="F"
   const fetchPaymentData = async () => {
     try {
       const response = await fetch("https://auth.zeenopay.com/payments/intents/", {
@@ -74,18 +74,30 @@ const RegistrationSalesChart = () => {
       }
 
       const data = await response.json();
-      console.log("Payment API Response:", data);
+      console.log("Payment API Response (Raw):", data);
 
-      // Filter payments with intent="V"
-      const filteredPayments = data.filter((payment) => payment.intent === "F");
+      // Filter payments with matching event_id and intent="F"
+      const filteredPayments = data.filter(
+        (payment) => payment.event_id === eventId && payment.intent === "F"
+      );
 
-      // Calculate total amount by payment method
+      console.log("Filtered Payments (intent=F):", filteredPayments);
+
+      // Group payment amounts by processor
       const paymentAmounts = {};
       filteredPayments.forEach((payment) => {
-        const method = payment.payment_method;
+        const processor = payment.processor;
         const amount = parseFloat(payment.amount) || 0;
-        paymentAmounts[method] = (paymentAmounts[method] || 0) + amount;
+
+        // Combine international processors into "International"
+        if (["PHONEPE", "PAYU", "STRIPE"].includes(processor)) {
+          paymentAmounts["International"] = (paymentAmounts["International"] || 0) + amount;
+        } else {
+          paymentAmounts[processor] = (paymentAmounts[processor] || 0) + amount;
+        }
       });
+
+      console.log("Grouped Payment Amounts:", paymentAmounts);
 
       setPaymentData(paymentAmounts);
     } catch (error) {
@@ -97,8 +109,8 @@ const RegistrationSalesChart = () => {
   useEffect(() => {
     if (eventId) {
       fetchRegistrationData();
+      fetchPaymentData();
     }
-    fetchPaymentData();
   }, [eventId]);
 
   // Process registration data for bar chart
@@ -139,16 +151,25 @@ const RegistrationSalesChart = () => {
   ];
 
   // Process payment data for pie chart
-  const paymentMethods = Object.keys(paymentData);
-  const pieSeries = paymentMethods.map((method) => paymentData[method]);
+  const paymentProcessors = Object.keys(paymentData);
+  const pieSeries = paymentProcessors.map((processor) => paymentData[processor]);
+
+  console.log("Pie Chart Data:", { paymentProcessors, pieSeries });
 
   // Pie chart options
   const pieOptions = {
     chart: { type: "pie", height: 350 },
-    labels: paymentMethods,
+    labels: paymentProcessors,
     colors: ["#028248", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"],
     legend: { position: "bottom" },
-    dataLabels: { formatter: (value) => `Rs. ${Math.floor(value)}` },
+    dataLabels: {
+      enabled: true,
+      formatter: function (val, { seriesIndex, w }) {
+        // `val` is the percentage, but we want to show the actual amount
+        const amount = pieSeries[seriesIndex]; // Get the amount from the pieSeries array
+        return `Rs. ${Math.floor(amount)}`; // Display the amount
+      },
+    },
   };
 
   if (loading) {
@@ -170,17 +191,26 @@ const RegistrationSalesChart = () => {
         {/* Registration Report */}
         <div className="registration-chart">
           <h3 className="regis">Registration Report</h3>
-          <Chart options={barOptions} series={barSeries} type="bar" height={350} />
+          {registrationCounts.length > 0 ? (
+            <Chart options={barOptions} series={barSeries} type="bar" height={350} />
+          ) : (
+            <div className="no-data-message">No Registration Done Till Now</div>
+          )}
         </div>
 
         {/* Sales Report */}
         <div className="sales-report">
           <h3 className="regis">Sales Report</h3>
-          <Chart options={pieOptions} series={pieSeries} type="pie" height={350} />
-          <div className="total-sales">
-            Rs. {Math.floor(pieSeries.reduce((sum, amount) => sum + amount, 0))}{" "}
-            {/* <span>+18.5%</span> */}
-          </div>
+          {paymentProcessors.length > 0 ? (
+            <>
+              <Chart options={pieOptions} series={pieSeries} type="pie" height={350} />
+              <div className="total-sales">
+                Total Sales: Rs. {Math.floor(pieSeries.reduce((sum, amount) => sum + amount, 0))}
+              </div>
+            </>
+          ) : (
+            <div className="no-data-message">No Sales Data Available</div>
+          )}
         </div>
       </div>
 
@@ -207,7 +237,7 @@ const RegistrationSalesChart = () => {
           color: #333;
         }
 
-        .regis{
+        .regis {
           padding: 10px;
           font-size: 14px;
         }
@@ -236,7 +266,7 @@ const RegistrationSalesChart = () => {
         .registration-chart,
         .sales-report {
           background-color: white;
-          padding: 0px;
+          padding: 20px;
           border-radius: 8px;
           width: 48%;
           box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
@@ -248,6 +278,15 @@ const RegistrationSalesChart = () => {
           font-weight: bold;
           color: #028248;
           text-align: center;
+        }
+
+        .no-data-message {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+          font-size: 16px;
+          color: #666;
         }
 
         /* Mobile Responsive Styles */
@@ -263,7 +302,6 @@ const RegistrationSalesChart = () => {
 
           .header h2 {
             font-size: 20px;
-          
           }
 
           .export-btn {

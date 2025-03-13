@@ -18,13 +18,14 @@ const CandidateTable = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState(null); // Add paymentInfo state
   const itemsPerPage = 10;
 
   const { token } = useToken();
   const { event_id } = useParams();
 
   useEffect(() => {
-    const fetchCandidates = async () => {
+    const fetchData = async () => {
       if (!event_id) {
         setError("Event ID is missing. Please provide a valid event ID.");
         setLoading(false);
@@ -41,7 +42,33 @@ const CandidateTable = () => {
       setError(null);
 
       try {
-        const response = await fetch(
+        // Fetch event data to get payment_info
+        const eventResponse = await fetch(
+          `https://auth.zeenopay.com/events/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!eventResponse.ok) {
+          throw new Error("Failed to fetch event data.");
+        }
+
+        const eventData = await eventResponse.json();
+        const event = eventData.find((event) => event.id === parseInt(event_id));
+
+        if (!event) {
+          throw new Error("Event not found.");
+        }
+
+        // Set payment_info
+        setPaymentInfo(event.payment_info);
+
+        // Fetch contestants data
+        const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
           {
             headers: {
@@ -51,18 +78,48 @@ const CandidateTable = () => {
           }
         );
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("Unauthorized. Please log in again.");
-          } else if (response.status === 404) {
-            throw new Error("Event not found.");
-          } else {
-            throw new Error("Failed to fetch data. Please try again.");
-          }
+        if (!contestantsResponse.ok) {
+          throw new Error("Failed to fetch contestants data.");
         }
 
-        const result = await response.json();
-        setData(result);
+        const contestants = await contestantsResponse.json();
+
+        // Fetch payment intents data
+        const paymentsResponse = await fetch(
+          `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!paymentsResponse.ok) {
+          throw new Error("Failed to fetch payment intents data.");
+        }
+
+        const paymentIntents = await paymentsResponse.json();
+
+        // Calculate votes for each contestant
+        const candidatesWithVotes = contestants.map((contestant) => {
+          let totalVotes = 0;
+
+          // Find matching payment intents
+          paymentIntents.forEach((intent) => {
+            if (intent.intent_id.toString() === contestant.misc_kv) {
+              // Calculate votes using payment_info
+              totalVotes += parseFloat(intent.amount) / paymentInfo;
+            }
+          });
+
+          return {
+            ...contestant,
+            votes: totalVotes, // Update votes
+          };
+        });
+
+        setData(candidatesWithVotes);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -70,8 +127,8 @@ const CandidateTable = () => {
       }
     };
 
-    fetchCandidates();
-  }, [event_id, token]);
+    fetchData();
+  }, [event_id, token, paymentInfo]);
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -214,7 +271,7 @@ const CandidateTable = () => {
           <h3>Candidate List</h3>
         </div>
         <div className="actions">
-          <button className="export-btn" onClick={handleExport}  style={{
+          <button className="export-btn" onClick={handleExport} style={{
                         background: "#028248", 
                       }}>
             <FaDownload className="export-icon" /> Export

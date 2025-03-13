@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import { useToken } from "../../context/TokenContext";
 
-const RealtimeVoting = () => {
+const RealtimeVoting = ({ id: event_id }) => {
   const { token } = useToken();
   const [data, setData] = useState([]);
+  const [eventData, setEventData] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
+  // Log the event_id for debugging
+  console.log('Event ID:', event_id, 'Type:', typeof event_id);
+
+  // Function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = date.getDate();
@@ -31,6 +36,7 @@ const RealtimeVoting = () => {
     return `${day}${ordinalSuffix(day)} ${month} ${year}, ${formattedHours}:${minutes} ${period}`;
   };
 
+  // Status labels and colors
   const statusLabel = {
     P: { label: 'Pending', color: '#FFA500' },
     S: { label: 'Success', color: '#28A745' },
@@ -38,44 +44,84 @@ const RealtimeVoting = () => {
     C: { label: 'Cancelled', color: '#6C757D' },
   };
 
+  // Fetch event data to get payment_info
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await fetch(`https://auth.zeenopay.com/events/${event_id}/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch event data');
+        }
+
+        const result = await response.json();
+        setEventData(result);
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+      }
+    };
+
+    fetchEventData();
+  }, [token, event_id]);
+
+  // Fetch payment intents data
   useEffect(() => {
     const fetchData = async () => {
+      if (!eventData) return; // Wait until eventData is available
+
       try {
-        const responses = await Promise.all([
-          fetch(`https://auth.zeenopay.com/payments/intents/`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        ]);
+        const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        const results = await Promise.all(responses.map((response) => response.json()));
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
 
-        const combinedData = results.flat().map((item) => ({
-          name: item.name,
-          email: item.email || 'N/A',
-          phone: item.phone_no || 'N/A',
-          createdAt: formatDate(item.created_at),
-          amount: item.amount,
-          status: statusLabel[item.status] || { label: item.status, color: '#6C757D' }, 
-          paymentType: item.payment_type
-            ? item.payment_type.charAt(0).toUpperCase() + item.payment_type.slice(1)
-            : '',
-          votes: Math.floor(item.amount / 10) || 0, 
-        }));
+        const result = await response.json();
+        console.log('API Response:', result); // Debugging: Log the API response
 
-        setData(combinedData);
+        // Log the event_id from the API response
+        result.forEach((item) => {
+          console.log('Item Event ID:', item.event_id, 'Type:', typeof item.event_id);
+        });
+
+        // Filter and map the data
+        const filteredData = result
+          .filter((item) => item.event_id == event_id) // Use == for loose comparison
+          .map((item) => ({
+            name: item.name,
+            email: item.email || 'N/A',
+            phone: item.phone_no || 'N/A',
+            createdAt: formatDate(item.created_at),
+            amount: item.amount,
+            status: statusLabel[item.status] || { label: item.status, color: '#6C757D' },
+            paymentType: item.processor
+              ? item.processor.charAt(0).toUpperCase() + item.processor.slice(1)
+              : '',
+            votes: eventData.payment_info ? Math.floor(item.amount / eventData.payment_info) : 0,
+          }));
+
+        console.log('Filtered Data:', filteredData); // Debugging: Log the filtered data
+        setData(filteredData); // Update state with filtered data
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
 
     fetchData();
-  }, [token]);
+  }, [token, event_id, eventData]);
 
+  // Handle CSV export
   const handleExport = async () => {
     try {
-      const response = await fetch(`https://auth.zeenopay.com/report/csv`, {
+      const response = await fetch(`https://auth.zeenopay.com/report/csv?event_id=${event_id}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -94,10 +140,10 @@ const RealtimeVoting = () => {
     }
   };
 
+  // Pagination logic
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentData = data.slice(indexOfFirstRow, indexOfLastRow);
-
   const totalPages = Math.ceil(data.length / rowsPerPage);
 
   const handlePageChange = (page) => {
@@ -124,37 +170,42 @@ const RealtimeVoting = () => {
               <th>Name</th>
               <th>Email</th>
               <th>Phone</th>
-              <th>Votes</th> 
-              <th>Amount</th>
+              <th>Votes</th>
+              {/* <th>Amount</th> */}
               <th>Status</th>
               <th>Payment Type</th>
               <th>Transaction Time</th>
             </tr>
           </thead>
           <tbody>
-  {currentData
-    .filter((row) => row.votes > 0) 
-    .map((row, index) => (
-      <tr key={index}>
-        <td>{row.name}</td>
-        <td>{row.email}</td>
-        <td>{row.phone}</td>
-        <td>{row.votes}</td>
-        <td>{row.amount}</td>
-        <td>
-          <span
-            className="status"
-            style={{ backgroundColor: row.status.color, color: '#fff' }}
-          >
-            {row.status.label}
-          </span>
-        </td>
-        <td>{row.paymentType}</td>
-        <td>{row.createdAt}</td>
-      </tr>
-    ))}
-</tbody>
-
+            {currentData.length > 0 ? (
+              currentData.map((row, index) => (
+                <tr key={index}>
+                  <td>{row.name}</td>
+                  <td>{row.email}</td>
+                  <td>{row.phone}</td>
+                  <td>{row.votes}</td>
+                  {/* <td>{row.amount}</td> */}
+                  <td>
+                    <span
+                      className="status"
+                      style={{ backgroundColor: row.status.color, color: '#fff' }}
+                    >
+                      {row.status.label}
+                    </span>
+                  </td>
+                  <td>{row.paymentType}</td>
+                  <td>{row.createdAt}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="8" style={{ textAlign: 'center' }}>
+                  No data available for this event.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
 
@@ -260,7 +311,7 @@ const RealtimeVoting = () => {
           padding: 5px 10px;
           border-radius: 5px;
           font-weight: bold;
-          font-size: 12px; /* Reduced font size for status */
+          font-size: 12px;
         }
 
         @media screen and (max-width: 768px) {

@@ -3,11 +3,12 @@ import Chart from "react-apexcharts";
 import axios from "axios";
 import { useToken } from "../../context/TokenContext";
 import { useParams } from "react-router-dom";
+import CandidateList from "./Contestant"; 
 
 const VotingData = () => {
   const { token } = useToken();
   const { event_id } = useParams();
-  const [chartOptions] = useState({
+  const [chartOptions, setChartOptions] = useState({
     chart: {
       type: "line",
       toolbar: { show: false },
@@ -21,9 +22,7 @@ const VotingData = () => {
       },
     },
     xaxis: {
-      categories: [
-        "12:00 am", "6:00 am", "12:00 pm", "6:00 pm",
-      ],
+      categories: ["12:00 am", "6:00 am", "12:00 pm", "6:00 pm"],
       labels: {
         style: {
           colors: "#333333",
@@ -55,22 +54,23 @@ const VotingData = () => {
     grid: { borderColor: "#ECEFF1" },
   });
 
-  const [series] = useState([{
-    name: "Votes",
-    data: [100, 750, 300, 750],
-  }]);
+  const [series, setSeries] = useState([
+    {
+      name: "Votes",
+      data: [0, 0, 0, 0],
+    },
+  ]);
 
-  const [candidates, setCandidates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentDate, setCurrentDate] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState(0);
+  const [error, setError] = useState(null); 
 
   useEffect(() => {
-    const fetchCandidates = async () => {
+    const fetchEventData = async () => {
       try {
         const response = await axios.get(
-          `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
+          `https://auth.zeenopay.com/events/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -79,21 +79,71 @@ const VotingData = () => {
           }
         );
 
-        const sortedCandidates = response.data
-          .sort((a, b) => b.votes - a.votes)
-          .slice(0, 6);
-
-        setCandidates(sortedCandidates);
-        setLoading(false);
+        const event = response.data.find((event) => event.id === parseInt(event_id));
+        if (event) {
+          setPaymentInfo(event.payment_info);
+        }
       } catch (err) {
-        console.error("Error fetching candidates:", err);
-        setError("Failed to fetch candidate data.");
-        setLoading(false);
+        console.error("Error fetching event data:", err);
+        setError("Failed to fetch event data."); 
       }
     };
 
-    fetchCandidates();
+    fetchEventData();
   }, [event_id, token]);
+
+  useEffect(() => {
+    const fetchPaymentIntents = async () => {
+      try {
+        const response = await axios.get(
+          `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const paymentIntents = response.data;
+
+        const timeIntervals = ["12:00 am", "6:00 am", "12:00 pm", "6:00 pm"];
+        const votesByInterval = [0, 0, 0, 0];
+
+        paymentIntents.forEach((intent) => {
+          const updatedAt = new Date(intent.updated_at);
+          const hours = updatedAt.getHours();
+          const minutes = updatedAt.getMinutes();
+
+          // Determine the time interval
+          if (hours >= 0 && hours < 6) {
+            votesByInterval[0] += intent.amount / paymentInfo; 
+          } else if (hours >= 6 && hours < 12) {
+            votesByInterval[1] += intent.amount / paymentInfo; 
+          } else if (hours >= 12 && hours < 18) {
+            votesByInterval[2] += intent.amount / paymentInfo; 
+          } else {
+            votesByInterval[3] += intent.amount / paymentInfo; 
+          }
+        });
+
+        // Update the chart series
+        setSeries([
+          {
+            name: "Votes",
+            data: votesByInterval,
+          },
+        ]);
+      } catch (err) {
+        console.error("Error fetching payment intents:", err);
+        setError("Failed to fetch payment intents data.");
+      }
+    };
+
+    if (paymentInfo > 0) {
+      fetchPaymentIntents();
+    }
+  }, [event_id, token, paymentInfo]);
 
   useEffect(() => {
     const date = new Date();
@@ -115,8 +165,7 @@ const VotingData = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
+  if (error) return <p>{error}</p>; 
 
   return (
     <div className="dashboard-container">
@@ -136,7 +185,6 @@ const VotingData = () => {
           }
           .chart-card {
             background-color: #f7f9fc;
-            // border: 1px solid #E0E0E0;
             border-radius: 10px;
             padding: 20px;
             flex: 2;
@@ -159,7 +207,6 @@ const VotingData = () => {
           }
           .candidate-card {
             background-color: #f7f9fc;
-            // border: 1px solid #E0E0E0;
             border-radius: 10px;
             padding: 30px;
             flex: 2;
@@ -176,7 +223,7 @@ const VotingData = () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color:rgb(133, 219, 80);
+            background-color: rgb(133, 219, 80);
             border: 1px solid #E0E0E0;
             color: #fff;
             font-weight: 600;
@@ -211,41 +258,40 @@ const VotingData = () => {
           .candidate-button:hover {
             background-color: #1565C0;
           }
-         @media (max-width: 768px) {
-  .dashboard-container {
-    flex-direction: column;
-    padding: 0 5px; /* Add equal gap on both sides */
-  }
-  .chart-card,
-  .candidate-card {
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box; 
-  }
-  .chart-card {
-    padding-top: 10px;
-    padding-bottom: 0;
-  }
-  .chart-header h1 {
-    font-size: 18px;
-  }
-  .date-display {
-    display: none;
-  }
-  .total-votes {
-    font-size: 1.5rem;
-  }
-  .voting-h3 {
-    display: none;
-  }
-  .top-h3 {
-    font-size: 16px;
-  }
-  .chart {
-    height: ${isMobile ? '250px' : '300px'};
-  }
-}
-
+          @media (max-width: 768px) {
+            .dashboard-container {
+              flex-direction: column;
+              padding: 0 5px;
+            }
+            .chart-card,
+            .candidate-card {
+              width: 100%;
+              padding: 10px;
+              box-sizing: border-box;
+            }
+            .chart-card {
+              padding-top: 10px;
+              padding-bottom: 0;
+            }
+            .chart-header h1 {
+              font-size: 18px;
+            }
+            .date-display {
+              display: none;
+            }
+            .total-votes {
+              font-size: 1.5rem;
+            }
+            .voting-h3 {
+              display: none;
+            }
+            .top-h3 {
+              font-size: 16px;
+            }
+            .chart {
+              height: ${isMobile ? "250px" : "300px"};
+            }
+          }
         `}
       </style>
       <div className="chart-card">
@@ -254,27 +300,17 @@ const VotingData = () => {
           <h3>Today's Votes</h3>
           <div className="date-display">{currentDate}</div>
         </div>
-        <Chart options={chartOptions} series={series} type="line" height={isMobile ? 240 : 300} className="chart" />
+        <Chart
+          options={chartOptions}
+          series={series}
+          type="line"
+          height={isMobile ? 240 : 300}
+          className="chart"
+        />
       </div>
 
-      <div className="candidate-card">
-        <h3 className="top-h3">Top - Performing Candidates</h3>
-        <ul className="candidate-list">
-          {candidates.map((candidate, index) => (
-            <li key={index} className="candidate-item">
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <img
-                  src={candidate.avatar}
-                  alt="candidate"
-                  className="candidate-image"
-                />
-                {candidate.name}
-              </div>
-              <span>{candidate.votes} Votes</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Pass event_id and token as props to CandidateList */}
+      <CandidateList event_id={event_id} token={token} />
     </div>
   );
 };

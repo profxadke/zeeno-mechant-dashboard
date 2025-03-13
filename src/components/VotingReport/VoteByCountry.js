@@ -1,276 +1,319 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Chart from "react-apexcharts";
 import { FaDownload } from "react-icons/fa";
+import { useParams } from "react-router-dom";
+import { useToken } from "../../context/TokenContext";
 
 const VoteByCountry = () => {
+  const { event_id } = useParams();
+  const { token } = useToken();
+  const [nepalVotes, setNepalVotes] = useState([]);
+  const [globalVotes, setGlobalVotes] = useState([]);
+  const [totalVotesNepal, setTotalVotesNepal] = useState(0);
+  const [totalVotesGlobal, setTotalVotesGlobal] = useState(0);
+  const [paymentInfo, setPaymentInfo] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const nepalProcessors = ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"];
+  const indiaProcessors = ["PHONEPE"];
+  const internationalProcessors = ["PAYU", "STRIPE"];
+
+  useEffect(() => {
+    const fetchEventsData = async () => {
+      try {
+        const response = await fetch(`https://auth.zeenopay.com/events/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch events data");
+        }
+
+        const data = await response.json();
+        const event = data.find((event) => event.id === parseInt(event_id));
+
+        if (event) {
+          setPaymentInfo(event.payment_info);
+        }
+      } catch (error) {
+        console.error("Error fetching events data:", error);
+      }
+    };
+
+    const fetchPaymentIntentsData = async () => {
+      try {
+        const response = await fetch(
+          `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch payment intents data");
+        }
+
+        const data = await response.json();
+
+        // Process data for Nepal
+        const nepalData = data.filter((item) => nepalProcessors.includes(item.processor));
+        const nepalVotesData = nepalData.map((item) => item.amount / paymentInfo);
+        setNepalVotes(nepalVotesData);
+        setTotalVotesNepal(nepalVotesData.reduce((a, b) => a + b, 0));
+
+        // Process data for Global
+        const indiaData = data.filter((item) => indiaProcessors.includes(item.processor));
+        const internationalData = data.filter((item) =>
+          internationalProcessors.includes(item.processor)
+        );
+        const indiaVotes = indiaData.map((item) => item.amount / paymentInfo).reduce((a, b) => a + b, 0);
+        const internationalVotes = internationalData
+          .map((item) => item.amount / paymentInfo)
+          .reduce((a, b) => a + b, 0);
+        setGlobalVotes([indiaVotes, internationalVotes]);
+        setTotalVotesGlobal(indiaVotes + internationalVotes);
+      } catch (error) {
+        console.error("Error fetching payment intents data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchEventsData().then(() => fetchPaymentIntentsData());
+    }
+  }, [event_id, token, paymentInfo]);
+
+  // Update labels for Nepal chart
+  const nepalLabels = nepalProcessors.map((processor) => {
+    if (processor === "NQR") return "S-QR";
+    if (processor === "QR") return "D-QR";
+    return processor;
+  });
+
   const pieOptionsNepal = {
     chart: {
       type: "pie",
       height: 350,
     },
-    labels: ["Esewa", "Khalti", "ImePay", "Bank Transfer"],
-    colors: ["#007bff", "#ff6384", "#36a2eb", "#ffcd56"],
+    labels: nepalLabels,
+    colors: ["#007bff", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0", "#9966ff"],
     legend: { position: "bottom" },
   };
-
-  const pieSeriesNepal = [12800, 7833, 2789, 8921];
 
   const pieOptionsGlobal = {
     chart: {
       type: "pie",
       height: 350,
     },
-    labels: ["Vote From India", "Vote From Global"],
-    colors: ["#4bc0c0", "#9966ff"],
+    labels: ["Votes by Residents Within India", "International Votes"],
+    colors: ["#007bff", "#ff6384"],
     legend: { position: "bottom" },
   };
 
-  const pieSeriesGlobal = [12067, 19028];
-
-  const [dateRange, setDateRange] = useState("1 Jan - 10 Jan");
-
-  const dateRanges = [
-    { label: "1 Jan - 10 Jan", value: "1 Jan - 10 Jan" },
-    { label: "11 Jan - 20 Jan", value: "11 Jan - 20 Jan" },
-    { label: "21 Jan - 30 Jan", value: "21 Jan - 30 Jan" },
-  ];
-
-  const handleDateChange = (event) => {
-    setDateRange(event.target.value);
-  };
+  // Check if there is no data
+  const hasNoData = nepalVotes.length === 0 && globalVotes.length === 0;
+  const hasNoNepalVotes = nepalVotes.length === 0 || nepalVotes.every((vote) => vote === 0);
+  const hasNoGlobalVotes = globalVotes.length === 0 || globalVotes.every((vote) => vote === 0);
 
   return (
     <div className="chart-container">
       <div className="header">
         <h2>Vote Breakdown</h2>
-        <button style={{
-                        background: "#028248", 
-                      }} className="export-btn" >  <FaDownload className="export-icon" />Export</button>
+        <button className="export-btn">
+          <FaDownload className="export-icon" /> Export
+        </button>
       </div>
 
-      <div className="charts">
-        <div className="report">
-          <div className="chart-header">
-            <h3>Votes from Nepal</h3>
-            <div className="dropdown">
-              <button className="filter-btn">
-                Select Date Range: {dateRange}
-              </button>
-              <div className="dropdown-content">
-                {dateRanges.map((range) => (
-                  <button
-                    key={range.value}
-                    value={range.value}
-                    onClick={handleDateChange}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
+      {isLoading ? (
+        <div className="loading">Loading...</div>
+      ) : hasNoData ? (
+        <div className="no-data">No any vote data</div>
+      ) : (
+        <div className="charts">
+          <div className="report">
+            <div className="chart-header">
+              <h3>Votes from Nepal</h3>
             </div>
+            {hasNoNepalVotes ? (
+              <div className="no-nepal-votes">No any Votes from Nepal</div>
+            ) : (
+              <>
+                <Chart
+                  options={pieOptionsNepal}
+                  series={nepalVotes}
+                  type="pie"
+                  height={350}
+                />
+                <div className="total-votes">Total Votes: {totalVotesNepal.toLocaleString()}</div>
+              </>
+            )}
           </div>
-          <Chart
-            options={pieOptionsNepal}
-            series={pieSeriesNepal}
-            type="pie"
-            height={350}
-          />
-          <div className="total-votes">
-            Total Votes: 32,343
-          </div>
-        </div>
 
-        <div className="report">
-          <div className="chart-header">
-            <h3>Votes from Global</h3>
-            <div className="dropdown">
-              <button className="filter-btn">
-                Select Date Range: {dateRange}
-              </button>
-              <div className="dropdown-content">
-                {dateRanges.map((range) => (
-                  <button
-                    key={range.value}
-                    value={range.value}
-                    onClick={handleDateChange}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
+          <div className="report">
+            <div className="chart-header">
+              <h3>Votes from Global</h3>
             </div>
-          </div>
-          <Chart
-            options={pieOptionsGlobal}
-            series={pieSeriesGlobal}
-            type="pie"
-            height={350}
-          />
-          <div className="total-votes">
-            Total Votes: 63,095
+            {hasNoGlobalVotes ? (
+              <div className="no-global-votes">No any Global Votes</div>
+            ) : (
+              <>
+                <Chart
+                  options={pieOptionsGlobal}
+                  series={globalVotes}
+                  type="pie"
+                  height={350}
+                />
+                <div className="total-votes">Total Votes: {totalVotesGlobal.toLocaleString()}</div>
+              </>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       <style jsx>{`
-  .chart-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-    padding-bottom: 20px; 
-  }
+        .chart-container {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          width: 100%;
+          padding-bottom: 20px;
+        }
 
-  .header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    margin-top: 30px;
-  }
+        .header {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+          margin-top: 30px;
+        }
 
-  .header h2 {
-    margin: 0;
-  }
+        .header h2 {
+          margin: 0;
+          font-size: 24px;
+        }
 
-  .export-btn {
-    background-color: #028248;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+        .export-btn {
+          background-color: #028248;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 16px;
+        }
 
-  .export-btn:hover {
-    background-color:#028248;
-  }
+        .export-btn:hover {
+          background-color: #028248;
+        }
 
-  .charts {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    gap: px;
-    flex-wrap: wrap;
-  }
+        .charts {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          gap: 20px;
+        }
 
-  .report {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    width: 48%;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    justify-content: space-between; 
-  }
+        .report {
+          background-color: white;
+          padding: 20px;
+          border-radius: 8px;
+          width: 48%;
+          box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-between;
+        }
 
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
+        .chart-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+        }
 
-  .dropdown {
-    position: relative;
-    display: inline-block;
-  }
+        .total-votes {
+          text-align: center;
+          font-size: 18px;
+          margin-top: 20px;
+          padding: 10px;
+          width: 100%;
+          box-sizing: border-box;
+        }
 
-  .filter-btn {
-    background-color: #fff;
-    color: #000;
-    border: 1px solid #ddd;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+        .loading,
+        .no-data,
+        .no-nepal-votes,
+        .no-global-votes {
+          text-align: center;
+          font-size: 18px;
+          margin-top: 20px;
+          width: 100%;
+        }
 
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-  }
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+          .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
 
-  .dropdown:hover .dropdown-content {
-    display: block;
-  }
+          .header h2 {
+            font-size: 20px;
+          }
 
-  .dropdown-content button {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-    width: 100%;
-    border: none;
-    background-color: #fff;
-    cursor: pointer;
-  }
+          .export-btn {
+            width: 100%;
+            justify-content: center;
+          }
 
-  .dropdown-content button:hover {
-    background-color: #ddd;
-  }
+          .charts {
+            flex-direction: column;
+            gap: 20px;
+          }
 
-  .total-votes {
-    text-align: center;
-    font-size: 18px;
-    margin-top: 20px;
-    padding: 10px; 
-    width: 100%;
-    box-sizing: border-box; 
-  }
+          .report {
+            width: 100%;
+            margin-bottom: 20px;
+          }
 
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .charts {
-      flex-direction: column;
-      gap: 20px; 
-      align-items: center;
-    }
+          .total-votes {
+            font-size: 16px;
+          }
 
-    .report {
-      width: 90%; 
-      margin-bottom: 20px;
-    }
+          .report .apexcharts-canvas {
+            height: 250px !important;
+          }
+        }
 
-    .filter-btn {
-      display: none;
-    }
+        @media (max-width: 480px) {
+          .header h2 {
+            font-size: 18px;
+          }
 
-    .export-btn {
-      padding: 10px 20px;
-    }
+          .export-btn {
+            font-size: 14px;
+          }
 
-    .report .apexcharts-canvas {
-      height: 250px !important;
-    }
-  }
+          .total-votes {
+            font-size: 14px;
+          }
 
-  @media (max-width: 480px) {
-    .header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .charts {
-      gap: 10px;
-    }
-
-    .total-votes {
-      font-size: 16px; 
-    }
-
-    .report .apexcharts-canvas {
-      height: 200px !important;
-    }
-  }
-`}</style>
-
+          .report .apexcharts-canvas {
+            height: 200px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

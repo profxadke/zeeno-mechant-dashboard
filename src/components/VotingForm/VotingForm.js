@@ -11,11 +11,11 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     org = "",
   } = formData;
   const [votingMode, setVotingMode] = useState("");
-  const [votingCapsPerUser, setVotingCapsPerUser] = useState("");
+  // const [votingCapsPerUser, setVotingCapsPerUser] = useState("");
   const [createdAt, setVotingStartDate] = useState(data?.createdAt || "");
   const [finaldate, setVotingEndDate] = useState(data?.finaldate || "");
   const [error, setError] = useState("");
-  const [votePricing, setVotePricing] = useState("");
+  const [payment_info, setPaymentInfo] = useState("");
   const [votingAccessPreference, setVotingAccessPreference] = useState("");
   const [services, setServices] = useState("");
   const [votingName, setVotingName] = useState(title);
@@ -54,9 +54,9 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     setVotingMode(e.target.value);
   };
 
-  const handleVotingCapsPerUserChange = (e) => {
-    setVotingCapsPerUser(e.target.value);
-  };
+  // const handleVotingCapsPerUserChange = (e) => {
+  //   setVotingCapsPerUser(e.target.value);
+  // };
 
   const handleVotingStartDateChange = (e) => {
     const value = e.target.value;
@@ -83,7 +83,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
   };
 
   const handleVotePricingChange = (e) => {
-    setVotePricing(e.target.value);
+    setPaymentInfo(e.target.value);
   };
 
   const handleVotingAccessPreferenceChange = (e) => {
@@ -130,10 +130,10 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
       img,
       org,
       votingMode,
-      votingCapsPerUser,
+      // votingCapsPerUser,
       createdAt,
       finaldate,
-      votePricing,
+      payment_info,
       votingAccessPreference,
       services,
     };
@@ -162,10 +162,10 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
           org: "",
         });
         setVotingMode("");
-        setVotingCapsPerUser("");
+        // setVotingCapsPerUser("");
         setVotingStartDate("");
         setVotingEndDate("");
-        setVotePricing("");
+        setPaymentInfo("");
         setVotingAccessPreference("");
         setServices([]);
         setError("");
@@ -263,7 +263,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
               </select>
             </div>
 
-            <div className="voting-form-field">
+            {/* <div className="voting-form-field">
               <label>Voting Caps Per User</label>
               <input
                 className="voting"
@@ -272,7 +272,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
                 value={votingCapsPerUser}
                 onChange={handleVotingCapsPerUserChange}
               />
-            </div>
+            </div> */}
 
             <div className="voting-form-field">
               <label>Voting Start Date and Time</label>
@@ -305,7 +305,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
               <input
                 className="voting"
                 type="text"
-                value={votePricing}
+                value={payment_info}
                 onChange={handleVotePricingChange}
                 placeholder="Enter Voting Price"
               />
