@@ -11,7 +11,7 @@ const initialFormState = {
   description: '',
   org: '',
   finaldate: '',
-  formImg: '',
+  img: '',
   formLocation: '',
   formFee: '',
   female_only: false,
@@ -207,7 +207,7 @@ const EventDetailsForm = () => {
         title: formData.formTitle,
         description: formData.description,
         org: formData.org,
-        formImg: formData.formImg,
+        img: formData.img,
         finaldate: formData.finaldate,
         fields: JSON.stringify({
           formLocation: formData.formLocation,
@@ -341,8 +341,8 @@ const EventDetailsForm = () => {
                 className="event-location"
                 type="text"
                 id="file-input"
-                value={formData.formImg}
-                onChange={(e) => updateFormData('formImg', e.target.value)}
+                value={formData.img}
+                onChange={(e) => updateFormData('img', e.target.value)}
                 placeholder="Upload Image"
               />
             </div>

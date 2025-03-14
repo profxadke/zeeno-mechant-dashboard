@@ -20,7 +20,7 @@ const ViewRegistrationReport = () => {
     const fetchEvents = async () => {
       try {
         const response = await fetch('https://auth.zeenopay.com/events/forms/', {
-          method: 'GET', // Fixed: Added the HTTP method
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ const ViewRegistrationReport = () => {
     };
 
     fetchEvents();
-  }, [token]); // Added `token` as a dependency
+  }, [token]); 
 
   const deleteEvent = async () => {
     try {

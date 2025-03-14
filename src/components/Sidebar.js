@@ -5,7 +5,7 @@ import "../assets/sidebar.css";
 
 const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
   const location = useLocation();
-  const sidebarRef = useRef(null); // Ref for the sidebar
+  const sidebarRef = useRef(null);
 
   const menuItems = [
     { title: "Dashboard", icon: <FaChartBar />, section: "Home", path: "/" },
@@ -76,7 +76,8 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         if (open) {
-          toggleSidebar(); // Close the sidebar if it's open
+          // Close the sidebar if it's open
+          toggleSidebar(); 
         }
       }
     };
@@ -92,7 +93,7 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
 
   return (
     <div
-      ref={sidebarRef} // Attach the ref to the sidebar
+      ref={sidebarRef}
       className={`sidebar ${collapsed ? "collapsed" : ""} ${open ? "open" : ""}`}
     >
       <div className="sidebar-header">
