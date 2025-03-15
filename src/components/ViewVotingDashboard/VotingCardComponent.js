@@ -9,26 +9,27 @@ const VotingCardComponent = () => {
   const [eventData, setEventData] = useState(null);
   const [topPerformer, setTopPerformer] = useState(null);
 
+  // Card schema for displaying total votes and top performer
   const cardSchema = {
     totalVotes: {
-      image: "https://i.ibb.co/SwHs5b7g/IMG-2417.png", 
+      image: "https://i.ibb.co/SwHs5b7g/IMG-2417.png",
       title: "Total Votes",
-      value: totalVotes !== null ? ` ${totalVotes}` : "Loading...",
+      value: totalVotes !== null ? `${totalVotes}` : "Loading...",
       subtext: "Updated Recently",
       subtextColor: totalVotes !== null && totalVotes > 0 ? "green" : "red",
     },
     topPerformer: {
-      image: "https://i.ibb.co/by04tPM/IMG-2418.png", 
+      image: "https://i.ibb.co/by04tPM/IMG-2418.png",
       title: "Top Performer",
       value: topPerformer ? topPerformer.name : "Loading...",
-      subtext: topPerformer ? `${topPerformer.votes.toFixed(2)} Votes` : "Data will be available soon",
+      subtext: topPerformer?.votes !== undefined ? `${topPerformer.votes.toFixed(2)} Votes` : "Data will be available soon",
       subtextColor: "green",
     },
   };
 
   const cards = Object.values(cardSchema);
 
-  
+  // Fetch event data
   useEffect(() => {
     const fetchEventData = async () => {
       try {
@@ -39,20 +40,20 @@ const VotingCardComponent = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch event data');
+          throw new Error("Failed to fetch event data");
         }
 
         const result = await response.json();
         setEventData(result);
       } catch (error) {
-        console.error('Error fetching event data:', error);
+        console.error("Error fetching event data:", error);
       }
     };
 
     fetchEventData();
   }, [token, event_id]);
 
-  // Fetch payment intents data and calculate total votes
+  // Fetch payment intents and calculate total votes and top performer
   useEffect(() => {
     const fetchVotes = async () => {
       if (!eventData) return;
@@ -69,10 +70,16 @@ const VotingCardComponent = () => {
         );
 
         if (!paymentsResponse.ok) {
-          throw new Error('Failed to fetch payment intents');
+          throw new Error("Failed to fetch payment intents");
         }
 
         const paymentIntents = await paymentsResponse.json();
+
+        // Calculate total votes
+        let totalVotesCalculated = 0;
+        paymentIntents.forEach((intent) => {
+          totalVotesCalculated += parseFloat(intent.amount) / eventData.payment_info;
+        });
 
         // Fetch contestants
         const contestantsResponse = await fetch(
@@ -85,24 +92,21 @@ const VotingCardComponent = () => {
         );
 
         if (!contestantsResponse.ok) {
-          throw new Error('Failed to fetch contestants');
+          throw new Error("Failed to fetch contestants");
         }
 
         const contestants = await contestantsResponse.json();
 
-        // Calculate total votes and find top performer
-        let totalVotesCalculated = 0;
+        // Calculate votes for each contestant
         const candidatesWithVotes = contestants.map((contestant) => {
           let votes = 0;
 
-          // Match misc_kv with intent_id and calculate votes
+          // Match intent_id with contestant id and calculate votes
           paymentIntents.forEach((intent) => {
-            if (intent.intent_id.toString() === contestant.misc_kv) {
+            if (intent.intent_id.toString() === contestant.id) {
               votes += parseFloat(intent.amount) / eventData.payment_info;
             }
           });
-
-          totalVotesCalculated += votes;
 
           return {
             ...contestant,
@@ -114,8 +118,10 @@ const VotingCardComponent = () => {
         const sortedCandidates = candidatesWithVotes.sort((a, b) => b.votes - a.votes);
         const topPerformer = sortedCandidates[0];
 
+        // Update state
         setTotalVotes(totalVotesCalculated);
-        setTopPerformer(topPerformer); // Set the top performer
+        setTopPerformer(topPerformer);
+        console.log("Top Performer:", topPerformer); // Debugging
       } catch (error) {
         console.error("Error fetching data:", error);
         setTotalVotes("Error");
@@ -136,7 +142,7 @@ const VotingCardComponent = () => {
         <div key={index} className="card">
           <div className="card-row">
             <div className="card-icon">
-              <img src={card.image} alt={card.title} className="icon-img" /> {/* Use image as icon */}
+              <img src={card.image} alt={card.title} className="icon-img" />
             </div>
             <div className="card-content">
               <h4 className="card-title">{card.title}</h4>
@@ -158,7 +164,7 @@ const VotingCardComponent = () => {
         .cards-container {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px; /* Reduced gap between cards */
+          gap: 10px;
           justify-content: space-between;
           margin: 0px 0;
           animation: fadeIn 0.6s ease-in-out;
@@ -170,7 +176,7 @@ const VotingCardComponent = () => {
           flex-direction: column;
           justify-content: space-between;
           width: 100%;
-          max-width: 400px; /* Increased max-width for desktop */
+          max-width: 400px;
           padding: 15px;
           border: 1px solid #e5e5e5;
           border-radius: 8px;

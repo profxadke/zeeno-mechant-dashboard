@@ -41,9 +41,19 @@ const ViewRegistration = () => {
     fetchEvents();
   }, [token]);
 
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null); // Clear the message after 3 seconds
+      }, 3000);
+
+      return () => clearTimeout(timer); // Cleanup the timer
+    }
+  }, [message]);
+
   const deleteEvent = async () => {
     try {
-      const response = await fetch(`https://auth.zeenopay.com/forms/${parseInt(eventToDelete)}/`, {
+      const response = await fetch(`https://auth.zeenopay.com/events/forms/${parseInt(eventToDelete)}/`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -57,10 +67,10 @@ const ViewRegistration = () => {
 
       setEvents(events.filter((event) => event.id !== eventToDelete));
       setMessage({ type: 'success', text: 'Event deleted successfully' });
-      setShowDeleteConfirmation(false);
+      setShowDeleteConfirmation(false); // Close the delete confirmation modal
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
-      setShowDeleteConfirmation(false);
+      setShowDeleteConfirmation(false); // Close the delete confirmation modal even if there's an error
     }
   };
 
@@ -76,7 +86,7 @@ const ViewRegistration = () => {
 
   const handleUpdateEvent = async (updatedEvent) => {
     try {
-      const response = await fetch(`https://auth.zeenopay.com/events/${updatedEvent.id}/`, {
+      const response = await fetch(`https://auth.zeenopay.com/events/forms/${updatedEvent.id}/`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -90,8 +100,8 @@ const ViewRegistration = () => {
       }
 
       setEvents(events.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)));
-      handleCloseModal();
       setMessage({ type: 'success', text: '🎉 Event updated successfully' });
+      handleCloseModal(); 
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
     }
@@ -127,39 +137,35 @@ const ViewRegistration = () => {
         </div>
       )}
       <div style={styles.cardContainer}>
-        {events.map((event) => {
-        
-          return (
-            <div
-              key={event.id}
-              style={styles.cardLink}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-            >
-              <div style={styles.card}>
+        {events.map((event) => (
+          <div
+            key={event.id}
+            style={styles.cardLink}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            <div style={styles.card}>
               <div style={styles.imageWrapper}>
-  {event.img ? (
-    <img src={event.img} alt={event.title || 'Event Image'} style={styles.image} />
-  ) : (
-    <div style={styles.noImage}>No Image Available</div>
-  )}
-</div>
-
-                <div style={styles.cardContent}>
-                  <h2 style={styles.cardTitle}>{event.title}</h2>
-                  <div style={styles.buttonContainer}>
-                    <Link to={`/viewregistration/${event.id}`} style={styles.viewButton}>
-                      <MdVisibility style={styles.icon} /> View Report
-                    </Link>
-                    <button onClick={() => handleEditClick(event)} style={styles.editButton}>
-                      <MdEdit style={styles.icon} /> Edit
-                    </button>
-                  </div>
+                {event.img ? (
+                  <img src={event.img} alt={event.title || 'Event Image'} style={styles.image} />
+                ) : (
+                  <div style={styles.noImage}>No Image Available</div>
+                )}
+              </div>
+              <div style={styles.cardContent}>
+                <h2 style={styles.cardTitle}>{event.title}</h2>
+                <div style={styles.buttonContainer}>
+                  <Link to={`/viewregistration/${event.id}`} style={styles.viewButton}>
+                    <MdVisibility style={styles.icon} /> View Report
+                  </Link>
+                  <button onClick={() => handleEditClick(event)} style={styles.editButton}>
+                    <MdEdit style={styles.icon} /> Edit
+                  </button>
                 </div>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {showModal && selectedEvent && (

@@ -4,37 +4,30 @@ const Contestant = ({ event_id, token }) => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [paymentInfo, setPaymentInfo] = useState(null); 
+  const [paymentInfo, setPaymentInfo] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const eventResponse = await fetch(
-          `https://auth.zeenopay.com/events/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
+        const eventResponse = await fetch(`https://auth.zeenopay.com/events/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
 
         if (!eventResponse.ok) {
           throw new Error("Failed to fetch event data");
         }
 
         const eventData = await eventResponse.json();
-
-        // Find the event with the matching event_id
         const event = eventData.find((event) => event.id === parseInt(event_id));
         if (!event) {
           throw new Error("Event not found");
         }
 
-        // Set payment_info
         setPaymentInfo(event.payment_info);
 
-        // Fetch contestants data
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
           {
@@ -51,7 +44,6 @@ const Contestant = ({ event_id, token }) => {
 
         const contestants = await contestantsResponse.json();
 
-        // Fetch payment intents data
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
@@ -68,26 +60,22 @@ const Contestant = ({ event_id, token }) => {
 
         const paymentIntents = await paymentsResponse.json();
 
-        // Calculate votes for each contestant
+        // Calculate votes by matching intent_id with id of contestants
         const candidatesWithVotes = contestants.map((contestant) => {
           let totalVotes = 0;
-
-          // Find matching payment intents
+          
           paymentIntents.forEach((intent) => {
-            if (intent.intent_id.toString() === contestant.misc_kv) {
-              // Calculate votes using payment_info
-              totalVotes += parseFloat(intent.amount) / paymentInfo;
+            if (intent.intent_id.toString() === contestant.id.toString()) {
+              totalVotes += parseFloat(intent.amount) / event.payment_info;
             }
           });
 
           return {
             ...contestant,
-            // Update votes
             votes: totalVotes,
           };
         });
 
-        // Sort candidates by votes in descending order
         const sortedCandidates = candidatesWithVotes
           .sort((a, b) => b.votes - a.votes)
           .slice(0, 6);
@@ -102,7 +90,7 @@ const Contestant = ({ event_id, token }) => {
     };
 
     fetchData();
-  }, [event_id, token, paymentInfo]);
+  }, [event_id, token]);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
@@ -121,7 +109,7 @@ const Contestant = ({ event_id, token }) => {
               />
               {candidate.name}
             </div>
-            <span>{candidate.votes.toFixed(2)} Votes</span>
+            <span>{candidate.votes} Votes</span>
           </li>
         ))}
       </ul>

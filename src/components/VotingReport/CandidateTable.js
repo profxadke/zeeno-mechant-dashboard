@@ -18,7 +18,7 @@ const CandidateTable = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState(null); // Add paymentInfo state
+  const [paymentInfo, setPaymentInfo] = useState(null); // Cost per vote
   const itemsPerPage = 10;
 
   const { token } = useToken();
@@ -107,9 +107,9 @@ const CandidateTable = () => {
 
           // Find matching payment intents
           paymentIntents.forEach((intent) => {
-            if (intent.intent_id.toString() === contestant.misc_kv) {
+            if (intent.intent_id.toString() === contestant.id.toString()) {
               // Calculate votes using payment_info
-              totalVotes += parseFloat(intent.amount) / paymentInfo;
+              totalVotes += parseFloat(intent.amount) / event.payment_info;
             }
           });
 
@@ -285,7 +285,7 @@ const CandidateTable = () => {
           <thead>
             <tr>
               <th>SN</th>
-              <th>Contestant No.</th>
+              <th>Contestant No.</th> 
               <th>Avatar</th>
               <th>Name</th>
               <th>Status</th>
@@ -304,7 +304,7 @@ const CandidateTable = () => {
               paginatedData.map((candidate, index) => (
                 <tr key={candidate.id}>
                   <td>{startIndex + index + 1}</td>
-                  <td>{candidate.misc_kv}</td>
+                  <td>{candidate.misc_kv}</td> 
                   <td>
                     <img
                       src={candidate.avatar}

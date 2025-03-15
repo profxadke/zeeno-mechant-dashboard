@@ -39,11 +39,21 @@ const ViewRegistrationReport = () => {
     };
 
     fetchEvents();
-  }, [token]); 
+  }, [token]);
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null); 
+      }, 3000);
+
+      return () => clearTimeout(timer); 
+    }
+  }, [message]);
 
   const deleteEvent = async () => {
     try {
-      const response = await fetch(`https://auth.zeenopay.com/forms/${eventToDelete}/`, {
+      const response = await fetch(`https://auth.zeenopay.com/events/forms/${eventToDelete}/`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -57,7 +67,7 @@ const ViewRegistrationReport = () => {
 
       setEvents(events.filter((event) => event.id !== eventToDelete));
       setMessage({ type: 'success', text: 'Event deleted successfully' });
-      setShowDeleteConfirmation(false);
+      setShowDeleteConfirmation(false); 
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
       setShowDeleteConfirmation(false);
@@ -76,7 +86,7 @@ const ViewRegistrationReport = () => {
 
   const handleUpdateEvent = async (updatedEvent) => {
     try {
-      const response = await fetch(`https://auth.zeenopay.com/events/${updatedEvent.id}/`, {
+      const response = await fetch(`https://auth.zeenopay.com/events/forms/${updatedEvent.id}/`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -90,8 +100,8 @@ const ViewRegistrationReport = () => {
       }
 
       setEvents(events.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)));
-      handleCloseModal();
       setMessage({ type: 'success', text: '🎉 Event updated successfully' });
+      handleCloseModal(); // Close the modal after successful update
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
     }
@@ -134,16 +144,14 @@ const ViewRegistrationReport = () => {
             >
               <div style={styles.card}>
                 <div style={styles.imageWrapper}>
-                {event.img ? (
-    <img src={event.img} alt={event.title || 'Event Image'} style={styles.image} />
-  ) : (
-    <div style={styles.noImage}>No Image Available</div>
-  )}
+                  {event.img ? (
+                    <img src={event.img} alt={event.title || 'Event Image'} style={styles.image} />
+                  ) : (
+                    <div style={styles.noImage}>No Image Available</div>
+                  )}
                 </div>
                 <div style={styles.cardContent}>
-                  <h2 style={styles.cardTitle}>
-                   {event.title}
-                  </h2>
+                  <h2 style={styles.cardTitle}>{event.title}</h2>
                   <div style={styles.buttonContainer}>
                     <Link to={`/viewreport/${event.id}`} style={styles.viewButton}>
                       <MdVisibility style={styles.icon} /> View Report

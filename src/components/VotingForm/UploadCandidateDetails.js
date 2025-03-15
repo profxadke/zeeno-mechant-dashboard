@@ -5,7 +5,7 @@ import { MdArrowDropDown } from 'react-icons/md';
 const UploadCandidateDetails = () => {
   const [showModal, setShowModal] = useState(false);
   const [isBulk, setIsBulk] = useState(false);
-  const [candidates, setCandidates] = useState([{ name: "", misc_kv: "", photo: "", description: "", event_id: "" }]);
+  const [candidates, setCandidates] = useState([{ name: "", misc_kv: "", photo: "", description: "", event_id: "", shareable_link: "" }]);
   const [candidateDetails, setCandidateDetails] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState("");
@@ -43,32 +43,30 @@ const UploadCandidateDetails = () => {
   };
 
   const addMoreCandidate = () => {
-    setCandidates([...candidates, { name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent }]);
+    setCandidates([...candidates, { name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent, shareable_link: "" }]);
   };
 
   const handleImageUpload = (index, file) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-
       const updatedCandidateList = [...candidates];
-      updatedCandidateList[index].photo = reader.result;  
+      updatedCandidateList[index].photo = reader.result;
       setCandidates(updatedCandidateList);
     };
     if (file) {
-      reader.readAsDataURL(file); 
+      reader.readAsDataURL(file);
     }
   };
-  
 
   const handleSubmit = async () => {
     const candidatesData = candidates.map((candidate) => ({
       name: candidate.name,
-      misc_kv: candidate.misc_kv, 
+      misc_kv: candidate.misc_kv,
       avatar: candidate.photo,
       bio: candidate.description,
       status: "O",
-      shareable_link: "",
-      event: selectedEvent, 
+      shareable_link: candidate.shareable_link, // Include shareable_link
+      event: selectedEvent,
     }));
 
     try {
@@ -85,14 +83,15 @@ const UploadCandidateDetails = () => {
       }
 
       setCandidateDetails([...candidateDetails, ...candidates]);
-      setCandidates([{ name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent }]);
+      setCandidates([{ name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent, shareable_link: "" }]);
       closeModal();
     } catch (error) {
       console.error("Error submitting candidate details:", error);
     }
   };
+
   const addMorePhoto = () => {
-    setCandidates([...candidates, { photo: "", event_id: "" }]); 
+    setCandidates([...candidates, { photo: "", event_id: "" }]);
   };
 
   return (
@@ -113,7 +112,7 @@ const UploadCandidateDetails = () => {
         </div>
       </div>
 
-      {/*Add Candidate or Add Bulk Candidate */}
+      {/* Add Candidate or Add Bulk Candidate */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-container">
@@ -122,70 +121,75 @@ const UploadCandidateDetails = () => {
             <div className="candidate-forms-container">
               {/* Event dropdown */}
               <div className="event-dropdown">
-      <label htmlFor="event">Select Event</label>
-      <div className="dropdown-container">
-        <select
-          id="event"
-          value={selectedEvent}
-          onChange={(e) => setSelectedEvent(e.target.value)}
-        >
-          <option value="">Select Event</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title}
-            </option>
-          ))}
-        </select>
-        <MdArrowDropDown className="dropdown-icon" />
-      </div>
-    </div>
+                <label htmlFor="event">Select Event</label>
+                <div className="dropdown-container">
+                  <select
+                    id="event"
+                    value={selectedEvent}
+                    onChange={(e) => setSelectedEvent(e.target.value)}
+                  >
+                    <option value="">Select Event</option>
+                    {events.map((event) => (
+                      <option key={event.id} value={event.id}>
+                        {event.title}
+                      </option>
+                    ))}
+                  </select>
+                  <MdArrowDropDown className="dropdown-icon" />
+                </div>
+              </div>
               {candidates.map((candidate, index) => (
                 <div key={index} className="candidate-form">
                   {!isBulk ? (
                     <>
-                <label htmlFor="name">Contestant Name</label>
-
+                      <label htmlFor="name">Contestant Name</label>
                       <input
-                      id="name"
+                        id="name"
                         type="text"
                         placeholder="Enter Contestant Name"
                         value={candidate.name}
                         onChange={(e) => handleInputChange(index, "name", e.target.value)}
                       />
-                <label htmlFor="number">Contestant Number</label>
-
+                      <label htmlFor="number">Contestant Number</label>
                       <input
-                      id="number"
-
+                        id="number"
                         type="text"
                         placeholder="Enter Contestant Number"
-                        value={candidate.misc_kv}  
+                        value={candidate.misc_kv}
                         onChange={(e) => handleInputChange(index, "misc_kv", e.target.value)}
                       />
-                <label htmlFor="description">Contestant Bio</label>
+                      <label htmlFor="description">Contestant Bio</label>
                       <textarea
                         id="description"
                         placeholder="Enter Contestant Bio"
                         value={candidate.description}
                         onChange={(e) => handleInputChange(index, "description", e.target.value)}
                       />
+                      {/* Reel Link Field */}
+                      <label htmlFor="reel-link">Reel Link</label>
+                      <input
+                        id="reel-link"
+                        type="text"
+                        placeholder="Enter Reel Link"
+                        value={candidate.shareable_link}
+                        onChange={(e) => handleInputChange(index, "shareable_link", e.target.value)}
+                      />
                     </>
                   ) : null}
-                <label htmlFor="photo">Select Contestant Photo</label>
-                 <input
-  id="photo"
-  type="file"
-  accept="image/*"
-  onChange={(e) => handleImageUpload(index, e.target.files[0])}
-/>
-
+                  <label htmlFor="photo">Select Contestant Photo</label>
+                  <input
+                    id="photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(index, e.target.files[0])}
+                  />
                 </div>
               ))}
             </div>
             <div className="modal-actions">
-            {isBulk && (
-                  <button onClick={addMorePhoto}>Add Another Photo</button>
-            )}
+              {isBulk && (
+                <button onClick={addMorePhoto}>Add Another Photo</button>
+              )}
               <button onClick={handleSubmit}>Submit</button>
             </div>
           </div>
@@ -209,8 +213,16 @@ const UploadCandidateDetails = () => {
                   </div>
                   <div className="candidate-info">
                     <p className="candidate-name">{candidate.name}</p>
-                    <p className="candidate-number">{candidate.misc_kv}</p> 
+                    <p className="candidate-number">{candidate.misc_kv}</p>
                     <p className="candidate-description">{candidate.description}</p>
+                    {/* Display Reel Link */}
+                    {candidate.shareable_link && (
+                      <p className="candidate-reel-link">
+                        <a href={candidate.shareable_link} target="_blank" rel="noopener noreferrer">
+                          View Reel
+                        </a>
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -389,10 +401,19 @@ const UploadCandidateDetails = () => {
           color: #666;
         }
 
+        .candidate-reel-link a {
+          color: #028248;
+          text-decoration: none;
+        }
+
+        .candidate-reel-link a:hover {
+          text-decoration: underline;
+        }
+
         /* Responsive styles */
         @media screen and (max-width: 768px) {
           .upload-candidate-container {
-            // padding: 10px;
+            padding: 10px;
           }
 
           .section-title {
@@ -401,12 +422,12 @@ const UploadCandidateDetails = () => {
           }
 
           .upload-candidate-box {
-            // padding: 15px 10px;
+            padding: 15px 10px;
             margin-bottom: 10px;
           }
 
           .candidate-forms-container {
-            // max-height: 250px;
+            max-height: 250px;
           }
 
           .modal-actions {
@@ -421,47 +442,43 @@ const UploadCandidateDetails = () => {
         }
 
         /* Event dropdown */
+        .event-dropdown select:focus {
+          border-color: #028248;
+        }
 
-.event-dropdown select:focus {
-  border-color: #028248;
-}
+        .event-dropdown {
+          position: relative;
+        }
 
-.event-dropdown {
-  position: relative;
-}
+        .event-dropdown select {
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          padding: 10px;
+          font-size: 16px;
+          background-color: white;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          width: 380px;
+          padding-right: 30px;
+          margin-bottom: 10px;
+          outline: none;
+        }
 
-.event-dropdown select {
-  -webkit-appearance: none; 
-  -moz-appearance: none; 
-  appearance: none; 
-  padding: 10px;
-  font-size: 16px;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 380px;
-  padding-right: 30px; 
-  margin-bottom: 10px;
-  outline: none;
-}
+        .dropdown-container {
+          position: relative;
+          display: inline-block;
+        }
 
-.dropdown-container {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  color: #333;
-  pointer-events: none; 
-}
-
-
-
+        .dropdown-icon {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 18px;
+          color: #333;
+          pointer-events: none;
+        }
       `}</style>
     </div>
   );

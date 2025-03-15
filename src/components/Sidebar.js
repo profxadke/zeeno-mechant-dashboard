@@ -67,7 +67,7 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
       title: "Customize Website",
       icon: <FaRegFileAlt />,
       section: "CMS",
-      path: "/view-ticket-report",
+      path: "/customize-website",
     },
   ];
 

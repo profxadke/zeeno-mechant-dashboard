@@ -1,77 +1,141 @@
 import React, { useState, useEffect } from "react";
 import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
+import * as XLSX from "xlsx";
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
   const [voterDetails, setVoterDetails] = useState([]);
   const { token } = useToken();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isLoadingVoters, setIsLoadingVoters] = useState(false);
+  const [voterError, setVoterError] = useState(null);
 
   useEffect(() => {
     setFormData(candidate || {});
-    if (candidate && candidate.misc_kv) {
-      fetchVoterDetails(candidate.misc_kv);
+    if (candidate && candidate.id) {
+      fetchVoterDetails(candidate.id);
     }
   }, [candidate]);
 
   // Fetch voter details and calculate votes
   const fetchVoterDetails = async (miscKv) => {
+    setIsLoadingVoters(true);
+    setVoterError(null);
+
     try {
-      // Fetch payment intents data
-      const paymentsResponse = await fetch(
-        `https://auth.zeenopay.com/payments/intents/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const [paymentsResponse, eventsResponse] = await Promise.all([
+        fetch(`https://auth.zeenopay.com/payments/intents/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`https://auth.zeenopay.com/events/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      if (!paymentsResponse.ok) {
-        throw new Error("Failed to fetch payment intents data");
+      if (!paymentsResponse.ok || !eventsResponse.ok) {
+        throw new Error("Failed to fetch data");
       }
 
-      const paymentIntents = await paymentsResponse.json();
+      const [paymentIntents, events] = await Promise.all([
+        paymentsResponse.json(),
+        eventsResponse.json(),
+      ]);
 
-      // Fetch events data
-      const eventsResponse = await fetch(
-        `https://auth.zeenopay.com/events/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!eventsResponse.ok) {
-        throw new Error("Failed to fetch events data");
-      }
-
-      const events = await eventsResponse.json();
-
-      // Filter payment intents by misc_kv and intent type
       const matchedIntents = paymentIntents.filter(
         (intent) => String(intent.intent_id) === String(miscKv) && intent.intent === "V"
       );
 
       const voterList = matchedIntents.map((intent) => {
-
         const event = events.find((event) => event.id === intent.event_id);
-
         const votes = event ? Number(intent.amount) / event.payment_info : 0;
 
         return {
           name: intent.name,
           phone_no: intent.phone_no,
-          email: intent.email,
+          processor: intent.processor || "N/A",
           votes: votes,
+          transactionTime: intent.updated_at,
         };
       });
 
       setVoterDetails(voterList);
     } catch (error) {
-      console.error("Error fetching voter details:", error);
+      setVoterError(error.message);
+    } finally {
+      setIsLoadingVoters(false);
     }
+  };
+
+  // Calculate total votes
+  const totalVotes = voterDetails.reduce((sum, voter) => sum + voter.votes, 0);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentVoters = voterDetails.slice(indexOfFirstItem, indexOfLastItem);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Function to get processor color
+  const getProcessorColor = (processor) => {
+    switch (processor.toUpperCase()) {
+      case "ESEWA":
+        return "green";
+      case "PRABHUPAY":
+        return "red";
+      case "KHALTI":
+        return "purple";
+      case "FONEPAY":
+        return "red";
+      case "NQR":
+        return "skyblue";
+      case "QR":
+        return "skyblue";
+      case "STRIPE":
+        return "#5433ff";
+      case "PHONEPE":
+        return "#5F259F";
+      case "PAYU":
+        return "#FF5722";
+      default:
+        return "black";
+    }
+  };
+
+  // Function to format transaction time
+  const formatTransactionTime = (dateString) => {
+    const date = new Date(dateString);
+    const options = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    };
+    const formattedDate = new Intl.DateTimeFormat("en-US", options).format(date);
+    const day = date.getDate();
+    const ordinalSuffix =
+      day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th";
+    return formattedDate.replace(/\d+/, `${day}${ordinalSuffix}`);
+  };
+
+  // Function to export voting details to Excel
+  const exportToExcel = () => {
+    const dataForExport = voterDetails.map((voter) => ({
+      "Full Name": voter.name,
+      "Payment Method": voter.processor,
+      Votes: voter.votes,
+      "Phone No": voter.phone_no,
+      "Transaction Time": formatTransactionTime(voter.transactionTime),
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(dataForExport);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Voting Details");
+    XLSX.writeFile(workbook, "voting_details.xlsx");
   };
 
   if (!visible) return null;
@@ -86,10 +150,22 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     onUpdate(formData);
   };
 
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleModalContainerClick = (e) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <button className="modal-close-btn" onClick={onClose}>&times;</button>
+    <div className="modal-overlay" onClick={handleOverlayClick}>
+      <div className="modal-container" onClick={handleModalContainerClick}>
+        <button className="modal-close-btn" onClick={onClose}>
+          &times;
+        </button>
         <h2 className="modal-title">{title}</h2>
 
         {isEditMode ? (
@@ -140,7 +216,20 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
               />
             </div>
 
-            <button type="submit" className="modal-submit-btn">Save Changes</button>
+            <div className="form-group">
+              <label>Shareable Link:</label>
+              <input
+                type="text"
+                name="shareable_link"
+                value={formData.shareable_link || ""}
+                onChange={handleInputChange}
+                placeholder="Enter shareable link"
+              />
+            </div>
+
+            <button type="submit" className="submit-btn">
+              Save Changes
+            </button>
           </form>
         ) : (
           <div className="modal-content">
@@ -153,42 +242,126 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
                 />
               </div>
               <div className="candidate-details">
-                <p><strong>ID:</strong> {candidate.misc_kv}</p>
-                <p><strong>Name:</strong> {candidate.name}</p>
-                <p><strong>Status:</strong> {candidate.status}</p>
-                <p><strong>Total Votes:</strong> {candidate.votes}</p>
-                <p><strong>Bio:</strong> {candidate.bio || "Not provided"}</p>
+                <p>
+                  <strong>Name:</strong> {candidate.name}
+                </p>
+                <p>
+                  <strong>Contestant No:</strong> {candidate.id}
+                </p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  <span
+                    className={`status-badge 
+                      ${candidate.status === "O" ? "status-ongoing" :
+                      candidate.status === "E" ? "status-eliminated" :
+                      candidate.status === "H" ? "status-hidden" :
+                      candidate.status === "C" ? "status-closed" : ""}`}
+                  >
+                    {candidate.status === "O"
+                      ? "Ongoing"
+                      : candidate.status === "E"
+                      ? "Eliminated"
+                      : candidate.status === "H"
+                      ? "Hidden"
+                      : candidate.status === "C"
+                      ? "Closed"
+                      : "Unknown"}
+                  </span>
+                </p>
+                <p>
+                  <strong>Total Votes:</strong> {totalVotes} Votes
+                </p>
+                <p>
+                  <strong>Bio:</strong> {candidate.bio || "Not provided"}
+                </p>
               </div>
             </div>
 
-            <h3 className="modal-section-title">Voter Information</h3>
-            <div className="table-wrapper">
-              <table className="voters-table">
-                <thead>
-                  <tr>
-                    <th>Voter Name</th>
-                    <th>Phone No</th>
-                    <th>Email</th>
-                    <th>Votes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {voterDetails.length > 0 ? (
-                    voterDetails.map((voter, index) => (
-                      <tr key={index}>
-                        <td>{voter.name}</td>
-                        <td>{voter.phone_no}</td>
-                        <td>{voter.email}</td>
-                        <td>{voter.votes}</td>
-                      </tr>
-                    ))
-                  ) : (
+            {/* Voting Information Section */}
+            <div className="voting-info-header">
+              <h3 className="modal-section-title">Voting Information</h3>
+              <button
+                onClick={exportToExcel}
+                className="export-btn"
+                style={{
+                  background: "#028248",
+                  color: "#fff",
+                  border: "none",
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Export to Excel
+              </button>
+            </div>
+
+            {isLoadingVoters ? (
+              <p>Loading voter details...</p>
+            ) : voterError ? (
+              <p className="error-message">{voterError}</p>
+            ) : (
+              <div className="table-wrapper">
+                <table className="voters-table">
+                  <thead>
                     <tr>
-                      <td colSpan="4" style={{ textAlign: "center" }}>No voters available.</td>
+                      <th>Full Name</th>
+                      <th>Payment Method</th>
+                      <th>Votes</th>
+                      <th>Phone No</th>
+                      <th>Transaction Time</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {currentVoters.length > 0 ? (
+                      currentVoters.map((voter, index) => (
+                        <tr key={index}>
+                          <td>{voter.name}</td>
+                          <td>
+                            <span
+                              style={{
+                                fontWeight: "bold",
+                                color: getProcessorColor(voter.processor),
+                              }}
+                            >
+                              {voter.processor}
+                            </span>
+                          </td>
+                          <td>{voter.votes}</td>
+                          <td>{voter.phone_no}</td>
+                          <td>{formatTransactionTime(voter.transactionTime)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: "center" }}>
+                          No voters available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            <div className="pagination">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span>
+                Page {currentPage} of {Math.ceil(voterDetails.length / itemsPerPage)}
+              </span>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={indexOfLastItem >= voterDetails.length}
+              >
+                Next
+              </button>
             </div>
           </div>
         )}

@@ -233,6 +233,7 @@ const KycComponent = () => {
           font-size: 16px;
           font-weight: bold;
           text-align: left;
+          font-family: 'Poppins', sans-serif;
         }
         .kyc-setup {
           padding: 20px;
@@ -240,14 +241,17 @@ const KycComponent = () => {
           border-radius: 8px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           margin-bottom: 25px;
+          font-family: 'Poppins', sans-serif;
         }
         .kyc-form-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 15px;
+          font-family: 'Poppins', sans-serif;
         }
         .kyc-form-field {
           margin-bottom: 10px;
+          font-family: 'Poppins', sans-serif;
         }
         .kyc-input {
           width: 100%;
@@ -255,18 +259,21 @@ const KycComponent = () => {
           border: 1px solid #ddd;
           border-radius: 5px;
           font-size: 14px;
+          font-family: 'Poppins', sans-serif;
         }
         .kyc-submit-button {
-          background-color: #007bff;
+          background-color: #028248;
           color: white;
-          padding: 10px 15px;
+          padding: 10px 25px;
           border: none;
           border-radius: 5px;
           font-size: 14px;
           cursor: pointer;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 600;
         }
         .kyc-submit-button:hover {
-          background-color: #0056b3;
+          background-color:rgb(46, 153, 105);
         }
         @media (max-width: 768px) {
           .kyc-form-grid {
