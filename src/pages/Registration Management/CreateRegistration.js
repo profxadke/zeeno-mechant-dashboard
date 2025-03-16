@@ -15,7 +15,6 @@ const CreateRegistration = () => {
         .dashboard {
           padding: 20px;
           font-family: Arial, sans-serif;
-          background-color: #f9f9f9;
         }
 
         .confirm-btn {
@@ -34,6 +33,14 @@ const CreateRegistration = () => {
         .confirm-btn:hover {
           background-color:rgb(59, 177, 124);
         }
+
+        html,
+            body {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: scroll;
+            }
       `}</style>
     </DashboardLayout>
   );

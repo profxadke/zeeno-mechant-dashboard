@@ -24,6 +24,22 @@ const ViewRegistration = () => {
           padding: 20px;
           font-family: Arial, sans-serif;
         }
+           html,
+            body {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: scroll;
+            }
+            body::-webkit-scrollbar {
+            display: none;
+            }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        body {
+            -ms-overflow-style: none; 
+            scrollbar-width: none;  
+        }
       `}</style>
     </>
   );

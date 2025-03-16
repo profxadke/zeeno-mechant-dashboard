@@ -123,7 +123,7 @@ const VoteByCountry = () => {
   return (
     <div className="chart-container">
       <div className="header">
-        <h2>Vote Breakdown</h2>
+        <h3>Vote Breakdown</h3>
         <button className="export-btn">
           <FaDownload className="export-icon" /> Export
         </button>
@@ -273,8 +273,7 @@ const VoteByCountry = () => {
           }
 
           .export-btn {
-            width: 100%;
-            justify-content: center;
+            display: none;
           }
 
           .charts {
@@ -283,7 +282,7 @@ const VoteByCountry = () => {
           }
 
           .report {
-            width: 100%;
+            width: 85%;
             margin-bottom: 20px;
           }
 
@@ -299,10 +298,6 @@ const VoteByCountry = () => {
         @media (max-width: 480px) {
           .header h2 {
             font-size: 18px;
-          }
-
-          .export-btn {
-            font-size: 14px;
           }
 
           .total-votes {

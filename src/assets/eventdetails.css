@@ -378,3 +378,9 @@ textarea:focus {
 .payment-checkboxes div:hover {
   background-color: #f1f1f1;
 }
+
+@media (max-width: 480px) {
+  .event-details-container {
+    margin-top: 80px;
+  }
+}

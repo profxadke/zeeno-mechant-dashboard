@@ -113,14 +113,16 @@ const RegistrationCardComponent = () => {
 
         const totalFeesToday = todayPayments.reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
-        setFeesCollectedToday(totalFeesToday.toFixed(2));
+        // Remove decimal places
+        setFeesCollectedToday(Math.floor(totalFeesToday));
 
         // Filter payments by event_id and intent="F"
         const totalFees = data
           .filter((item) => item.event_id === eventId && item.intent === "F")
           .reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
-        setFeesCollected(totalFees.toFixed(2));
+        // Remove decimal places
+        setFeesCollected(Math.floor(totalFees));
       } catch (error) {
         console.error("Error fetching payment data:", error);
         setError("Failed to fetch payment data");
@@ -133,13 +135,13 @@ const RegistrationCardComponent = () => {
   const cards = [
     {
       image: "https://i.ibb.co/1G76zF91/IMG-2042.png",
-      title: "Total Fees Collected",
+      title: "Fees Collected",
       value: `Rs. ${feesCollected}`,
       subtextColor: "green",
     },
     {
       image: "https://i.ibb.co/m5tv29nV/IMG-2043.png",
-      title: "Fees Collected Today",
+      title: "Today's Collection",
       value: `Rs. ${feesCollectedToday}`,
       subtextColor: "red",
     },
@@ -263,8 +265,8 @@ const RegistrationCardComponent = () => {
             justify-content: space-between;
           }
           .card {
-            flex: 1 1 calc(40% - 10px);
-            max-width: calc(40% - 10px);
+            flex: 1 1 calc(50% - 10px);
+            max-width: calc(50% - 10px);
             padding: 15px;
           }
           .card-title { font-size: 12px; }
@@ -272,24 +274,53 @@ const RegistrationCardComponent = () => {
         }
 
         @media (max-width: 480px) {
+          .cards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 0 20px; 
+            margin-top: 100px;
+          }
           .card {
-            flex: 1 1 calc(40% - 10px);
-            max-width: calc(40% - 10px);
+            flex: 1 1 calc(50% - 5px);
+            max-width: calc(50% - 5px);
+            padding: 10px; 
+            padding-right: 40px; 
+            padding-left: 30px; 
           }
           .card-row {
             flex-direction: column;
             align-items: flex-start;
           }
-          .card-icon {
-            margin-bottom: 10px;
-            width: 40px;
+          .card-icon { 
+            margin-bottom: 10px; 
+            width: 40px; 
             height: 40px;
           }
           .icon-img {
-            width: 20px;
+            width: 20px; 
             height: 20px;
           }
           .card-content { align-items: flex-start; }
+        }
+
+        .card-value{
+        font-size: 14px;}
+
+        /* Styles for screens below 300px */
+        @media (max-width: 300px) {
+          .cards-container {
+            gap: 5px; 
+            padding: 0 5px; 
+          }
+          .card {
+            flex: 1 1 calc(50% - 2.5px);
+            max-width: calc(50% - 2.5px); 
+            padding: 8px; 
+          }
+          .card-title {
+            white-space: pre-line;
+          }
         }
       `}</style>
     </div>

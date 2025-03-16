@@ -48,12 +48,12 @@ const DashboardCard = () => {
   }, []);
 
   const cards = [
-    { image: "https://i.ibb.co/gFcnBhR0/IMG-2035.png", title: "Total Event Organized", value: data.totalEvents },
+    { image: "https://i.ibb.co/gFcnBhR0/IMG-2035.png", title: "Event Organized", value: data.totalEvents },
     { image: "https://i.ibb.co/WNMZ72j7/IMG-2037.png", title: "Completed Events", value: data.completedEvents },
     { image: "https://i.ibb.co/bjhM75JQ/IMG-2038.png", title: "Ongoing Event", value: data.ongoingEvents },
-    { image: "https://i.ibb.co/Zz89ZtHD/IMG-2044.png", title: "Total Registration Events", value: data.registrationEvents },
-    { image: "https://i.ibb.co/NdrtMFcC/IMG-2034.png", title: "Total Voting Events", value: data.votingEvents },
-    { image: "https://i.ibb.co/6JDmR2q4/IMG-2036.png", title: "Total Ticketing Events", value: data.ticketingEvents },
+    { image: "https://i.ibb.co/Zz89ZtHD/IMG-2044.png", title: "Registration Events", value: data.registrationEvents },
+    { image: "https://i.ibb.co/NdrtMFcC/IMG-2034.png", title: "Voting Events", value: data.votingEvents },
+    { image: "https://i.ibb.co/6JDmR2q4/IMG-2036.png", title: "Ticketing Events", value: data.ticketingEvents },
   ];
 
   return (
@@ -78,7 +78,7 @@ const DashboardCard = () => {
           display: flex;
           flex-wrap: wrap;
           gap: 20px;
-          justify-content: flex-start; /* Align cards to the start */
+          justify-content: flex-start; 
           margin: 0px 0;
           animation: fadeIn 0.6s ease-in-out;
         }
@@ -95,7 +95,7 @@ const DashboardCard = () => {
           flex-direction: column;
           justify-content: space-between;
           width: 100%;
-          max-width: 320px; /* Default max-width for desktop */
+          max-width: 320px; 
           padding: 20px;
           border: 1px solid #e5e5e5;
           border-radius: 8px;
@@ -143,6 +143,7 @@ const DashboardCard = () => {
           font-weight: 600;
           color: #4f4f4f;
           margin: 0;
+          line-height: 1.4;
         }
 
         .card-value {
@@ -176,10 +177,19 @@ const DashboardCard = () => {
         }
 
         @media (max-width: 480px) {
+          .cards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            // gap: 10px;
+            padding: 0 20px; 
+            margin-top: 100px;
+          }
           .card {
-            flex: 1 1 calc(40% - 10px); 
-            max-width: calc(50% - 10px);
-            // padding: 10px; 
+            flex: 1 1 calc(50% - 5px);
+            max-width: calc(50% - 5px);
+            padding: 10px; 
+            padding-right: 40px; 
+            padding-left: 30px; 
           }
           .card-row {
             flex-direction: column;
@@ -195,6 +205,22 @@ const DashboardCard = () => {
             height: 20px;
           }
           .card-content { align-items: flex-start; }
+        }
+
+        /* Styles for screens below 300px */
+        @media (max-width: 300px) {
+          .cards-container {
+            gap: 5px; 
+            padding: 0 5px; 
+          }
+          .card {
+            flex: 1 1 calc(50% - 2.5px);
+            max-width: calc(50% - 2.5px); 
+            padding: 8px; 
+          }
+          .card-title {
+            white-space: pre-line;
+          }
         }
       `}</style>
     </div>

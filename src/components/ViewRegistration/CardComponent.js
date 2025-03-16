@@ -217,25 +217,51 @@ const CardComponent = () => {
           .card-value { font-size: 20px; }
         }
 
-        @media (max-width: 480px) {
+         @media (max-width: 480px) {
+          .cards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            // gap: 10px;
+            padding: 0 20px; 
+            margin-top: 100px;
+          }
           .card {
-            flex: 1 1 calc(40% - 10px);
-            max-width: calc(40% - 10px);
+            flex: 1 1 calc(50% - 5px);
+            max-width: calc(50% - 5px);
+            padding: 10px; 
+            padding-right: 40px; 
+            padding-left: 30px; 
           }
           .card-row {
             flex-direction: column;
             align-items: flex-start;
           }
-          .card-icon {
-            margin-bottom: 10px;
-            width: 40px;
+          .card-icon { 
+            margin-bottom: 10px; 
+            width: 40px; 
             height: 40px;
           }
           .icon-img {
-            width: 20px;
+            width: 20px; 
             height: 20px;
           }
           .card-content { align-items: flex-start; }
+        }
+
+        /* Styles for screens below 300px */
+        @media (max-width: 300px) {
+          .cards-container {
+            gap: 5px; 
+            padding: 0 5px; 
+          }
+          .card {
+            flex: 1 1 calc(50% - 2.5px);
+            max-width: calc(50% - 2.5px); 
+            padding: 8px; 
+          }
+          .card-title {
+            white-space: pre-line;
+          }
         }
       `}</style>
     </div>

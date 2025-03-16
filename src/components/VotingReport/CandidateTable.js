@@ -18,7 +18,7 @@ const CandidateTable = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [paymentInfo, setPaymentInfo] = useState(null); // Cost per vote
+  const [paymentInfo, setPaymentInfo] = useState(null); 
   const itemsPerPage = 10;
 
   const { token } = useToken();

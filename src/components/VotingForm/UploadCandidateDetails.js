@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useToken } from "../../context/TokenContext";
 import { MdArrowDropDown } from 'react-icons/md';
 
@@ -10,6 +10,7 @@ const UploadCandidateDetails = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState("");
   const { token } = useToken();
+  const modalRef = useRef(null);
 
   // Fetch event list on component mount
   useEffect(() => {
@@ -28,6 +29,25 @@ const UploadCandidateDetails = () => {
     };
     fetchEvents();
   }, [token]);
+
+  // Close modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        closeModal();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showModal]);
 
   const openModal = (bulk = false) => {
     setIsBulk(bulk);
@@ -65,7 +85,7 @@ const UploadCandidateDetails = () => {
       avatar: candidate.photo,
       bio: candidate.description,
       status: "O",
-      shareable_link: candidate.shareable_link, // Include shareable_link
+      shareable_link: candidate.shareable_link,
       event: selectedEvent,
     }));
 
@@ -115,7 +135,7 @@ const UploadCandidateDetails = () => {
       {/* Add Candidate or Add Bulk Candidate */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-container">
+          <div className="modal-container" ref={modalRef}>
             <span className="close-icon" onClick={closeModal}>&times;</span>
             <h3>{isBulk ? "Add Bulk Candidate Details" : "Add Candidate Details"}</h3>
             <div className="candidate-forms-container">

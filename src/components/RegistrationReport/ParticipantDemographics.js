@@ -130,7 +130,7 @@ const ParticipantDemographics = () => {
   return (
     <div className="participant-demographics-container">
       <div className="header">
-        <h2 className="title-demo">Participant Demographics</h2>
+        <h3 className="title-demo">Participant Demographics</h3>
         <button className="export-button">Export</button>
       </div>
 
@@ -153,7 +153,13 @@ const ParticipantDemographics = () => {
               </span>
             </>
           ) : (
-            <div className="no-data-message">No Demographics Data Available</div>
+            <div className="no-data-message">
+              <div className="no-data-content">
+                <img src="https://i.ibb.co/DPKwH0PD/oops-1.png" alt="No Data" className="no-data-image" />
+                <p className="no-data-text">No Demographics Data Available</p>
+                <p className="no-data-subtext">Please check back later or ensure data is being collected.</p>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -205,7 +211,10 @@ const ParticipantDemographics = () => {
         .age-distribution {
           background-color: #007bff;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          padding: 20px;
+          padding-left: 20px;
+          padding-right: 20px;
+          padding-bottom: 30px;
+
           border-radius: 8px;
           width: 48%;
         }
@@ -237,11 +246,40 @@ const ParticipantDemographics = () => {
           justify-content: center;
           align-items: center;
           height: 100%;
-          font-size: 16px;
-          color: #fff;
-          font-weight: bold;
           font-family: 'Poppins', sans-serif;
-         
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 20px;
+          width: 100%;
+          box-sizing: border-box;
+          color: #fff;
+        }
+
+        .no-data-content {
+          text-align: center;
+          max-width: 100%;
+          padding: 10px;
+        }
+
+        .no-data-image {
+          width: 100px;
+          height: 100px;
+          margin-bottom: 16px;
+        }
+
+        .no-data-text {
+          font-size: 18px;
+          color: #fff; /* White color */
+          font-weight: bold;
+          margin: 0;
+        }
+
+        .no-data-subtext {
+          font-size: 14px;
+          color: #fff; /* White color */
+          margin: 8px 0 0;
+          word-wrap: break-word;
+          max-width: 100%;
         }
 
         /* Responsive styles */
@@ -251,7 +289,7 @@ const ParticipantDemographics = () => {
           }
           
           .participant-demographics-container {
-            // padding: 0 15px;
+            padding: 20px;
           }
 
           .header {
@@ -261,7 +299,7 @@ const ParticipantDemographics = () => {
           }
 
           .title-demo {
-            font-size: 14px; 
+            font-size: 16px; 
           }
 
           .export-button {
@@ -292,11 +330,20 @@ const ParticipantDemographics = () => {
           .age-distribution .apexcharts-canvas {
             height: 150px !important;
           }
+
+          .no-data-text {
+            font-size: 16px;
+          }
+
+          .no-data-subtext {
+            font-size: 12px;
+          }
         }
 
         @media (max-width: 480px) {
           .participant-demographics-container {
-            // padding: 0 10px;
+            padding: 20px;
+            margin-top: 20px;
           }
 
           .regis {
@@ -323,6 +370,14 @@ const ParticipantDemographics = () => {
 
           .age-distribution p,
           .age-distribution span {
+            font-size: 10px;
+          }
+
+          .no-data-text {
+            font-size: 14px;
+          }
+
+          .no-data-subtext {
             font-size: 10px;
           }
         }

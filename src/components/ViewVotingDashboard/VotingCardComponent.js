@@ -275,6 +275,7 @@ const VotingCardComponent = () => {
         @media (max-width: 768px) {
           .cards-container {
             justify-content: space-between;
+            margin-top: 70px;
           }
           .card {
             flex: 1 1 calc(40% - 10px);

@@ -20,6 +20,23 @@ const ViewVotingReport = () => {
           font-family: Arial, sans-serif;
           {/* background-color: #f9f9f9; */}
         }
+
+         html,
+            body {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: scroll;
+            }
+            body::-webkit-scrollbar {
+            display: none;
+            }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
       `}</style>
     </DashboardLayout>
   );

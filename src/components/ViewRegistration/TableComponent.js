@@ -149,7 +149,7 @@ const TableComponent = () => {
     }
 
     setFilteredData(result);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1); 
   };
 
   // Handle search changes
@@ -291,6 +291,9 @@ const TableComponent = () => {
 
   return (
     <div className="table-container">
+      {/* Header with Title */}
+      <h3 className="header-title">Registration Responses</h3>
+
       {/* Header with Search, Export, and Filter */}
       <div className="table-header">
         <div className="search-bar">
@@ -348,7 +351,7 @@ const TableComponent = () => {
                 <tr>
                   <th>Profile</th>
                   <th>Full Name</th>
-                  <th className="email-column">Email Address</th> {/* Add class here */}
+                  <th className="email-column">Email Address</th>
                   <th>Phone Number</th>
                   <th>Age</th>
                   <th>Location</th>
@@ -388,7 +391,7 @@ const TableComponent = () => {
                       )}
                     </td>
                     <td>{row.name}</td>
-                    <td className="email-column">{row.email}</td> {/* Add class here */}
+                    <td className="email-column">{row.email}</td>
                     <td>{row.phone}</td>
                     <td>{row.age}</td>
                     <td>{row.location}</td>
@@ -455,6 +458,13 @@ const TableComponent = () => {
       <style>{`
         .table-container {
           font-family: 'Poppins', sans-serif;
+        }
+
+        .header-title {
+          text-align: left;
+          font-size: 18px;
+          margin-bottom: 20px;
+          color: #333;
         }
 
         .loading-container, .error-container {
@@ -551,28 +561,33 @@ const TableComponent = () => {
 
         /* Mobile-specific styles */
         @media (max-width: 768px) {
+
+         .table-container {
+          padding: 20px;
+        }
+
           .table-header {
-            flex-direction: column; /* Stack items vertically */
-            gap: 10px; /* Add space between items */
+            flex-direction: column; 
+            gap: 10px; 
           }
 
           .filter-dropdowns {
             display: flex;
             flex-direction: row;
-            gap: 10px; /* Add space between dropdowns */
+            gap: 10px;
           }
 
           .filter-dropdown {
-            width: 170px;
+            width: 155px;
           }
 
           .search-bar {
-            width: 100%; /* Make search bar full width */
-            margin-top: 10px; /* Add space above the search bar */
+            width: 100%; 
+            margin-top: 10px;
           }
 
           .search-bar input {
-            width: 100%; /* Make search input full width */
+            width: 100%; 
           }
 
           /* Hide email column in responsive mode */

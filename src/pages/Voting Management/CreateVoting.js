@@ -29,26 +29,21 @@ const CreateVoting = () => {
           // background-color: #f9f9f9;
         }
 
-        .confirm-btn {
-          display: block;
-          margin: 20px 0px;
-          align-items: right;
-          padding: 10px 35px;
-          background-color: #007bff;
-          color: #fff;
-          border: none;
-          border-radius: 5px;
-          font-size: 16px;
-          cursor: pointer;
-        }
+        html,
+            body {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: scroll;
+            }
+            body::-webkit-scrollbar {
+            display: none;
+            }
 
-        .confirm-btn:hover {
-          background-color: #0056b3;
-        }
-
-        .confirm-btn:disabled {
-          background-color: #6c757d;
-          cursor: not-allowed;
+        /* Hide scrollbar for IE, Edge and Firefox */
+        body {
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
         }
       `}</style>
     </DashboardLayout>

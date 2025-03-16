@@ -1,3 +1,5 @@
+
+
 .dashboard-container {
   display: flex;
   flex-wrap: wrap;
@@ -5,7 +7,6 @@
   padding: 20px;
 }
 
-/* Calendar Section */
 .calendar-section {
   flex: 1;
   max-width: 400px;
@@ -19,7 +20,6 @@
   padding: 20px;
 }
 
-/* Ongoing Events Section */
 .ongoing-events-section {
   flex: 2;
   max-width: 800px;
@@ -32,7 +32,6 @@
   gap: 20px;
 }
 
-/* Individual Event Card */
 .ongoing-card {
   background: #fff;
   border-radius: 12px;
@@ -49,7 +48,6 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Event Image */
 .events-image {
   width: 80px;
   height: 80px;
@@ -57,7 +55,6 @@
   object-fit: cover;
 }
 
-/* Event Details */
 .event-details {
   flex: 1;
   display: flex;
@@ -78,7 +75,6 @@
   color: #666;
 }
 
-/* View Event Button */
 .view-event-button {
   background: #028248;
   color: #fff;
@@ -101,7 +97,6 @@
   font-size: 16px;
 }
 
-/* Pagination Controls */
 .pagination-controls {
   display: flex;
   gap: 10px;
@@ -121,7 +116,6 @@
   cursor: not-allowed;
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .dashboard-container {
     flex-direction: column;
@@ -136,46 +130,67 @@
 
 @media (max-width: 768px) {
   .calendar-section {
-    display: none; /* Hide the calendar on mobile */
+    display: none;
   }
 
   .ongoing-card {
-    flex-direction: row; /* Ensure the card layout remains the same as desktop */
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
   }
 
   .events-image {
-    width: 80px; /* Maintain the image size */
-    height: 80px;
+    width: 60px;
+    height: 60px;
   }
 
   .view-event-button {
-    width: auto; /* Reset the button width */
-    justify-content: flex-start;
+    width: 100%;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 12px;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-container {
     padding: 10px;
+    margin-bottom: 30px;
   }
 
   .calendar-container,
   .ongoing-card {
-    padding: 15px;
+    padding: 10px;
   }
 
   .event-details h3 {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .event-details .category {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .view-event-button {
-    padding: 8px 15px;
-    font-size: 13px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-top: -30px;
+  }
+
+  .events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .pagination-controls {
+    margin-left: auto;
+    gap: 5px;
+  }
+
+  .pagination-controls button {
+    font-size: 1.2rem;
+    padding: 3px;
   }
 }

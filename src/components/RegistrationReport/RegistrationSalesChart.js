@@ -4,7 +4,7 @@ import { useToken } from "../../context/TokenContext";
 
 const RegistrationSalesChart = () => {
   const [registrationData, setRegistrationData] = useState([]);
-  const [paymentData, setPaymentData] = useState({}); // Store payment amounts by processor
+  const [paymentData, setPaymentData] = useState({});
   const [eventId, setEventId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,9 +46,7 @@ const RegistrationSalesChart = () => {
       const data = await response.json();
       console.log("Registration API Response:", data);
 
-      // Filter data for matching form ID
       const filteredData = data.filter((item) => item.form === eventId);
-
       setRegistrationData(filteredData);
       setLoading(false);
     } catch (error) {
@@ -58,7 +56,7 @@ const RegistrationSalesChart = () => {
     }
   };
 
-  // Fetch payment data from API and filter for matching event_id and intent="F"
+  // Fetch payment data from API
   const fetchPaymentData = async () => {
     try {
       const response = await fetch("https://auth.zeenopay.com/payments/intents/", {
@@ -76,20 +74,17 @@ const RegistrationSalesChart = () => {
       const data = await response.json();
       console.log("Payment API Response (Raw):", data);
 
-      // Filter payments with matching event_id and intent="F"
       const filteredPayments = data.filter(
         (payment) => payment.event_id === eventId && payment.intent === "F"
       );
 
       console.log("Filtered Payments (intent=F):", filteredPayments);
 
-      // Group payment amounts by processor
       const paymentAmounts = {};
       filteredPayments.forEach((payment) => {
         const processor = payment.processor;
         const amount = parseFloat(payment.amount) || 0;
 
-        // Combine international processors into "International"
         if (["PHONEPE", "PAYU", "STRIPE"].includes(processor)) {
           paymentAmounts["International"] = (paymentAmounts["International"] || 0) + amount;
         } else {
@@ -98,7 +93,6 @@ const RegistrationSalesChart = () => {
       });
 
       console.log("Grouped Payment Amounts:", paymentAmounts);
-
       setPaymentData(paymentAmounts);
     } catch (error) {
       console.error("Error fetching payment data:", error);
@@ -154,21 +148,36 @@ const RegistrationSalesChart = () => {
   const paymentProcessors = Object.keys(paymentData);
   const pieSeries = paymentProcessors.map((processor) => paymentData[processor]);
 
-  console.log("Pie Chart Data:", { paymentProcessors, pieSeries });
+  // Pie chart colors (same as in the pie chart)
+  const pieColors = ["#028248", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"];
 
   // Pie chart options
   const pieOptions = {
     chart: { type: "pie", height: 350 },
     labels: paymentProcessors,
-    colors: ["#028248", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"],
-    legend: { position: "bottom" },
+    colors: pieColors,
+    legend: {
+      position: "bottom",
+      showForMobile: false, // Custom property to control legend visibility
+    },
     dataLabels: {
       enabled: true,
       formatter: function (val, { seriesIndex, w }) {
-        // `val` is the percentage, but we want to show the actual amount
-        const amount = pieSeries[seriesIndex]; // Get the amount from the pieSeries array
-        return `Rs. ${Math.floor(amount)}`; // Display the amount
+        const amount = pieSeries[seriesIndex];
+        return `Rs. ${Math.floor(amount)}`;
       },
+    },
+  };
+
+  // Function to check if the screen is mobile
+  const isMobile = () => window.innerWidth <= 768;
+
+  // Adjust pie chart options for mobile
+  const adjustedPieOptions = {
+    ...pieOptions,
+    legend: {
+      ...pieOptions.legend,
+      show: !isMobile(), // Hide legend in mobile view
     },
   };
 
@@ -183,7 +192,7 @@ const RegistrationSalesChart = () => {
   return (
     <div className="chart-container">
       <div className="header">
-        <h2>Registration & Sales Chart</h2>
+        <h2 className="text-demoo">Registration & Sales Chart</h2>
         <button className="export-btn">Export</button>
       </div>
 
@@ -203,7 +212,7 @@ const RegistrationSalesChart = () => {
           <h3 className="regis">Sales Report</h3>
           {paymentProcessors.length > 0 ? (
             <>
-              <Chart options={pieOptions} series={pieSeries} type="pie" height={350} />
+              <Chart options={adjustedPieOptions} series={pieSeries} type="pie" height={350} />
               <div className="total-sales">
                 Total Sales: Rs. {Math.floor(pieSeries.reduce((sum, amount) => sum + amount, 0))}
               </div>
@@ -213,6 +222,20 @@ const RegistrationSalesChart = () => {
           )}
         </div>
       </div>
+
+      {/* Payment Processor Labels for Mobile */}
+      {paymentProcessors.length > 0 && (
+        <div className="mobile-payment-labels">
+          <h4>Payment Processors</h4>
+          <ul>
+            {paymentProcessors.map((processor, index) => (
+              <li key={processor} style={{ color: pieColors[index % pieColors.length] }}>
+                {processor}: Rs. {Math.floor(paymentData[processor])}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <style jsx>{`
         .chart-container {
@@ -291,6 +314,16 @@ const RegistrationSalesChart = () => {
 
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
+         .text-demoo h2{
+            font-size: 14px;
+            }
+          .chart-container {
+            padding: 20px;
+            width: 80%;
+            margin-top: -60px;
+
+          }
+
           .charts {
             flex-direction: column;
           }
@@ -307,6 +340,39 @@ const RegistrationSalesChart = () => {
           .export-btn {
             padding: 6px 12px;
             font-size: 12px;
+          }
+
+          .mobile-payment-labels {
+            width: 100%;
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+          }
+
+          .mobile-payment-labels h4 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+          }
+
+          .mobile-payment-labels ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+          }
+
+          .mobile-payment-labels li {
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+           
+        }
+
+        @media (min-width: 769px) {
+          .mobile-payment-labels {
+            display: none;
           }
         }
       `}</style>

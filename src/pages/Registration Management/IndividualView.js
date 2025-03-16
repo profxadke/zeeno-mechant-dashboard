@@ -13,11 +13,15 @@ const ViewRegistration = () => {
 
       {/* styled-jsx */}
       <style jsx>{`
-        .dashboard {
-          padding: 20px;
-          font-family: Arial, sans-serif;
-          {/* background-color: #f9f9f9; */}
-        }
+       html,
+            body {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow: scroll;
+            }
+
+           
       `}</style>
     </DashboardLayout>
   );
