@@ -4,8 +4,8 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { useToken } from "../../context/TokenContext";
 import Modal from '../../components/modal';
 import { MdDelete } from 'react-icons/md';
-import { MdEdit } from 'react-icons/md';  
-import { MdVisibility } from 'react-icons/md'; 
+import { MdEdit } from 'react-icons/md';
+import { MdVisibility } from 'react-icons/md';
 
 const ViewReport = () => {
   const [events, setEvents] = useState([]);
@@ -15,7 +15,8 @@ const ViewReport = () => {
   const [showModal, setShowModal] = useState(false);
   const [message, setMessage] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState(null); 
+  const [eventToDelete, setEventToDelete] = useState(null);
+  const [newImage, setNewImage] = useState(null); // State for the new image file
   const { token } = useToken();
 
   useEffect(() => {
@@ -53,39 +54,64 @@ const ViewReport = () => {
 
       setEvents(events.filter((event) => event.id !== eventToDelete));
       setMessage({ type: 'success', text: 'Event deleted successfully' });
-      setShowDeleteConfirmation(false); 
+      setShowDeleteConfirmation(false); // Close the delete confirmation popup
+      setShowModal(false); // Close the edit event popup
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
-      setShowDeleteConfirmation(false); 
+      setShowDeleteConfirmation(false); // Close the delete confirmation popup even if there's an error
     }
   };
 
   const handleEditClick = (event) => {
     setSelectedEvent(event);
     setShowModal(true);
+    setNewImage(null); // Reset the new image state when opening the modal
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedEvent(null);
+    setNewImage(null); // Reset the new image state when closing the modal
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result;
+      setNewImage(base64); // Set the new image as a base64 string
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleUpdateEvent = async (updatedEvent) => {
     try {
+      const formData = new FormData();
+      formData.append('title', updatedEvent.title);
+      formData.append('desc', updatedEvent.desc);
+      formData.append('finaldate', updatedEvent.finaldate);
+      formData.append('org', updatedEvent.org); // Include the org field
+      if (newImage) {
+        formData.append('img', newImage); // Append the new image file if it exists
+      }
+
       const response = await fetch(`https://auth.zeenopay.com/events/${updatedEvent.id}/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedEvent),
+        body: formData, // Use FormData for file upload
       });
 
       if (!response.ok) {
         throw new Error('Failed to update event');
       }
 
-      setEvents(events.map((event) => event.id === updatedEvent.id ? updatedEvent : event));
+      const data = await response.json();
+      setEvents(events.map((event) => event.id === updatedEvent.id ? data : event));
       handleCloseModal();
       setMessage({ type: 'success', text: '🎉 Event updated successfully' });
     } catch (err) {
@@ -124,7 +150,7 @@ const ViewReport = () => {
             style={styles.cardLink}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-           >
+          >
             <div style={styles.card}>
               <div style={styles.imageWrapper}>
                 {event.img ? (
@@ -156,64 +182,89 @@ const ViewReport = () => {
       {/* Modal for editing event */}
       {showModal && selectedEvent && (
         <Modal onClose={handleCloseModal}>
-          <h2>Edit Event</h2>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleUpdateEvent(selectedEvent);
-          }}>
-            <div>
-              <label>Title</label>
-              <input
-                type="text"
-                value={selectedEvent.title}
-                onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
-              />
-            </div>
-            <div>
-              <label>Description</label>
-              <textarea
-                value={selectedEvent.desc}
-                onChange={(e) => setSelectedEvent({ ...selectedEvent, desc: e.target.value })}
-              />
-            </div>
-            <div>
-              <label>Image URL</label>
-              <input
-                type="text"
-                value={selectedEvent.img}
-                onChange={(e) => setSelectedEvent({ ...selectedEvent, img: e.target.value })}
-              />
-            </div>
-            <div>
-              <label>Final Date</label>
-              <input
-                type="datetime-local"
-                value={selectedEvent.finaldate}
-                onChange={(e) => setSelectedEvent({ ...selectedEvent, finaldate: e.target.value })}
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
-              <button type="submit" style={styles.updateButton}>Update Event</button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEventToDelete(selectedEvent.id);
-                  setShowDeleteConfirmation(true);
-                }}
-                style={styles.deleteButton}
-              >
-                Delete Event
-              </button>
-            </div>
-          </form>
+          <div style={styles.modalContent}>
+            <h2>Edit Event</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdateEvent(selectedEvent);
+            }}>
+              <div style={styles.formGroup}>
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={selectedEvent.title}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
+                  style={styles.input}
+                />
+              </div>
+              <div style={styles.formGroup}>
+                <label>Description</label>
+                <textarea
+                  value={selectedEvent.desc}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, desc: e.target.value })}
+                  style={styles.textarea}
+                />
+              </div>
+              <div style={styles.formGroup}>
+                <label>Organiser</label>
+                <input
+                  type="text"
+                  value={selectedEvent.org}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, org: e.target.value })}
+                  style={styles.input}
+                />
+              </div>
+              <div style={styles.formGroup}>
+                <label>Current Image</label>
+                {selectedEvent.img ? (
+                  <img
+                    src={selectedEvent.img}
+                    alt="Current Event Image"
+                    style={styles.currentImage}
+                  />
+                ) : (
+                  <p>No image available</p>
+                )}
+                <label>Update Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload} // Handle image upload
+                  style={styles.fileInput}
+                />
+              </div>
+              <div style={styles.formGroup}>
+                <label>Final Date</label>
+                <input
+                  type="datetime-local"
+                  value={selectedEvent.finaldate}
+                  onChange={(e) => setSelectedEvent({ ...selectedEvent, finaldate: e.target.value })}
+                  style={styles.input}
+                />
+              </div>
+              <div style={styles.buttonGroup}>
+                <button type="submit" style={styles.updateButton}>Update Event</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEventToDelete(selectedEvent.id); // Set the event to delete
+                    setShowDeleteConfirmation(true); // Open the delete confirmation popup
+                  }}
+                  style={styles.deleteButton}
+                >
+                  Delete Event
+                </button>
+              </div>
+            </form>
+          </div>
         </Modal>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
         <Modal onClose={() => setShowDeleteConfirmation(false)}>
-          <h2>Are you sure you want to delete this event?</h2>
-          <div>
+          <h4>Are you sure you want to delete this event?</h4>
+          <div style={styles.confirmationButtons}>
             <button onClick={deleteEvent} style={styles.confirmDeleteButton}>Yes, Delete</button>
             <button onClick={() => setShowDeleteConfirmation(false)} style={styles.cancelDeleteButton}>Cancel</button>
           </div>
@@ -356,30 +407,84 @@ const styles = {
     fontSize: '14px',
     fontWeight: '600',
   },
+  // Responsive styles for the edit popup
+  modalContent: {
+    maxHeight: '80vh', // Set a maximum height for the modal content
+    overflowY: 'auto', // Enable vertical scrolling
+    padding: '20px',
+  },
+  formGroup: {
+    marginBottom: '15px',
+  },
+  input: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
+  },
+  textarea: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
+    minHeight: '100px',
+  },
+  currentImage: {
+    width: '100%',
+    height: 'auto',
+    marginBottom: '10px',
+  },
+  fileInput: {
+    width: '100%',
+    padding: '10px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
+  },
+  buttonGroup: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '20px',
+  },
+  confirmationButtons: {
+    display: 'flex',
+    gap: '10px',
+    justifyContent: 'left',
+    marginTop: '20px',
+  },
+  // Media queries for responsiveness
+  '@media (max-width: 768px)': {
+    card: {
+      width: '100%',
+      maxWidth: '300px',
+    },
+    input: {
+      fontSize: '12px',
+    },
+    textarea: {
+      fontSize: '12px',
+    },
+    fileInput: {
+      fontSize: '12px',
+    },
+  },
+  '@media (max-width: 480px)': {
+    card: {
+      width: '100%',
+      maxWidth: '250px',
+    },
+    input: {
+      fontSize: '10px',
+    },
+    textarea: {
+      fontSize: '10px',
+    },
+    fileInput: {
+      fontSize: '10px',
+    },
+  },
 };
-
-// Media Queries for responsiveness
-const mediaQueries = `
-  @media (max-width: 768px) {
-    .card {
-      width: 100%;
-      max-width: 200px;
-    }
-    .cardLink {
-      margin: 10px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .card {
-      width: 100%;
-      max-width: 290px;
-      margin: 20px;
-    }
-    .cardLink {
-      margin: 5px;
-    }
-  }
-`;
 
 export default ViewReport;

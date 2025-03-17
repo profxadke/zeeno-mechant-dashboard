@@ -12,6 +12,7 @@ const Navbar = ({ toggleSidebar }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [username, setUsername] = useState("");
+  const [showTooltip, setShowTooltip] = useState(false); // State to manage tooltip visibility
   const location = useLocation();
   const { updateToken } = useToken();
   const navigate = useNavigate();
@@ -86,15 +87,14 @@ const Navbar = ({ toggleSidebar }) => {
     }, 2000);
   };
 
+  const handleVerifiedClick = () => {
+    setShowTooltip(!showTooltip); // Toggle tooltip visibility
+  };
+
   return (
     <nav className="navbar">
       {/* Image for Mobile View */}
       <div className="navbar-mobile-image">
-        {/* <img
-          src="https://i.ibb.co/HdffZky/zeenopay-logo-removebg-preview.png"
-          alt="Navbar Logo"
-          className="mobile-logo"
-        /> */}
         <span className="merchant-text">&nbsp; Merchant Dashboard</span>
       </div>
       {/* Left Section */}
@@ -130,11 +130,34 @@ const Navbar = ({ toggleSidebar }) => {
               className="profile-image"
             />
           </Link>
+         
           <Link to="/profile">
             <span className="user-greeting">
               Hello, <span className="user-name">{username}</span>
             </span>
           </Link>
+          <div className="verified-tick" onClick={handleVerifiedClick}>
+            <img
+              src="https://i.ibb.co/JwfxtgPv/IMG-2703.png" // Replace with your verified tick image path
+              alt="Verified"
+              className="verified-tick-image"
+            />
+            {showTooltip && (
+              <div className="tooltip">
+                <div className="tooltip-header">
+                  <img
+                    src="https://i.ibb.co/JwfxtgPv/IMG-2703.png" // Verified tick icon
+                    alt="Verified"
+                    className="tooltip-icon"
+                  />
+                  <span className="tooltip-title">Verified</span>
+                </div>
+                <div className="tooltip-body">
+                  You are verified as a GOLD member of zeenoPay Merchant Account. Our support team is available for you 24/7. :)
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <div className="notification-container">
           <FaBell style={{ fontSize: "20px" }} className="notification-icon" />
@@ -229,6 +252,50 @@ const Navbar = ({ toggleSidebar }) => {
           width: 40px;
           height: 40px;
           border-radius: 50%;
+        }
+        .verified-tick {
+          position: relative;
+          cursor: pointer;
+        }
+        .verified-tick-image {
+          width: 16px;
+          height: 16px;
+          margin-top: 7px;
+        }
+        .tooltip {
+          position: absolute;
+          top: 30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #fff;
+          color: #000;
+          padding: 12px;
+          border-radius: 8px;
+          font-size: 14px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          width: 220px;
+          z-index: 1000;
+          border: 1px solid #e0e0e0;
+        }
+        .tooltip-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        .tooltip-icon {
+          width: 16px;
+          height: 16px;
+        }
+        .tooltip-title {
+          font-weight: 600;
+          font-size: 14px;
+          color: #000;
+        }
+        .tooltip-body {
+          font-size: 12px;
+          color: #555;
+          line-height: 1.4;
         }
         .hamburger-menu {
           display: none;

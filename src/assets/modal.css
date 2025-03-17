@@ -16,6 +16,53 @@
   font-family: 'Poppins', sans-serif;
 }
 
+/* Custom Dropdown Styling */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.custom-dropdown:hover {
+  border-color: #5433ff;
+}
+
+.custom-dropdown select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  appearance: none; /* Remove default arrow */
+  cursor: pointer;
+}
+
+.custom-dropdown .dropdown-arrow {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #5433ff;
+  font-size: 12px;
+}
+
+/* Styling for options */
+.custom-dropdown select option {
+  padding: 10px;
+  background-color: #fff;
+  color: #333;
+}
+
+.custom-dropdown select option:hover {
+  background-color: #f0f0f0;
+}
+
 /* Modal Container */
 .modal-container {
   background: #fff;
@@ -54,7 +101,9 @@
   text-align: center;
 }
 
+/* Candidate Avatar Styling */
 .candidate-avatar {
+  position: relative;
   width: 120px;
   height: 120px;
   border-radius: 15px;
@@ -62,6 +111,17 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border: 3px solid #fff;
   margin: 0 auto 20px;
+}
+
+.candidate-avatar-edit {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 3px solid #fff;
+  margin: 0 0 20px;
 }
 
 .candidate-photo {
@@ -74,6 +134,30 @@
 
 .candidate-avatar:hover .candidate-photo {
   transform: scale(1.1);
+}
+
+.edit-avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.candidate-avatar:hover .edit-avatar-overlay {
+  opacity: 1;
+}
+
+.edit-avatar-icon {
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
 }
 
 .candidate-details {

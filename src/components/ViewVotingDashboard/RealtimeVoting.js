@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaDownload } from 'react-icons/fa';
+import ReactCountryFlag from 'react-country-flag';
 import { useToken } from "../../context/TokenContext";
 
 const RealtimeVoting = ({ id: event_id }) => {
@@ -31,6 +32,30 @@ const RealtimeVoting = ({ id: event_id }) => {
     THB: 4,
     INR: 10,
     NPR: 10,
+  };
+
+  // Currency to country code mapping
+  const currencyToCountry = {
+    USD: 'US', // United States Dollar
+    AUD: 'AU', // Australian Dollar
+    GBP: 'GB', // British Pound
+    CAD: 'CA', // Canadian Dollar
+    EUR: 'EU', // Euro (European Union)
+    AED: 'AE', // UAE Dirham
+    QAR: 'QA', // Qatari Riyal
+    MYR: 'MY', // Malaysian Ringgit
+    KWD: 'KW', // Kuwaiti Dinar
+    HKD: 'HK', // Hong Kong Dollar
+    CNY: 'CN', // Chinese Yuan
+    SAR: 'SA', // Saudi Riyal
+    OMR: 'OM', // Omani Rial
+    SGD: 'SG', // Singapore Dollar
+    NOK: 'NO', // Norwegian Krone
+    KRW: 'KR', // South Korean Won
+    JPY: 'JP', // Japanese Yen
+    THB: 'TH', // Thai Baht
+    INR: 'IN', // Indian Rupee
+    NPR: 'NP', // Nepalese Rupee
   };
 
   // Log the event_id for debugging
@@ -95,7 +120,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   // Fetch payment intents data
   useEffect(() => {
     const fetchData = async () => {
-      if (!eventData) return; // Wait until eventData is available
+      if (!eventData) return; 
 
       try {
         const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
@@ -113,9 +138,8 @@ const RealtimeVoting = ({ id: event_id }) => {
 
         // Filter and map the data
         const filteredData = result
-          .filter((item) => item.event_id == event_id) 
+          .filter((item) => item.event_id == event_id)
           .map((item) => {
-            
             let currency = 'USD';
             const processor = item.processor?.toUpperCase();
 
@@ -124,11 +148,10 @@ const RealtimeVoting = ({ id: event_id }) => {
             } else if (['PHONEPE', 'PAYU'].includes(processor)) {
               currency = 'INR';
             } else if (processor === 'STRIPE') {
-             
               currency = item.currency?.toUpperCase() || 'USD';
             }
 
-            const currencyValue = currencyValues[currency] || 1; 
+            const currencyValue = currencyValues[currency] || 1;
 
             let votes;
             if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
@@ -137,26 +160,31 @@ const RealtimeVoting = ({ id: event_id }) => {
               votes = Math.floor(item.amount * currencyValue);
             }
 
+            // Determine payment type display value
+            const paymentType = ['PAYU', 'PHONEPE', 'STRIPE'].includes(processor)
+              ? 'International'
+              : processor
+                ? processor.charAt(0).toUpperCase() + processor.slice(1)
+                : '';
+
             return {
               name: item.name,
               email: item.email || 'N/A',
               phone: item.phone_no || 'N/A',
-              createdAt: item.created_at, 
-              formattedCreatedAt: formatDate(item.created_at), 
+              createdAt: item.created_at,
+              formattedCreatedAt: formatDate(item.created_at),
               amount: item.amount,
               status: statusLabel[item.status] || { label: item.status, color: '#6C757D' },
-              paymentType: item.processor
-                ? item.processor.charAt(0).toUpperCase() + item.processor.slice(1)
-                : '',
+              paymentType: paymentType,
               votes: votes,
-              currency: currency, 
+              currency: currency,
             };
           });
 
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         console.log('Sorted Data:', sortedData);
-        setData(sortedData); 
+        setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -220,6 +248,7 @@ const RealtimeVoting = ({ id: event_id }) => {
               <th>Votes</th>
               <th>Status</th>
               <th>Payment Type</th>
+              <th>Currency</th>
               <th>Transaction Time</th>
             </tr>
           </thead>
@@ -240,12 +269,22 @@ const RealtimeVoting = ({ id: event_id }) => {
                     </span>
                   </td>
                   <td>{row.paymentType}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <ReactCountryFlag
+                        countryCode={currencyToCountry[row.currency]}
+                        svg
+                        style={{ width: '20px', height: '15px' }}
+                      />
+                      <span>{row.currency}</span>
+                    </div>
+                  </td>
                   <td>{row.formattedCreatedAt}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center' }}>
+                <td colSpan="8" style={{ textAlign: 'center' }}>
                   No data available for this event.
                 </td>
               </tr>

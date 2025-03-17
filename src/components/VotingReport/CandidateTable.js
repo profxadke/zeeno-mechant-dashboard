@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../assets/table.css";
 import { useToken } from "../../context/TokenContext";
 import { useParams } from "react-router-dom";
-import { FaEye, FaEdit, FaTrash, FaDownload } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaDownload, FaSort } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import CandidateModel from "./CandidateModal";
 
@@ -19,6 +19,10 @@ const CandidateTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState(null);
+  const [sortConfig, setSortConfig] = useState({
+    key: null, // 'name', 'misc_kv', 'votes'
+    direction: "asc", // 'asc' or 'desc'
+  });
   const itemsPerPage = 10;
 
   const { token } = useToken();
@@ -163,7 +167,7 @@ const CandidateTable = () => {
 
           return {
             ...contestant,
-            votes: totalVotes, // Update votes
+            votes: totalVotes,
           };
         });
 
@@ -177,6 +181,32 @@ const CandidateTable = () => {
 
     fetchData();
   }, [event_id, token, paymentInfo]);
+
+  // Sorting logic
+  const sortedData = React.useMemo(() => {
+    let sortableData = [...data];
+    if (sortConfig.key) {
+      sortableData.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableData;
+  }, [data, sortConfig]);
+
+  // Handle sorting
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -256,8 +286,8 @@ const CandidateTable = () => {
     }
   };
 
-  const filteredData = Array.isArray(data)
-    ? data.filter((candidate) => {
+  const filteredData = Array.isArray(sortedData)
+    ? sortedData.filter((candidate) => {
         const isPeriodMatch =
           filters.period === "" || candidate.period === filters.period;
         const isStatusMatch =
@@ -318,11 +348,106 @@ const CandidateTable = () => {
         <div className="search-bar">
           <h3>Candidate List</h3>
         </div>
-        <div className="actions">
-          <button className="export-btn" onClick={handleExport} style={{
-                        background: "#028248", 
-                      }}>
-            <FaDownload className="export-icon" /> Export
+        <div
+          className="actions"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "15px",
+            backgroundColor: "#f8f9fa",
+            padding: "10px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+            flexDirection: "row", // Default layout for larger screens
+            "@media (max-width: 768px)": {
+              flexDirection: "column", // Stack vertically on mobile
+              gap: "10px",
+              width: "100%",
+            },
+          }}
+        >
+          {/* Sort by Dropdown */}
+          <div
+            className="filter-group"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              width: "100%", // Full width on mobile
+              "@media (max-width: 768px)": {
+                flexDirection: "column", // Stack label and dropdown vertically
+                alignItems: "flex-start",
+              },
+            }}
+          >
+            <label
+              htmlFor="sort-by"
+              style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "#495057",
+                "@media (max-width: 768px)": {
+                  fontSize: "12px", // Smaller font size on mobile
+                },
+              }}
+            >
+              Filter:
+            </label>
+            <select
+              id="sort-by"
+              onChange={(e) => requestSort(e.target.value)}
+              value={sortConfig.key || ""}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #ced4da",
+                backgroundColor: "#fff",
+                fontSize: "14px",
+                color: "#495057",
+                cursor: "pointer",
+                outline: "none",
+                transition: "border-color 0.3s ease",
+                width: "100%", // Full width on mobile
+                "@media (max-width: 768px)": {
+                  fontSize: "12px", // Smaller font size on mobile
+                },
+              }}
+            >
+              <option value="">Select</option>
+              <option value="name">Name</option>
+              <option value="misc_kv">C.No.</option>
+              <option value="votes">Votes</option>
+            </select>
+          </div>
+
+          {/* Ascending/Descending Button */}
+          <button
+            onClick={() =>
+              setSortConfig({
+                ...sortConfig,
+                direction: sortConfig.direction === "asc" ? "desc" : "asc",
+              })
+            }
+            style={{
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1px solid #ced4da",
+              backgroundColor: "#fff",
+              fontSize: "14px",
+              color: "#495057",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "background-color 0.3s ease, border-color 0.3s ease",
+              width: "100%", // Full width on mobile
+              "@media (max-width: 768px)": {
+                fontSize: "12px", // Smaller font size on mobile
+              },
+            }}
+          >
+            <FaSort style={{ fontSize: "14px" }} />
+            {sortConfig.direction === "asc" ? "Ascending" : "Descending"}
           </button>
         </div>
       </div>
@@ -332,10 +457,10 @@ const CandidateTable = () => {
         <table>
           <thead>
             <tr>
-              <th>SN</th>
-              <th>Contestant No.</th> 
+              <th>S.No.</th>
               <th>Avatar</th>
               <th>Name</th>
+              <th>C.No.</th> 
               <th>Status</th>
               <th>Votes</th>
               <th>Action</th>
@@ -352,7 +477,6 @@ const CandidateTable = () => {
               paginatedData.map((candidate, index) => (
                 <tr key={candidate.id}>
                   <td>{startIndex + index + 1}</td>
-                  <td>{candidate.misc_kv}</td> 
                   <td>
                     <img
                       src={candidate.avatar}
@@ -365,6 +489,8 @@ const CandidateTable = () => {
                     />
                   </td>
                   <td>{candidate.name}</td>
+                  <td>{candidate.misc_kv}</td> 
+
                   <td>
                     <span
                       className={`status-badge 

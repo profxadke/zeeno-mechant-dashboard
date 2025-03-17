@@ -1,34 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useToken } from "../../context/TokenContext";
-import { MdArrowDropDown } from 'react-icons/md';
+import { MdArrowDropDown } from "react-icons/md";
 
-const UploadCandidateDetails = () => {
+const UploadCandidateDetails = ({ events }) => {
   const [showModal, setShowModal] = useState(false);
   const [isBulk, setIsBulk] = useState(false);
-  const [candidates, setCandidates] = useState([{ name: "", misc_kv: "", photo: "", description: "", event_id: "", shareable_link: "" }]);
+  const [candidates, setCandidates] = useState([
+    { name: "", misc_kv: "", photo: "", description: "", event_id: "", shareable_link: "" },
+  ]);
   const [candidateDetails, setCandidateDetails] = useState([]);
-  const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState("");
   const { token } = useToken();
   const modalRef = useRef(null);
-
-  // Fetch event list on component mount
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch("https://auth.zeenopay.com/events/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        setEvents(data);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      }
-    };
-    fetchEvents();
-  }, [token]);
+  const fileInputRefs = useRef([]); // Refs for file input fields
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -63,7 +47,10 @@ const UploadCandidateDetails = () => {
   };
 
   const addMoreCandidate = () => {
-    setCandidates([...candidates, { name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent, shareable_link: "" }]);
+    setCandidates([
+      ...candidates,
+      { name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent, shareable_link: "" },
+    ]);
   };
 
   const handleImageUpload = (index, file) => {
@@ -117,6 +104,17 @@ const UploadCandidateDetails = () => {
     }
   };
 
+  const handleRemoveImage = (index) => {
+    const updatedCandidateList = [...candidates];
+    updatedCandidateList[index].photo = ""; // Clear the photo
+    setCandidates(updatedCandidateList);
+
+    // Clear the file input value
+    if (fileInputRefs.current[index]) {
+      fileInputRefs.current[index].value = "";
+    }
+  };
+
   const handleSubmit = async () => {
     const candidatesData = candidates.map((candidate) => ({
       name: candidate.name,
@@ -141,7 +139,20 @@ const UploadCandidateDetails = () => {
         });
       }
 
-      setCandidateDetails([...candidateDetails, ...candidates]);
+      // Sort candidates before adding to candidateDetails
+      const sortedCandidates = [...candidates].sort((a, b) => {
+        if (a.misc_kv && b.misc_kv) {
+          return a.misc_kv.localeCompare(b.misc_kv, undefined, { numeric: true });
+        } else if (a.misc_kv) {
+          return -1;
+        } else if (b.misc_kv) {
+          return 1;
+        } else {
+          return a.name.localeCompare(b.name);
+        }
+      });
+
+      setCandidateDetails([...candidateDetails, ...sortedCandidates]);
       setCandidates([{ name: "", misc_kv: "", photo: "", description: "", event_id: selectedEvent, shareable_link: "" }]);
       closeModal();
     } catch (error) {
@@ -198,57 +209,75 @@ const UploadCandidateDetails = () => {
                 </div>
               </div>
               {candidates.map((candidate, index) => (
-                <div key={index} className="candidate-form">
-                  {!isBulk ? (
-                    <>
-                      <label htmlFor="name">Contestant Name</label>
-                      <input
-                        id="name"
-                        type="text"
-                        placeholder="Enter Contestant Name"
-                        value={candidate.name}
-                        onChange={(e) => handleInputChange(index, "name", e.target.value)}
-                      />
-                      <label htmlFor="number">Contestant Number</label>
-                      <input
-                        id="number"
-                        type="text"
-                        placeholder="Enter Contestant Number"
-                        value={candidate.misc_kv}
-                        onChange={(e) => handleInputChange(index, "misc_kv", e.target.value)}
-                      />
-                      <label htmlFor="description">Contestant Bio</label>
-                      <textarea
-                        id="description"
-                        placeholder="Enter Contestant Bio"
-                        value={candidate.description}
-                        onChange={(e) => handleInputChange(index, "description", e.target.value)}
-                      />
-                      {/* Reel Link Field */}
-                      <label htmlFor="reel-link">Reel Link</label>
-                      <input
-                        id="reel-link"
-                        type="text"
-                        placeholder="Enter Reel Link"
-                        value={candidate.shareable_link}
-                        onChange={(e) => handleInputChange(index, "shareable_link", e.target.value)}
-                      />
-                    </>
-                  ) : null}
-                  <label htmlFor="photo">Select Contestant Photo</label>
-                  <input
-                    id="photo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(index, e.target.files[0])}
-                  />
+                <div key={index} className="candidate-form-section">
+                  {/* <h5 className="candidate-form-header">Add Your Candidate </h5> */}
+                  <div className="candidate-form">
+                    {!isBulk ? (
+                      <>
+                        <label htmlFor="photo">Select Contestant Photo</label>
+                        <input
+                          id="photo"
+                          type="file"
+                          accept="image/*"
+                          ref={(el) => (fileInputRefs.current[index] = el)}
+                          onChange={(e) => handleImageUpload(index, e.target.files[0])}
+                        />
+                        {/* Image Preview */}
+                        {candidate.photo && (
+                          <div className="image-preview-container">
+                            <img
+                              src={candidate.photo}
+                              alt="Preview"
+                              className="image-preview"
+                            />
+                            <span
+                              className="remove-image-icon"
+                              onClick={() => handleRemoveImage(index)}
+                            >
+                              &times;
+                            </span>
+                          </div>
+                        )}
+                        <label htmlFor="name">Contestant Name</label>
+                        <input
+                          id="name"
+                          type="text"
+                          placeholder="Enter Contestant Name"
+                          value={candidate.name}
+                          onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                        />
+                        <label htmlFor="number">Contestant Number</label>
+                        <input
+                          id="number"
+                          type="text"
+                          placeholder="Enter Contestant Number"
+                          value={candidate.misc_kv}
+                          onChange={(e) => handleInputChange(index, "misc_kv", e.target.value)}
+                        />
+                        <label htmlFor="description">Contestant Bio</label>
+                        <textarea
+                          id="description"
+                          placeholder="Enter Contestant Bio"
+                          value={candidate.description}
+                          onChange={(e) => handleInputChange(index, "description", e.target.value)}
+                        />
+                        {/* Reel Link Field */}
+                        <label htmlFor="reel-link">Reel Link</label>
+                        <input
+                          id="reel-link"
+                          type="text"
+                          placeholder="Enter Reel Link"
+                          value={candidate.shareable_link}
+                          onChange={(e) => handleInputChange(index, "shareable_link", e.target.value)}
+                        />
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
             <div className="modal-actions">
-              {isBulk && (
-                <button onClick={addMorePhoto}>Add Another Photo</button>
-              )}
+              <button onClick={addMoreCandidate}>Add Another Candidate</button>
               <button onClick={handleSubmit}>Submit</button>
             </div>
           </div>
@@ -261,30 +290,42 @@ const UploadCandidateDetails = () => {
           <div>
             <h3>Candidate Details</h3>
             <div className="candidate-list">
-              {candidateDetails.map((candidate, index) => (
-                <div key={index} className="candidate-card">
-                  <div className="candidate-photo-container">
-                    <img
-                      src={candidate.photo}
-                      alt={candidate.name}
-                      className="candidate-photo"
-                    />
+              {candidateDetails
+                .sort((a, b) => {
+                  if (a.misc_kv && b.misc_kv) {
+                    return a.misc_kv.localeCompare(b.misc_kv, undefined, { numeric: true });
+                  } else if (a.misc_kv) {
+                    return -1;
+                  } else if (b.misc_kv) {
+                    return 1;
+                  } else {
+                    return a.name.localeCompare(b.name);
+                  }
+                })
+                .map((candidate, index) => (
+                  <div key={index} className="candidate-card">
+                    <div className="candidate-photo-container">
+                      <img
+                        src={candidate.photo}
+                        alt={candidate.name}
+                        className="candidate-photo"
+                      />
+                    </div>
+                    <div className="candidate-info">
+                      <p className="candidate-name">{candidate.name}</p>
+                      <p className="candidate-number">{candidate.misc_kv}</p>
+                      <p className="candidate-description">{candidate.description}</p>
+                      {/* Display Reel Link */}
+                      {candidate.shareable_link && (
+                        <p className="candidate-reel-link">
+                          <a href={candidate.shareable_link} target="_blank" rel="noopener noreferrer">
+                            View Reel
+                          </a>
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="candidate-info">
-                    <p className="candidate-name">{candidate.name}</p>
-                    <p className="candidate-number">{candidate.misc_kv}</p>
-                    <p className="candidate-description">{candidate.description}</p>
-                    {/* Display Reel Link */}
-                    {candidate.shareable_link && (
-                      <p className="candidate-reel-link">
-                        <a href={candidate.shareable_link} target="_blank" rel="noopener noreferrer">
-                          View Reel
-                        </a>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         )}
@@ -369,6 +410,19 @@ const UploadCandidateDetails = () => {
           max-height: 300px;
           overflow-y: auto;
           margin-bottom: 20px;
+        }
+
+        .candidate-form-section {
+          margin-bottom: 20px;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 20px;
+        }
+
+        .candidate-form-header {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 10px;
+          color: #333;
         }
 
         .candidate-form input, .candidate-form textarea {
@@ -537,6 +591,39 @@ const UploadCandidateDetails = () => {
           font-size: 18px;
           color: #333;
           pointer-events: none;
+        }
+
+        /* Image Preview */
+        .image-preview-container {
+          position: relative;
+          margin-bottom: 10px;
+        }
+
+        .image-preview {
+          width: 100%;
+          max-height: 150px;
+          object-fit: cover;
+          border-radius: 5px;
+        }
+
+        .remove-image-icon {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          background-color: rgba(255, 0, 0, 0.8);
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 14px;
+        }
+
+        .remove-image-icon:hover {
+          background-color: rgba(255, 0, 0, 1);
         }
       `}</style>
     </div>

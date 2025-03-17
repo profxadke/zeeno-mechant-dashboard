@@ -19,19 +19,19 @@ const ProfileComponent = () => {
       case 0:
         return (
           <div style={{ textAlign: "left", padding: "10px" }}>
-            <p><strong>Company Name:</strong> ABC Ticketing PVT LTD</p>
-            <p><strong>Representative Name:</strong> Dummy Name</p>
-            <p><strong>Registered Date:</strong> 01/01/2020</p>
-            <p><strong>Company Description:</strong> </p>
+            <p><strong>Company Name:</strong> SMART GUFF PVT LTD</p>
+            <p><strong>Representative Name:</strong> Smart Guff</p>
+            <p><strong>Registered Date:</strong> 3/17/2025</p>
+            <p><strong>Company Description:</strong> Smart Guff is an event management company in Nepal specializing in organizing beauty pageants and various other events.</p>
           </div>
         );
       case 1:
         return (
           <div style={{ textAlign: "left", padding: "10px" }}>
             <p><strong>Phone Number:</strong> +977 - 9899388920</p>
-            <p><strong>Landline Number:</strong> +977 - 9899388920</p>
-            <p><strong>Email Address:</strong> </p>
-            <p><strong>Company Address:</strong> </p>
+            <p><strong>Landline Number:</strong> Not Provided</p>
+            <p><strong>Email Address:</strong> smartguff@gmail.com</p>
+            <p><strong>Company Address:</strong> Kathmandu, Nepal</p>
           </div>
         );
       case 2:
@@ -96,7 +96,7 @@ const ProfileComponent = () => {
         alt="logo"
         src="https://i.ibb.co/HdffZky/zeenopay-logo-removebg-preview.png"
       />
-      <h2 style={{ fontSize: "1.5rem", marginBottom: "10px", fontWeight: "600" }}>ABC Ticketing PVT LTD.</h2>
+      <h2 style={{ fontSize: "1.5rem", marginBottom: "10px", fontWeight: "600" }}>SMART GUFF PVT LTD.</h2>
       <p style={{ fontSize: "1rem", color: "#666", marginBottom: "20px" }}>KYC Verified</p>
 
       {/* Buttons Section */}

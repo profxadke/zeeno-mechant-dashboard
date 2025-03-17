@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
 import * as XLSX from "xlsx";
+import { FaEdit } from "react-icons/fa"; // Import edit icon from react-icons
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
@@ -11,6 +12,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoadingVoters, setIsLoadingVoters] = useState(false);
   const [voterError, setVoterError] = useState(null);
+  const [newAvatar, setNewAvatar] = useState(null); // State to store the new image file
 
   useEffect(() => {
     setFormData(candidate || {});
@@ -19,7 +21,6 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     }
   }, [candidate]);
 
-  // Define currency conversion rates
   const currencyValues = {
     USD: 10,
     AUD: 5,
@@ -41,6 +42,30 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     THB: 4,
     INR: 10,
     NPR: 10,
+  };
+
+  // Handle image upload
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewAvatar(reader.result); // Set the new image URL
+        setFormData((prevData) => ({ ...prevData, avatar: reader.result })); // Update formData
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Include newAvatar in formData if it exists
+    const updatedFormData = {
+      ...formData,
+      avatar: newAvatar || formData.avatar, // Use newAvatar if available, otherwise fallback to the existing avatar
+    };
+    onUpdate(updatedFormData); // Pass the updated formData to the onUpdate function
   };
 
   // Fetch voter details and calculate votes
@@ -87,27 +112,32 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           // INR currency
           votes = intent.amount / currencyValues.INR;
         } else if (intent.processor === "STRIPE") {
-          // Use the currency specified in the intent
+
           const currency = intent.currency.toUpperCase();
           if (currencyValues[currency]) {
             votes = intent.amount / currencyValues[currency];
           }
         } else {
-          // Default to payment_info if no specific logic
+
           votes = event ? Number(intent.amount) / event.payment_info : 0;
         }
 
-        // Truncate decimal places using Math.floor
         votes = Math.floor(votes);
+
+        const paymentMethod = ["PAYU", "PHONEPE", "STRIPE"].includes(intent.processor)
+          ? "International"
+          : intent.processor || "N/A";
 
         return {
           name: intent.name,
           phone_no: intent.phone_no,
-          processor: intent.processor || "N/A",
+          processor: paymentMethod,
           votes: votes,
           transactionTime: intent.updated_at,
         };
       });
+
+      voterList.sort((a, b) => new Date(b.transactionTime) - new Date(a.transactionTime));
 
       setVoterDetails(voterList);
     } catch (error) {
@@ -117,10 +147,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     }
   };
 
-  // Calculate total votes
   const totalVotes = voterDetails.reduce((sum, voter) => sum + voter.votes, 0);
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentVoters = voterDetails.slice(indexOfFirstItem, indexOfLastItem);
@@ -194,11 +222,6 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdate(formData);
-  };
-
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -220,19 +243,19 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         {isEditMode ? (
           <form onSubmit={handleSubmit} className="edit-form">
             <div className="form-group">
-              <label>Avatar URL:</label>
+              <label>Contestant Number</label>
               <input
                 type="text"
-                name="avatar"
-                value={formData.avatar || ""}
+                name="misc_kv"
+                value={formData.misc_kv || ""}
                 onChange={handleInputChange}
-                placeholder="Enter avatar URL"
+                placeholder="Enter contestant number"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>Name:</label>
+              <label>Contestant Name</label>
               <input
                 type="text"
                 name="name"
@@ -244,15 +267,20 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             </div>
 
             <div className="form-group">
-              <label>Status:</label>
-              <input
-                type="text"
-                name="status"
-                value={formData.status || ""}
-                onChange={handleInputChange}
-                placeholder="Enter status"
-                required
-              />
+              <label>Status</label>
+              <div className="custom-dropdown">
+                <select
+                  name="status"
+                  value={formData.status || ""}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="O">Ongoing</option>
+                  <option value="E">Eliminated</option>
+                  <option value="H">Hidden</option>
+                </select>
+                <span className="dropdown-arrow">&#9660;</span>
+              </div>
             </div>
 
             <div className="form-group">
@@ -266,14 +294,37 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             </div>
 
             <div className="form-group">
-              <label>Shareable Link:</label>
+              <label>Add New reels/shorts</label>
               <input
                 type="text"
                 name="shareable_link"
                 value={formData.shareable_link || ""}
                 onChange={handleInputChange}
-                placeholder="Enter shareable link"
+                placeholder="Enter reels/shorts"
               />
+            </div>
+
+            <div className="form-group">
+              <label>Edit Contestant Avatar</label>
+              <div className="candidate-avatar">
+                <img
+                  src={newAvatar || formData.avatar}
+                  alt={`${formData.name}'s avatar`}
+                  className="candidate-photo"
+                />
+                <div className="edit-avatar-overlay">
+                  <label htmlFor="avatar-upload" className="edit-avatar-icon">
+                    <FaEdit />
+                  </label>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleImageUpload}
+                  />
+                </div>
+              </div>
             </div>
 
             <button type="submit" className="submit-btn">
@@ -285,7 +336,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             <div className="candidate-info">
               <div className="candidate-avatar">
                 <img
-                  src={candidate.avatar}
+                  src={newAvatar || candidate.avatar}
                   alt={`${candidate.name}'s avatar`}
                   className="candidate-photo"
                 />

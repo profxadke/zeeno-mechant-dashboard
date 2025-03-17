@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "../../assets/eventdetails.css";
 import { useToken } from "../../context/TokenContext";
 
-const VotingForm = ({ formData = {}, setFormData, data }) => {
+const VotingForm = ({ formData, setFormData, events, setEvents }) => {
   const {
     title = "",
     votingRound = "",
@@ -12,8 +12,8 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     misc_kv = "",
   } = formData;
   const [votingMode, setVotingMode] = useState("");
-  const [createdAt, setVotingStartDate] = useState(data?.createdAt || "");
-  const [finaldate, setVotingEndDate] = useState(data?.finaldate || "");
+  const [createdAt, setVotingStartDate] = useState("");
+  const [finaldate, setVotingEndDate] = useState("");
   const [error, setError] = useState("");
   const [payment_info, setPaymentInfo] = useState("");
   const [votingAccessPreference, setVotingAccessPreference] = useState("");
@@ -93,10 +93,6 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     }
   };
 
-  const handleVotePricingChange = (e) => {
-    setPaymentInfo(e.target.value);
-  };
-
   const handleVotingAccessPreferenceChange = (e) => {
     setVotingAccessPreference(e.target.value);
   };
@@ -141,7 +137,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
       const response = await fetch("https://auth.zeenopay.com/events/", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(eventData),
@@ -151,8 +147,12 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         const result = await response.json();
         console.log("Event successfully created:", result);
 
+        // Update the events list with the newly created event
+        setEvents([...events, result]);
+
         setSuccessMessage("Event successfully created!");
 
+        // Reset form data
         setFormData({
           title: "",
           votingRound: "",
@@ -270,7 +270,9 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         </div>
 
         {/* Set Voting Rules Section */}
-        <h2 className="section-title" style={{ fontSize: '14px' }}>Set Voting Rules</h2>
+        <h2 className="section-title" style={{ fontSize: "14px" }}>
+          Set Voting Rules
+        </h2>
         <div className="voting-setup">
           <div className="voting-form-grid">
             <div className="voting-form-field">
@@ -308,18 +310,21 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         </div>
 
         {/* Voting Options */}
-        <h2 className="section-title" style={{ fontSize: '14px' }}>Voting Options</h2>
+        <h2 className="section-title" style={{ fontSize: "14px" }}>
+          Voting Options
+        </h2>
         <div className="voting-options">
           <div className="voting-form-grid">
             <div className="voting-form-field">
               <label>Vote Pricing</label>
-              <input
+              <select
                 className="voting"
-                type="text"
                 value={payment_info}
-                onChange={handleVotePricingChange}
-                placeholder="Enter Voting Price"
-              />
+                onChange={(e) => setPaymentInfo(e.target.value)}
+              >
+                <option value="">Select Vote Price</option>
+                <option value="10">Rs. 10</option>
+              </select>
             </div>
 
             <div className="voting-form-field">
@@ -337,7 +342,11 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
         </div>
 
         {/* Submit Button */}
-        <button className="confirm-btn" type="submit" style={{ background: '#028248' }}>
+        <button
+          className="confirm-btn"
+          type="submit"
+          style={{ background: "#028248" }}
+        >
           Create Event
         </button>
       </form>
