@@ -18,6 +18,30 @@ const VoteByCountry = () => {
   const indiaProcessors = ["PHONEPE"];
   const internationalProcessors = ["PAYU", "STRIPE"];
 
+  // Define currency conversion rates
+  const currencyValues = {
+    USD: 10,
+    AUD: 5,
+    GBP: 10,
+    CAD: 5,
+    EUR: 10,
+    AED: 2,
+    QAR: 2,
+    MYR: 2,
+    KWD: 2,
+    HKD: 30,
+    CNY: 1,
+    SAR: 2,
+    OMR: 20,
+    SGD: 8,
+    NOK: 1,
+    KRW: 200,
+    JPY: 20,
+    THB: 4,
+    INR: 10,
+    NPR: 10,
+  };
+
   useEffect(() => {
     const fetchEventsData = async () => {
       try {
@@ -61,7 +85,10 @@ const VoteByCountry = () => {
 
         // Process data for Nepal
         const nepalData = data.filter((item) => nepalProcessors.includes(item.processor));
-        const nepalVotesData = nepalData.map((item) => item.amount / paymentInfo);
+        const nepalVotesData = nepalData.map((item) => {
+          // Calculate votes based on NPR currency
+          return item.amount / currencyValues.NPR;
+        });
         setNepalVotes(nepalVotesData);
         setTotalVotesNepal(nepalVotesData.reduce((a, b) => a + b, 0));
 
@@ -70,10 +97,29 @@ const VoteByCountry = () => {
         const internationalData = data.filter((item) =>
           internationalProcessors.includes(item.processor)
         );
-        const indiaVotes = indiaData.map((item) => item.amount / paymentInfo).reduce((a, b) => a + b, 0);
-        const internationalVotes = internationalData
-          .map((item) => item.amount / paymentInfo)
+
+        // Calculate votes for India (INR currency)
+        const indiaVotes = indiaData
+          .map((item) => item.amount / currencyValues.INR)
           .reduce((a, b) => a + b, 0);
+
+        // Calculate votes for International (other currencies)
+        const internationalVotes = internationalData
+          .map((item) => {
+            if (item.processor === "STRIPE") {
+              // Use the currency specified in the intent
+              const currency = item.currency.toUpperCase();
+              if (currencyValues[currency]) {
+                return item.amount / currencyValues[currency];
+              }
+            } else if (item.processor === "PAYU") {
+              // Use INR currency for PAYU
+              return item.amount / currencyValues.INR;
+            }
+            return 0;
+          })
+          .reduce((a, b) => a + b, 0);
+
         setGlobalVotes([indiaVotes, internationalVotes]);
         setTotalVotesGlobal(indiaVotes + internationalVotes);
       } catch (error) {

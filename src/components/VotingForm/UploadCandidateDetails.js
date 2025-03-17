@@ -69,10 +69,49 @@ const UploadCandidateDetails = () => {
   const handleImageUpload = (index, file) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      const updatedCandidateList = [...candidates];
-      updatedCandidateList[index].photo = reader.result;
-      setCandidates(updatedCandidateList);
+      const img = new Image();
+      img.src = reader.result;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set the desired width and height (e.g., 50% of the original size)
+        const maxWidth = 800; // Maximum width for the resized image
+        const maxHeight = 800; // Maximum height for the resized image
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate the new dimensions while maintaining the aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        // Set canvas dimensions
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the image on the canvas with the new dimensions
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert the canvas content to a base64 string
+        const resizedImage = canvas.toDataURL("image/jpeg", 0.8); // Adjust quality (0.8 = 80%)
+
+        // Update the candidate's photo with the resized image
+        const updatedCandidateList = [...candidates];
+        updatedCandidateList[index].photo = resizedImage;
+        setCandidates(updatedCandidateList);
+      };
     };
+
     if (file) {
       reader.readAsDataURL(file);
     }

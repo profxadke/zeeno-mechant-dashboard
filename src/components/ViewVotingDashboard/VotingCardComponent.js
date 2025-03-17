@@ -22,7 +22,7 @@ const VotingCardComponent = () => {
       image: "https://i.ibb.co/by04tPM/IMG-2418.png",
       title: "Top Performer",
       value: topPerformer ? topPerformer.name : "Loading...",
-      subtext: topPerformer?.votes !== undefined ? `${topPerformer.votes.toFixed(2)} Votes` : "Data will be available soon",
+      subtext: topPerformer?.votes !== undefined ? `${topPerformer.votes} Votes` : "Data will be available soon",
       subtextColor: "green",
     },
   };
@@ -75,11 +75,29 @@ const VotingCardComponent = () => {
 
         const paymentIntents = await paymentsResponse.json();
 
-        // Calculate total votes
-        let totalVotesCalculated = 0;
-        paymentIntents.forEach((intent) => {
-          totalVotesCalculated += parseFloat(intent.amount) / eventData.payment_info;
-        });
+        // Define currency conversion rates
+        const currencyValues = {
+          USD: 10,
+          AUD: 5,
+          GBP: 10,
+          CAD: 5,
+          EUR: 10,
+          AED: 2,
+          QAR: 2,
+          MYR: 2,
+          KWD: 2,
+          HKD: 30,
+          CNY: 1,
+          SAR: 2,
+          OMR: 20,
+          SGD: 8,
+          NOK: 1,
+          KRW: 200,
+          JPY: 20,
+          THB: 4,
+          INR: 10,
+          NPR: 10,
+        };
 
         // Fetch contestants
         const contestantsResponse = await fetch(
@@ -103,8 +121,33 @@ const VotingCardComponent = () => {
 
           // Match intent_id with contestant id and calculate votes
           paymentIntents.forEach((intent) => {
-            if (intent.intent_id.toString() === contestant.id) {
-              votes += parseFloat(intent.amount) / eventData.payment_info;
+            if (intent.intent_id.toString() === contestant.id.toString()) {
+              let contestantVotes = 0;
+
+              // Determine the currency based on the processor
+              if (
+                ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
+                  intent.processor
+                )
+              ) {
+                // NPR currency
+                contestantVotes = intent.amount / currencyValues.NPR;
+              } else if (["PHONEPE", "PAYU"].includes(intent.processor)) {
+                // INR currency
+                contestantVotes = intent.amount / currencyValues.INR;
+              } else if (intent.processor === "STRIPE") {
+                // Use the currency specified in the intent
+                const currency = intent.currency.toUpperCase();
+                if (currencyValues[currency]) {
+                  contestantVotes = intent.amount / currencyValues[currency];
+                }
+              } else {
+                // Default to payment_info if no specific logic
+                contestantVotes = intent.amount / eventData.payment_info;
+              }
+
+              // Truncate decimal places using Math.floor
+              votes += Math.floor(contestantVotes);
             }
           });
 
@@ -114,6 +157,12 @@ const VotingCardComponent = () => {
           };
         });
 
+        // Calculate total votes
+        const totalVotesCalculated = candidatesWithVotes.reduce(
+          (sum, candidate) => sum + Math.floor(candidate.votes),
+          0
+        );
+
         // Sort candidates by votes and get the top performer
         const sortedCandidates = candidatesWithVotes.sort((a, b) => b.votes - a.votes);
         const topPerformer = sortedCandidates[0];
@@ -121,7 +170,6 @@ const VotingCardComponent = () => {
         // Update state
         setTotalVotes(totalVotesCalculated);
         setTopPerformer(topPerformer);
-        console.log("Top Performer:", topPerformer); // Debugging
       } catch (error) {
         console.error("Error fetching data:", error);
         setTotalVotes("Error");

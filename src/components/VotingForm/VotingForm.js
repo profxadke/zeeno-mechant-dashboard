@@ -9,18 +9,37 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     desc = "",
     img = "",
     org = "",
+    misc_kv = "",
   } = formData;
   const [votingMode, setVotingMode] = useState("");
-  // const [votingCapsPerUser, setVotingCapsPerUser] = useState("");
   const [createdAt, setVotingStartDate] = useState(data?.createdAt || "");
   const [finaldate, setVotingEndDate] = useState(data?.finaldate || "");
   const [error, setError] = useState("");
   const [payment_info, setPaymentInfo] = useState("");
   const [votingAccessPreference, setVotingAccessPreference] = useState("");
-  const [services, setServices] = useState("");
   const [votingName, setVotingName] = useState(title);
   const [successMessage, setSuccessMessage] = useState("");
   const { token } = useToken();
+
+  // Handle image upload for Event Photos/Banners and Event Logo
+  const handleImageUpload = (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result;
+
+      // Update the form data with the base64 string
+      if (field === "img") {
+        setFormData({ ...formData, img: base64 });
+      } else if (field === "misc_kv") {
+        setFormData({ ...formData, misc_kv: base64 });
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   const handleEventNameChange = (e) => {
     setFormData({ ...formData, title: e.target.value });
@@ -46,17 +65,9 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     setFormData({ ...formData, org: e.target.value });
   };
 
-  const handleImageChange = (e) => {
-    setFormData({ ...formData, img: e.target.value });
-  };
-
   const handleVotingModeChange = (e) => {
     setVotingMode(e.target.value);
   };
-
-  // const handleVotingCapsPerUserChange = (e) => {
-  //   setVotingCapsPerUser(e.target.value);
-  // };
 
   const handleVotingStartDateChange = (e) => {
     const value = e.target.value;
@@ -90,17 +101,6 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
     setVotingAccessPreference(e.target.value);
   };
 
-  const handleServicesChange = (e) => {
-    setServices(e.target.value);
-  };
-
-  useEffect(() => {
-    if (data) {
-      setVotingStartDate(data.createdAt || "");
-      setVotingEndDate(data.finaldate || "");
-    }
-  }, [data]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -112,7 +112,7 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
       !org ||
       !createdAt ||
       !finaldate ||
-      services.length === 0
+      !misc_kv
     ) {
       setError("Please fill in all the required fields.");
       return;
@@ -129,13 +129,12 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
       desc,
       img,
       org,
+      misc_kv,
       votingMode,
-      // votingCapsPerUser,
       createdAt,
       finaldate,
       payment_info,
       votingAccessPreference,
-      services,
     };
 
     try {
@@ -160,14 +159,13 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
           desc: "",
           img: "",
           org: "",
+          misc_kv: "",
         });
         setVotingMode("");
-        // setVotingCapsPerUser("");
         setVotingStartDate("");
         setVotingEndDate("");
         setPaymentInfo("");
         setVotingAccessPreference("");
-        setServices([]);
         setError("");
       } else {
         const error = await response.json();
@@ -217,23 +215,39 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
                   <option value="Finals">Finals</option>
                 </select>
               </div>
+
               <div>
-                <label>Event Description</label>
-                <textarea
-                  placeholder="Write event description here"
-                  value={desc}
-                  onChange={handleEventDescriptionChange}
-                ></textarea>
+                <label>Upload Event Logo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, "misc_kv")}
+                />
+                {formData.misc_kv && (
+                  <img
+                    src={formData.misc_kv}
+                    alt="Event Logo"
+                    style={{ width: "100px", height: "100px", marginTop: "10px" }}
+                  />
+                )}
               </div>
+
               <div>
                 <label>Upload Event Photos/Banners</label>
                 <input
-                  type="text"
-                  placeholder="Enter image Link"
-                  value={img}
-                  onChange={handleImageChange}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, "img")}
                 />
+                {formData.img && (
+                  <img
+                    src={formData.img}
+                    alt="Event Banner"
+                    style={{ width: "100px", height: "100px", marginTop: "10px" }}
+                  />
+                )}
               </div>
+
               <div>
                 <label>Organiser</label>
                 <input
@@ -242,6 +256,14 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
                   value={org}
                   onChange={handleOrganiserChange}
                 />
+              </div>
+              <div>
+                <label>Event Description</label>
+                <textarea
+                  placeholder="Write event description here"
+                  value={desc}
+                  onChange={handleEventDescriptionChange}
+                ></textarea>
               </div>
             </div>
           </div>
@@ -262,17 +284,6 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
                 <option value="Paid Vote">Paid Vote</option>
               </select>
             </div>
-
-            {/* <div className="voting-form-field">
-              <label>Voting Caps Per User</label>
-              <input
-                className="voting"
-                type="number"
-                placeholder="Enter Voting Caps Per User"
-                value={votingCapsPerUser}
-                onChange={handleVotingCapsPerUserChange}
-              />
-            </div> */}
 
             <div className="voting-form-field">
               <label>Voting Start Date and Time</label>
@@ -321,17 +332,6 @@ const VotingForm = ({ formData = {}, setFormData, data }) => {
                 <option value="">Select Access Preference</option>
                 <option value="Public">Public</option>
               </select>
-            </div>
-
-            <div className="voting-form-field">
-              <label>Services</label>
-              <input
-                className="voting"
-                type="text"
-                value={services}
-                onChange={handleServicesChange}
-                placeholder="Enter services separated by commas"
-              />
             </div>
           </div>
         </div>

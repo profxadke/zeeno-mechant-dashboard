@@ -60,13 +60,62 @@ const Contestant = ({ event_id, token }) => {
 
         const paymentIntents = await paymentsResponse.json();
 
+        // Define currency conversion rates
+        const currencyValues = {
+          USD: 10,
+          AUD: 5,
+          GBP: 10,
+          CAD: 5,
+          EUR: 10,
+          AED: 2,
+          QAR: 2,
+          MYR: 2,
+          KWD: 2,
+          HKD: 30,
+          CNY: 1,
+          SAR: 2,
+          OMR: 20,
+          SGD: 8,
+          NOK: 1,
+          KRW: 200,
+          JPY: 20,
+          THB: 4,
+          INR: 10,
+          NPR: 10,
+        };
+
         // Calculate votes by matching intent_id with id of contestants
         const candidatesWithVotes = contestants.map((contestant) => {
           let totalVotes = 0;
-          
+
           paymentIntents.forEach((intent) => {
             if (intent.intent_id.toString() === contestant.id.toString()) {
-              totalVotes += parseFloat(intent.amount) / event.payment_info;
+              let votes = 0;
+
+              // Determine the currency based on the processor
+              if (
+                ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
+                  intent.processor
+                )
+              ) {
+                // NPR currency
+                votes = intent.amount / currencyValues.NPR;
+              } else if (["PHONEPE", "PAYU"].includes(intent.processor)) {
+                // INR currency
+                votes = intent.amount / currencyValues.INR;
+              } else if (intent.processor === "STRIPE") {
+                // Use the currency specified in the intent
+                const currency = intent.currency.toUpperCase();
+                if (currencyValues[currency]) {
+                  votes = intent.amount / currencyValues[currency];
+                }
+              } else {
+                // Default to payment_info if no specific logic
+                votes = intent.amount / event.payment_info;
+              }
+
+              // Truncate decimal places using Math.floor
+              totalVotes += Math.floor(votes);
             }
           });
 

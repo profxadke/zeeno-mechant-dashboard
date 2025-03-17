@@ -9,6 +9,30 @@ const RealtimeVoting = ({ id: event_id }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
+  // Currency mapping
+  const currencyValues = {
+    USD: 10,
+    AUD: 5,
+    GBP: 10,
+    CAD: 5,
+    EUR: 10,
+    AED: 2,
+    QAR: 2,
+    MYR: 2,
+    KWD: 2,
+    HKD: 30,
+    CNY: 1,
+    SAR: 2,
+    OMR: 20,
+    SGD: 8,
+    NOK: 1,
+    KRW: 200,
+    JPY: 20,
+    THB: 4,
+    INR: 10,
+    NPR: 10,
+  };
+
   // Log the event_id for debugging
   console.log('Event ID:', event_id, 'Type:', typeof event_id);
 
@@ -85,31 +109,54 @@ const RealtimeVoting = ({ id: event_id }) => {
         }
 
         const result = await response.json();
-        console.log('API Response:', result); // Debugging: Log the API response
-
-        // Log the event_id from the API response
-        result.forEach((item) => {
-          console.log('Item Event ID:', item.event_id, 'Type:', typeof item.event_id);
-        });
+        console.log('API Response:', result);
 
         // Filter and map the data
         const filteredData = result
-          .filter((item) => item.event_id == event_id) // Use == for loose comparison
-          .map((item) => ({
-            name: item.name,
-            email: item.email || 'N/A',
-            phone: item.phone_no || 'N/A',
-            createdAt: formatDate(item.created_at),
-            amount: item.amount,
-            status: statusLabel[item.status] || { label: item.status, color: '#6C757D' },
-            paymentType: item.processor
-              ? item.processor.charAt(0).toUpperCase() + item.processor.slice(1)
-              : '',
-            votes: eventData.payment_info ? Math.floor(item.amount / eventData.payment_info) : 0,
-          }));
+          .filter((item) => item.event_id == event_id) 
+          .map((item) => {
+            
+            let currency = 'USD';
+            const processor = item.processor?.toUpperCase();
 
-        console.log('Filtered Data:', filteredData); // Debugging: Log the filtered data
-        setData(filteredData); // Update state with filtered data
+            if (['ESEWA', 'KHALTI', 'FONEPAY', 'PRABHUPAY', 'NQR', 'QR'].includes(processor)) {
+              currency = 'NPR';
+            } else if (['PHONEPE', 'PAYU'].includes(processor)) {
+              currency = 'INR';
+            } else if (processor === 'STRIPE') {
+             
+              currency = item.currency?.toUpperCase() || 'USD';
+            }
+
+            const currencyValue = currencyValues[currency] || 1; 
+
+            let votes;
+            if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
+              votes = Math.floor(item.amount / currencyValue);
+            } else {
+              votes = Math.floor(item.amount * currencyValue);
+            }
+
+            return {
+              name: item.name,
+              email: item.email || 'N/A',
+              phone: item.phone_no || 'N/A',
+              createdAt: item.created_at, 
+              formattedCreatedAt: formatDate(item.created_at), 
+              amount: item.amount,
+              status: statusLabel[item.status] || { label: item.status, color: '#6C757D' },
+              paymentType: item.processor
+                ? item.processor.charAt(0).toUpperCase() + item.processor.slice(1)
+                : '',
+              votes: votes,
+              currency: currency, 
+            };
+          });
+
+        const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        console.log('Sorted Data:', sortedData);
+        setData(sortedData); 
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -171,7 +218,6 @@ const RealtimeVoting = ({ id: event_id }) => {
               <th>Email</th>
               <th>Phone</th>
               <th>Votes</th>
-              {/* <th>Amount</th> */}
               <th>Status</th>
               <th>Payment Type</th>
               <th>Transaction Time</th>
@@ -185,7 +231,6 @@ const RealtimeVoting = ({ id: event_id }) => {
                   <td>{row.email}</td>
                   <td>{row.phone}</td>
                   <td>{row.votes}</td>
-                  {/* <td>{row.amount}</td> */}
                   <td>
                     <span
                       className="status"
@@ -195,12 +240,12 @@ const RealtimeVoting = ({ id: event_id }) => {
                     </span>
                   </td>
                   <td>{row.paymentType}</td>
-                  <td>{row.createdAt}</td>
+                  <td>{row.formattedCreatedAt}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>
+                <td colSpan="7" style={{ textAlign: 'center' }}>
                   No data available for this event.
                 </td>
               </tr>
@@ -221,8 +266,8 @@ const RealtimeVoting = ({ id: event_id }) => {
         ))}
       </div>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+      <style>{
+        `@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
         .table-container {
           font-family: 'Poppins', sans-serif;
@@ -331,8 +376,8 @@ const RealtimeVoting = ({ id: event_id }) => {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
           }
-        }
-      `}</style>
+        }`
+      }</style>
     </div>
   );
 };

@@ -3,7 +3,7 @@ import Chart from "react-apexcharts";
 import axios from "axios";
 import { useToken } from "../../context/TokenContext";
 import { useParams } from "react-router-dom";
-import CandidateList from "./Contestant"; 
+import CandidateList from "./Contestant";
 
 const VotingData = () => {
   const { token } = useToken();
@@ -64,20 +64,41 @@ const VotingData = () => {
   const [currentDate, setCurrentDate] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState(0);
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState(null);
+
+  // Currency mapping
+  const currencyValues = {
+    USD: 10,
+    AUD: 5,
+    GBP: 10,
+    CAD: 5,
+    EUR: 10,
+    AED: 2,
+    QAR: 2,
+    MYR: 2,
+    KWD: 2,
+    HKD: 30,
+    CNY: 1,
+    SAR: 2,
+    OMR: 20,
+    SGD: 8,
+    NOK: 1,
+    KRW: 200,
+    JPY: 20,
+    THB: 4,
+    INR: 10,
+    NPR: 10,
+  };
 
   useEffect(() => {
     const fetchEventData = async () => {
       try {
-        const response = await axios.get(
-          `https://auth.zeenopay.com/events/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
+        const response = await axios.get(`https://auth.zeenopay.com/events/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
 
         const event = response.data.find((event) => event.id === parseInt(event_id));
         if (event) {
@@ -85,7 +106,7 @@ const VotingData = () => {
         }
       } catch (err) {
         console.error("Error fetching event data:", err);
-        setError("Failed to fetch event data."); 
+        setError("Failed to fetch event data.");
       }
     };
 
@@ -108,32 +129,56 @@ const VotingData = () => {
         const paymentIntents = response.data;
 
         const timeIntervals = ["12:00 am", "6:00 am", "12:00 pm", "6:00 pm"];
-        const votesByInterval = [0, 0, 0, 0];
+        const dailyVotes = {};
 
         paymentIntents.forEach((intent) => {
-          const updatedAt = new Date(intent.updated_at);
-          const hours = updatedAt.getHours();
-          const minutes = updatedAt.getMinutes();
+          let currency = "USD";
+          const processor = intent.processor?.toUpperCase();
 
-          // Determine the time interval
+          if (["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(processor)) {
+            currency = "NPR";
+          } else if (["PHONEPE", "PAYU"].includes(processor)) {
+            currency = "INR";
+          } else if (processor === "STRIPE") {
+            currency = intent.currency?.toUpperCase() || "USD";
+          }
+
+          const currencyValue = currencyValues[currency] || 1;
+          const votes = ["JPY", "THB", "INR", "NPR"].includes(currency)
+            ? intent.amount / currencyValue
+            : intent.amount * currencyValue;
+
+          // Truncate decimal places using Math.floor
+          const truncatedVotes = Math.floor(votes);
+
+          const updatedAt = new Date(intent.updated_at);
+          const dateKey = updatedAt.toISOString().split("T")[0]; // Extract YYYY-MM-DD
+          const hours = updatedAt.getHours();
+
+          if (!dailyVotes[dateKey]) {
+            dailyVotes[dateKey] = [0, 0, 0, 0];
+          }
+
           if (hours >= 0 && hours < 6) {
-            votesByInterval[0] += intent.amount / paymentInfo; 
+            dailyVotes[dateKey][0] += truncatedVotes;
           } else if (hours >= 6 && hours < 12) {
-            votesByInterval[1] += intent.amount / paymentInfo; 
+            dailyVotes[dateKey][1] += truncatedVotes;
           } else if (hours >= 12 && hours < 18) {
-            votesByInterval[2] += intent.amount / paymentInfo; 
+            dailyVotes[dateKey][2] += truncatedVotes;
           } else {
-            votesByInterval[3] += intent.amount / paymentInfo; 
+            dailyVotes[dateKey][3] += truncatedVotes;
           }
         });
 
-        // Update the chart series
-        setSeries([
-          {
-            name: "Votes",
-            data: votesByInterval,
-          },
-        ]);
+        // Sort dates in descending order
+        const sortedDates = Object.keys(dailyVotes).sort((a, b) => new Date(b) - new Date(a));
+
+        const seriesData = sortedDates.map((date) => ({
+          name: date,
+          data: dailyVotes[date],
+        }));
+
+        setSeries(seriesData);
       } catch (err) {
         console.error("Error fetching payment intents:", err);
         setError("Failed to fetch payment intents data.");
@@ -165,7 +210,7 @@ const VotingData = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  if (error) return <p>{error}</p>; 
+  if (error) return <p>{error}</p>;
 
   return (
     <div className="dashboard-container">
