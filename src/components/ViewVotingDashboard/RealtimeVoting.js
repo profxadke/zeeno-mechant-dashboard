@@ -59,7 +59,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   };
 
   // Log the event_id for debugging
-  console.log('Event ID:', event_id, 'Type:', typeof event_id);
+  // console.log('Event ID:', event_id, 'Type:', typeof event_id);
 
   // Function to format date
   const formatDate = (dateString) => {
@@ -134,7 +134,7 @@ const RealtimeVoting = ({ id: event_id }) => {
         }
   
         const result = await response.json();
-        console.log('API Response:', result);
+        // console.log('API Response:', result);
   
         // Filter and map the data
         const filteredData = result
@@ -183,7 +183,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   
-        console.log('Sorted Data:', sortedData);
+        // console.log('Sorted Data:', sortedData);
         setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);

@@ -145,7 +145,7 @@ const VotingForm = ({ formData, setFormData, events, setEvents }) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Event successfully created:", result);
+        // console.log("Event successfully created:", result);
 
         // Update the events list with the newly created event
         setEvents([...events, result]);
