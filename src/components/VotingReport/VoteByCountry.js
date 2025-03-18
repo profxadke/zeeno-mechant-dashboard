@@ -76,33 +76,40 @@ const VoteByCountry = () => {
             },
           }
         );
-
+    
         if (!response.ok) {
           throw new Error("Failed to fetch payment intents data");
         }
-
+    
         const data = await response.json();
-
+    
+        // Filter payment intents to include only successful transactions (status === 'S')
+        const successfulPaymentIntents = data.filter((item) => item.status === 'S');
+    
         // Process data for Nepal
-        const nepalData = data.filter((item) => nepalProcessors.includes(item.processor));
+        const nepalData = successfulPaymentIntents.filter((item) =>
+          nepalProcessors.includes(item.processor)
+        );
         const nepalVotesData = nepalData.map((item) => {
           // Calculate votes based on NPR currency
           return item.amount / currencyValues.NPR;
         });
         setNepalVotes(nepalVotesData);
         setTotalVotesNepal(nepalVotesData.reduce((a, b) => a + b, 0));
-
+    
         // Process data for Global
-        const indiaData = data.filter((item) => indiaProcessors.includes(item.processor));
-        const internationalData = data.filter((item) =>
+        const indiaData = successfulPaymentIntents.filter((item) =>
+          indiaProcessors.includes(item.processor)
+        );
+        const internationalData = successfulPaymentIntents.filter((item) =>
           internationalProcessors.includes(item.processor)
         );
-
+    
         // Calculate votes for India (INR currency)
         const indiaVotes = indiaData
           .map((item) => item.amount / currencyValues.INR)
           .reduce((a, b) => a + b, 0);
-
+    
         // Calculate votes for International (other currencies)
         const internationalVotes = internationalData
           .map((item) => {
@@ -119,7 +126,7 @@ const VoteByCountry = () => {
             return 0;
           })
           .reduce((a, b) => a + b, 0);
-
+    
         setGlobalVotes([indiaVotes, internationalVotes]);
         setTotalVotesGlobal(indiaVotes + internationalVotes);
       } catch (error) {

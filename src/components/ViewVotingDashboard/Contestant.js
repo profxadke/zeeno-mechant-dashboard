@@ -15,19 +15,19 @@ const Contestant = ({ event_id, token }) => {
             Accept: "application/json",
           },
         });
-
+  
         if (!eventResponse.ok) {
           throw new Error("Failed to fetch event data");
         }
-
+  
         const eventData = await eventResponse.json();
         const event = eventData.find((event) => event.id === parseInt(event_id));
         if (!event) {
           throw new Error("Event not found");
         }
-
+  
         setPaymentInfo(event.payment_info);
-
+  
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
           {
@@ -37,13 +37,13 @@ const Contestant = ({ event_id, token }) => {
             },
           }
         );
-
+  
         if (!contestantsResponse.ok) {
           throw new Error("Failed to fetch contestants data");
         }
-
+  
         const contestants = await contestantsResponse.json();
-
+  
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
@@ -53,13 +53,18 @@ const Contestant = ({ event_id, token }) => {
             },
           }
         );
-
+  
         if (!paymentsResponse.ok) {
           throw new Error("Failed to fetch payment intents data");
         }
-
+  
         const paymentIntents = await paymentsResponse.json();
-
+  
+        // Filter payment intents to include only successful transactions (status === 'S')
+        const successfulPaymentIntents = paymentIntents.filter(
+          (intent) => intent.status === 'S'
+        );
+  
         // Define currency conversion rates
         const currencyValues = {
           USD: 10,
@@ -83,15 +88,15 @@ const Contestant = ({ event_id, token }) => {
           INR: 10,
           NPR: 10,
         };
-
+  
         // Calculate votes by matching intent_id with id of contestants
         const candidatesWithVotes = contestants.map((contestant) => {
           let totalVotes = 0;
-
-          paymentIntents.forEach((intent) => {
+  
+          successfulPaymentIntents.forEach((intent) => {
             if (intent.intent_id.toString() === contestant.id.toString()) {
               let votes = 0;
-
+  
               // Determine the currency based on the processor
               if (
                 ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
@@ -113,22 +118,22 @@ const Contestant = ({ event_id, token }) => {
                 // Default to payment_info if no specific logic
                 votes = intent.amount / event.payment_info;
               }
-
+  
               // Truncate decimal places using Math.floor
               totalVotes += Math.floor(votes);
             }
           });
-
+  
           return {
             ...contestant,
             votes: totalVotes,
           };
         });
-
+  
         const sortedCandidates = candidatesWithVotes
           .sort((a, b) => b.votes - a.votes)
           .slice(0, 6);
-
+  
         setCandidates(sortedCandidates);
         setLoading(false);
       } catch (err) {
@@ -137,7 +142,7 @@ const Contestant = ({ event_id, token }) => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [event_id, token]);
 

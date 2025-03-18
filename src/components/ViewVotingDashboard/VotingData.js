@@ -125,16 +125,21 @@ const VotingData = () => {
             },
           }
         );
-
+  
         const paymentIntents = response.data;
-
+  
+        // Filter payment intents to include only successful transactions (status === 'S')
+        const successfulPaymentIntents = paymentIntents.filter(
+          (intent) => intent.status === 'S'
+        );
+  
         const timeIntervals = ["12:00 am", "6:00 am", "12:00 pm", "6:00 pm"];
         const dailyVotes = {};
-
-        paymentIntents.forEach((intent) => {
+  
+        successfulPaymentIntents.forEach((intent) => {
           let currency = "USD";
           const processor = intent.processor?.toUpperCase();
-
+  
           if (["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(processor)) {
             currency = "NPR";
           } else if (["PHONEPE", "PAYU"].includes(processor)) {
@@ -142,23 +147,23 @@ const VotingData = () => {
           } else if (processor === "STRIPE") {
             currency = intent.currency?.toUpperCase() || "USD";
           }
-
+  
           const currencyValue = currencyValues[currency] || 1;
           const votes = ["JPY", "THB", "INR", "NPR"].includes(currency)
             ? intent.amount / currencyValue
             : intent.amount * currencyValue;
-
+  
           // Truncate decimal places using Math.floor
           const truncatedVotes = Math.floor(votes);
-
+  
           const updatedAt = new Date(intent.updated_at);
           const dateKey = updatedAt.toISOString().split("T")[0]; // Extract YYYY-MM-DD
           const hours = updatedAt.getHours();
-
+  
           if (!dailyVotes[dateKey]) {
             dailyVotes[dateKey] = [0, 0, 0, 0];
           }
-
+  
           if (hours >= 0 && hours < 6) {
             dailyVotes[dateKey][0] += truncatedVotes;
           } else if (hours >= 6 && hours < 12) {
@@ -169,22 +174,22 @@ const VotingData = () => {
             dailyVotes[dateKey][3] += truncatedVotes;
           }
         });
-
+  
         // Sort dates in descending order
         const sortedDates = Object.keys(dailyVotes).sort((a, b) => new Date(b) - new Date(a));
-
+  
         const seriesData = sortedDates.map((date) => ({
           name: date,
           data: dailyVotes[date],
         }));
-
+  
         setSeries(seriesData);
       } catch (err) {
         console.error("Error fetching payment intents:", err);
         setError("Failed to fetch payment intents data.");
       }
     };
-
+  
     if (paymentInfo > 0) {
       fetchPaymentIntents();
     }

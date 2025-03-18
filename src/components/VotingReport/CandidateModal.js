@@ -72,7 +72,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const fetchVoterDetails = async (miscKv) => {
     setIsLoadingVoters(true);
     setVoterError(null);
-
+  
     try {
       const [paymentsResponse, eventsResponse] = await Promise.all([
         fetch(`https://auth.zeenopay.com/payments/intents/`, {
@@ -82,24 +82,29 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
-
+  
       if (!paymentsResponse.ok || !eventsResponse.ok) {
         throw new Error("Failed to fetch data");
       }
-
+  
       const [paymentIntents, events] = await Promise.all([
         paymentsResponse.json(),
         eventsResponse.json(),
       ]);
-
-      const matchedIntents = paymentIntents.filter(
+  
+      // Filter payment intents to include only successful transactions (status === 'S')
+      const successfulPaymentIntents = paymentIntents.filter(
+        (intent) => intent.status === 'S'
+      );
+  
+      const matchedIntents = successfulPaymentIntents.filter(
         (intent) => String(intent.intent_id) === String(miscKv) && intent.intent === "V"
       );
-
+  
       const voterList = matchedIntents.map((intent) => {
         const event = events.find((event) => event.id === intent.event_id);
         let votes = 0;
-
+  
         // Determine the currency based on the processor
         if (
           ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
@@ -112,22 +117,22 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           // INR currency
           votes = intent.amount / currencyValues.INR;
         } else if (intent.processor === "STRIPE") {
-
+          // Use the currency specified in the intent
           const currency = intent.currency.toUpperCase();
           if (currencyValues[currency]) {
             votes = intent.amount / currencyValues[currency];
           }
         } else {
-
+          // Default to payment_info if no specific logic
           votes = event ? Number(intent.amount) / event.payment_info : 0;
         }
-
+  
         votes = Math.floor(votes);
-
+  
         const paymentMethod = ["PAYU", "PHONEPE", "STRIPE"].includes(intent.processor)
           ? "International"
           : intent.processor || "N/A";
-
+  
         return {
           name: intent.name,
           phone_no: intent.phone_no,
@@ -136,9 +141,9 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           transactionTime: intent.updated_at,
         };
       });
-
+  
       voterList.sort((a, b) => new Date(b.transactionTime) - new Date(a.transactionTime));
-
+  
       setVoterDetails(voterList);
     } catch (error) {
       setVoterError(error.message);

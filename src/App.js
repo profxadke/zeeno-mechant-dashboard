@@ -21,6 +21,7 @@ import IndividualEventPage from "./pages/IndividualEventPage.js";
 import IndividualView from "./pages/Registration Management/IndividualView.js";
 import IndividualReportPage from "./pages/IndividualReportPage.js";
 import IndividualReport from "./pages/Registration Management/IndividualReport.js";
+// import ScrollButtons from "./components/ScrollButtons.js";
 
 function App() {
   return (
@@ -173,6 +174,7 @@ function App() {
               }
             />
           </Routes>
+          {/* <ScrollButtons/> */}
         </div>
       </TokenProvider>
     </Router>

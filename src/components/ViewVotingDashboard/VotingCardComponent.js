@@ -57,7 +57,7 @@ const VotingCardComponent = () => {
   useEffect(() => {
     const fetchVotes = async () => {
       if (!eventData) return;
-
+  
       try {
         // Fetch payment intents
         const paymentsResponse = await fetch(
@@ -68,13 +68,18 @@ const VotingCardComponent = () => {
             },
           }
         );
-
+  
         if (!paymentsResponse.ok) {
           throw new Error("Failed to fetch payment intents");
         }
-
+  
         const paymentIntents = await paymentsResponse.json();
-
+  
+        // Filter payment intents to include only successful transactions (status === 'S')
+        const successfulPaymentIntents = paymentIntents.filter(
+          (intent) => intent.status === 'S'
+        );
+  
         // Define currency conversion rates
         const currencyValues = {
           USD: 10,
@@ -98,7 +103,7 @@ const VotingCardComponent = () => {
           INR: 10,
           NPR: 10,
         };
-
+  
         // Fetch contestants
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
@@ -108,22 +113,22 @@ const VotingCardComponent = () => {
             },
           }
         );
-
+  
         if (!contestantsResponse.ok) {
           throw new Error("Failed to fetch contestants");
         }
-
+  
         const contestants = await contestantsResponse.json();
-
+  
         // Calculate votes for each contestant
         const candidatesWithVotes = contestants.map((contestant) => {
           let votes = 0;
-
+  
           // Match intent_id with contestant id and calculate votes
-          paymentIntents.forEach((intent) => {
+          successfulPaymentIntents.forEach((intent) => {
             if (intent.intent_id.toString() === contestant.id.toString()) {
               let contestantVotes = 0;
-
+  
               // Determine the currency based on the processor
               if (
                 ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
@@ -145,28 +150,28 @@ const VotingCardComponent = () => {
                 // Default to payment_info if no specific logic
                 contestantVotes = intent.amount / eventData.payment_info;
               }
-
+  
               // Truncate decimal places using Math.floor
               votes += Math.floor(contestantVotes);
             }
           });
-
+  
           return {
             ...contestant,
             votes,
           };
         });
-
+  
         // Calculate total votes
         const totalVotesCalculated = candidatesWithVotes.reduce(
           (sum, candidate) => sum + Math.floor(candidate.votes),
           0
         );
-
+  
         // Sort candidates by votes and get the top performer
         const sortedCandidates = candidatesWithVotes.sort((a, b) => b.votes - a.votes);
         const topPerformer = sortedCandidates[0];
-
+  
         // Update state
         setTotalVotes(totalVotesCalculated);
         setTopPerformer(topPerformer);
@@ -176,7 +181,7 @@ const VotingCardComponent = () => {
         setTopPerformer(null);
       }
     };
-
+  
     fetchVotes();
   }, [event_id, token, eventData]);
 

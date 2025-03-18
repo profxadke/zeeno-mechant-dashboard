@@ -120,29 +120,29 @@ const RealtimeVoting = ({ id: event_id }) => {
   // Fetch payment intents data
   useEffect(() => {
     const fetchData = async () => {
-      if (!eventData) return; 
-
+      if (!eventData) return;
+  
       try {
         const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
+  
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
-
+  
         const result = await response.json();
         console.log('API Response:', result);
-
+  
         // Filter and map the data
         const filteredData = result
-          .filter((item) => item.event_id == event_id)
+          .filter((item) => item.event_id == event_id && item.status === 'S') // Only include successful transactions
           .map((item) => {
             let currency = 'USD';
             const processor = item.processor?.toUpperCase();
-
+  
             if (['ESEWA', 'KHALTI', 'FONEPAY', 'PRABHUPAY', 'NQR', 'QR'].includes(processor)) {
               currency = 'NPR';
             } else if (['PHONEPE', 'PAYU'].includes(processor)) {
@@ -150,23 +150,23 @@ const RealtimeVoting = ({ id: event_id }) => {
             } else if (processor === 'STRIPE') {
               currency = item.currency?.toUpperCase() || 'USD';
             }
-
+  
             const currencyValue = currencyValues[currency] || 1;
-
+  
             let votes;
             if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
               votes = Math.floor(item.amount / currencyValue);
             } else {
               votes = Math.floor(item.amount * currencyValue);
             }
-
+  
             // Determine payment type display value
             const paymentType = ['PAYU', 'PHONEPE', 'STRIPE'].includes(processor)
               ? 'International'
               : processor
                 ? processor.charAt(0).toUpperCase() + processor.slice(1)
                 : '';
-
+  
             return {
               name: item.name,
               email: item.email || 'N/A',
@@ -180,16 +180,16 @@ const RealtimeVoting = ({ id: event_id }) => {
               currency: currency,
             };
           });
-
+  
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+  
         console.log('Sorted Data:', sortedData);
         setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
   }, [token, event_id, eventData]);
 

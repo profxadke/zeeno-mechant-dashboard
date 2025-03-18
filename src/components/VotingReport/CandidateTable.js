@@ -35,16 +35,16 @@ const CandidateTable = () => {
         setLoading(false);
         return;
       }
-
+  
       if (!token) {
         setError("Token not found. Please log in again.");
         setLoading(false);
         return;
       }
-
+  
       setLoading(true);
       setError(null);
-
+  
       try {
         // Fetch event data to get payment_info
         const eventResponse = await fetch(
@@ -56,21 +56,21 @@ const CandidateTable = () => {
             },
           }
         );
-
+  
         if (!eventResponse.ok) {
           throw new Error("Failed to fetch event data.");
         }
-
+  
         const eventData = await eventResponse.json();
         const event = eventData.find((event) => event.id === parseInt(event_id));
-
+  
         if (!event) {
           throw new Error("Event not found.");
         }
-
+  
         // Set payment_info
         setPaymentInfo(event.payment_info);
-
+  
         // Fetch contestants data
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
@@ -81,13 +81,13 @@ const CandidateTable = () => {
             },
           }
         );
-
+  
         if (!contestantsResponse.ok) {
           throw new Error("Failed to fetch contestants data.");
         }
-
+  
         const contestants = await contestantsResponse.json();
-
+  
         // Fetch payment intents data
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
@@ -98,13 +98,18 @@ const CandidateTable = () => {
             },
           }
         );
-
+  
         if (!paymentsResponse.ok) {
           throw new Error("Failed to fetch payment intents data.");
         }
-
+  
         const paymentIntents = await paymentsResponse.json();
-
+  
+        // Filter payment intents to include only those with status "S"
+        const filteredPaymentIntents = paymentIntents.filter(
+          (intent) => intent.status === "S"
+        );
+  
         // Define currency conversion rates
         const currencyValues = {
           USD: 10,
@@ -128,16 +133,16 @@ const CandidateTable = () => {
           INR: 10,
           NPR: 10,
         };
-
-        // Calculate votes for each contestant
+  
+        // Calculate votes for each contestant using filtered payment intents
         const candidatesWithVotes = contestants.map((contestant) => {
           let totalVotes = 0;
-
+  
           // Find matching payment intents
-          paymentIntents.forEach((intent) => {
+          filteredPaymentIntents.forEach((intent) => {
             if (intent.intent_id.toString() === contestant.id.toString()) {
               let votes = 0;
-
+  
               // Determine the currency based on the processor
               if (
                 ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
@@ -159,18 +164,18 @@ const CandidateTable = () => {
                 // Default to payment_info if no specific logic
                 votes = intent.amount / event.payment_info;
               }
-
+  
               // Truncate decimal places using Math.floor
               totalVotes += Math.floor(votes);
             }
           });
-
+  
           return {
             ...contestant,
             votes: totalVotes,
           };
         });
-
+  
         setData(candidatesWithVotes);
       } catch (err) {
         setError(err.message);
@@ -178,7 +183,7 @@ const CandidateTable = () => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [event_id, token, paymentInfo]);
 
