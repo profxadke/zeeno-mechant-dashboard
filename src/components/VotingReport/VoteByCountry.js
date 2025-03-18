@@ -82,20 +82,34 @@ const VoteByCountry = () => {
         }
     
         const data = await response.json();
+        console.log("Fetched Data:", data); // Log the fetched data
     
-        // Filter payment intents to include only successful transactions (status === 'S')
+        
         const successfulPaymentIntents = data.filter((item) => item.status === 'S');
+        console.log("Successful Payment Intents:", successfulPaymentIntents); 
     
         // Process data for Nepal
         const nepalData = successfulPaymentIntents.filter((item) =>
           nepalProcessors.includes(item.processor)
         );
-        const nepalVotesData = nepalData.map((item) => {
-          // Calculate votes based on NPR currency
-          return item.amount / currencyValues.NPR;
+        // console.log("Nepal Data (Successful):", nepalData);
+    
+        // Calculate votes for each Nepal processor
+        const nepalVotesData = nepalProcessors.map((processor) => {
+          const processorData = nepalData.filter((item) => item.processor === processor);
+          const totalVotes = processorData.reduce((sum, item) => {
+            return sum + item.amount / currencyValues.NPR;
+          }, 0);
+          return totalVotes;
         });
+    
+        // console.log("Nepal Votes Data:", nepalVotesData); 
+    
+        const totalNepalVotes = nepalVotesData.reduce((a, b) => a + b, 0);
+        // console.log("Total Nepal Votes:", totalNepalVotes); 
+    
         setNepalVotes(nepalVotesData);
-        setTotalVotesNepal(nepalVotesData.reduce((a, b) => a + b, 0));
+        setTotalVotesNepal(totalNepalVotes);
     
         // Process data for Global
         const indiaData = successfulPaymentIntents.filter((item) =>
@@ -154,7 +168,7 @@ const VoteByCountry = () => {
       height: 350,
     },
     labels: nepalLabels,
-    colors: ["#007bff", "#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0", "#9966ff"],
+    colors: ["green", "#200a69", "red", "orange", "skyblue", "blue"],
     legend: { position: "bottom" },
   };
 
@@ -164,7 +178,7 @@ const VoteByCountry = () => {
       height: 350,
     },
     labels: ["Votes by Residents Within India", "International Votes"],
-    colors: ["#007bff", "#ff6384"],
+    colors: ["#5F259F", "#FF5722"],
     legend: { position: "bottom" },
   };
 

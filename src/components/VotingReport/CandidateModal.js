@@ -50,8 +50,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewAvatar(reader.result); // Set the new image URL
-        setFormData((prevData) => ({ ...prevData, avatar: reader.result })); // Update formData
+        setNewAvatar(reader.result); 
+        setFormData((prevData) => ({ ...prevData, avatar: reader.result })); 
       };
       reader.readAsDataURL(file);
     }
@@ -63,9 +63,9 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     // Include newAvatar in formData if it exists
     const updatedFormData = {
       ...formData,
-      avatar: newAvatar || formData.avatar, // Use newAvatar if available, otherwise fallback to the existing avatar
+      avatar: newAvatar || formData.avatar, 
     };
-    onUpdate(updatedFormData); // Pass the updated formData to the onUpdate function
+    onUpdate(updatedFormData); 
   };
 
   // Fetch voter details and calculate votes
@@ -168,7 +168,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
       case "PRABHUPAY":
         return "red";
       case "KHALTI":
-        return "purple";
+        return "#200a69";
       case "FONEPAY":
         return "red";
       case "NQR":

@@ -243,7 +243,6 @@ const RealtimeVoting = ({ id: event_id }) => {
           <thead>
             <tr>
               <th>Name</th>
-              <th>Email</th>
               <th>Phone</th>
               <th>Votes</th>
               <th>Status</th>
@@ -257,7 +256,6 @@ const RealtimeVoting = ({ id: event_id }) => {
               currentData.map((row, index) => (
                 <tr key={index}>
                   <td>{row.name}</td>
-                  <td>{row.email}</td>
                   <td>{row.phone}</td>
                   <td>{row.votes}</td>
                   <td>
@@ -284,7 +282,7 @@ const RealtimeVoting = ({ id: event_id }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>
+                <td colSpan="7" style={{ textAlign: 'center' }}>
                   No data available for this event.
                 </td>
               </tr>

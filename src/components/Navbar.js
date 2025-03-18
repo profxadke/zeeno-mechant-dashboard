@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaSignOutAlt, FaBars, FaChevronDown, FaBell } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import NotificationDropdown from "./NotificationDropdown";
@@ -16,6 +16,8 @@ const Navbar = ({ toggleSidebar }) => {
   const location = useLocation();
   const { updateToken } = useToken();
   const navigate = useNavigate();
+  const tooltipRef = useRef(null); // Ref for the tooltip
+
   const pageTitleMap = {
     "/": "Dashboard Analytics",
     "/kyc-verification": "KYC Verification",
@@ -57,6 +59,20 @@ const Navbar = ({ toggleSidebar }) => {
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Handle clicks outside the tooltip
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(event.target)) {
+        setShowTooltip(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -136,9 +152,9 @@ const Navbar = ({ toggleSidebar }) => {
               Hello, <span className="user-name">{username}</span>
             </span>
           </Link>
-          <div className="verified-tick" onClick={handleVerifiedClick}>
+          <div className="verified-tick" onClick={handleVerifiedClick} ref={tooltipRef}>
             <img
-              src="https://i.ibb.co/JwfxtgPv/IMG-2703.png" // Replace with your verified tick image path
+              src="https://i.ibb.co/JwfxtgPv/IMG-2703.png" 
               alt="Verified"
               className="verified-tick-image"
             />
@@ -146,7 +162,7 @@ const Navbar = ({ toggleSidebar }) => {
               <div className="tooltip">
                 <div className="tooltip-header">
                   <img
-                    src="https://i.ibb.co/JwfxtgPv/IMG-2703.png" // Verified tick icon
+                    src="https://i.ibb.co/JwfxtgPv/IMG-2703.png" 
                     alt="Verified"
                     className="tooltip-icon"
                   />
