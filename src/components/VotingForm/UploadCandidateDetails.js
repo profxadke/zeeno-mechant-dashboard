@@ -116,9 +116,17 @@ const UploadCandidateDetails = ({ events }) => {
   };
 
   const handleSubmit = async () => {
+    // Validate required fields
+    for (const candidate of candidates) {
+      if (!candidate.name || !candidate.photo) {
+        alert("Name and Photo are required fields.");
+        return;
+      }
+    }
+
     const candidatesData = candidates.map((candidate) => ({
       name: candidate.name,
-      misc_kv: candidate.misc_kv,
+      misc_kv: candidate.misc_kv || "N/A", // Allow misc_kv to be blank
       avatar: candidate.photo,
       bio: candidate.description,
       status: "O",
@@ -127,7 +135,7 @@ const UploadCandidateDetails = ({ events }) => {
     }));
 
     try {
-      // Making API request
+      // Making API request for each candidate
       for (const candidate of candidatesData) {
         await fetch("https://auth.zeenopay.com/events/contestants/", {
           method: "POST",
@@ -210,7 +218,6 @@ const UploadCandidateDetails = ({ events }) => {
               </div>
               {candidates.map((candidate, index) => (
                 <div key={index} className="candidate-form-section">
-                  {/* <h5 className="candidate-form-header">Add Your Candidate </h5> */}
                   <div className="candidate-form">
                     {!isBulk ? (
                       <>

@@ -306,7 +306,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
 
             <div className="form-group">
               <label>Edit Contestant Avatar</label>
-              <div className="candidate-avatar">
+              <div className="candidate-avatar-edit">
                 <img
                   src={newAvatar || formData.avatar}
                   alt={`${formData.name}'s avatar`}
