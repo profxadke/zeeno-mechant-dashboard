@@ -1,11 +1,25 @@
 import React, { useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { FaChartBar, FaRegClipboard, FaRegFileAlt, FaCogs, FaVoteYea, FaTicketAlt, FaCalendarPlus } from "react-icons/fa";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  FaChartBar,
+  FaRegClipboard,
+  FaRegFileAlt,
+  FaCogs,
+  FaVoteYea,
+  FaTicketAlt,
+  FaCalendarPlus,
+  FaSignOutAlt, 
+} from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useToken } from "../context/TokenContext"; 
 import "../assets/sidebar.css";
 
 const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
   const location = useLocation();
   const sidebarRef = useRef(null);
+  const { updateToken } = useToken();
+  const navigate = useNavigate(); 
 
   const menuItems = [
     { title: "Dashboard", icon: <FaChartBar />, section: "Home", path: "/" },
@@ -71,21 +85,37 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
     },
   ];
 
+  // Handle logout
+  const handleLogout = () => {
+    console.log("Logout button clicked"); 
+    updateToken(null); 
+    sessionStorage.removeItem("token"); 
+    sessionStorage.removeItem("username"); 
+    toast.success("You have logged out successfully!", {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+    setTimeout(() => {
+      navigate("/login"); 
+    }, 2000);
+  };
+
   // Handle click outside the sidebar to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         if (open) {
-          // Close the sidebar if it's open
-          toggleSidebar(); 
+          toggleSidebar();
         }
       }
     };
 
-    // Add event listener for clicks outside the sidebar
     document.addEventListener("mousedown", handleClickOutside);
-
-    // Cleanup the event listener
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -141,7 +171,17 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
             </Link>
           </div>
         ))}
+
+        {/* Logout Button for Mobile Screens */}
+        {/* <div className="mobile-logout">
+          <button className="logout-button" onClick={handleLogout}>
+            <FaSignOutAlt className="menu-icon" />
+            <span className="logout-text">Logout</span>
+          </button>
+        </div> */}
       </div>
+      {/* Toast Container for Notifications */}
+      <ToastContainer position="top-right" autoClose={5000} />
     </div>
   );
 };

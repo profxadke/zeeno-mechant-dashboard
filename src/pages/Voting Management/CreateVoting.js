@@ -14,7 +14,7 @@ const CreateVoting = () => {
     services: "",
   });
 
-  const [events, setEvents] = useState([]); // State to manage events
+  const [events, setEvents] = useState([]); 
   const { token } = useToken();
 
   // Fetch events on component mount

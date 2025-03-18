@@ -2,6 +2,13 @@
     font-family: 'Arial', sans-serif;
   }
 
+  select option {
+    padding: 8px 12px; 
+    font-size: 14px;
+    background-color: #fff;
+    color: #495057;
+  }
+
   .action-icons {
     display: flex;
     gap: 10px;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import { motion } from 'framer-motion';
 import 'react-calendar/dist/Calendar.css';
@@ -9,6 +10,7 @@ function DashboardCalender() {
   const [ongoingEvents, setOngoingEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const eventsPerPage = 2;
+  const navigate = useNavigate();
 
   const handleDateChange = (newDate) => {
     setDate(newDate);
@@ -25,16 +27,19 @@ function DashboardCalender() {
 
         const formattedEvents = [
           ...formsRes.map(event => ({
+            id: event.id,
             title: event.title,
             category: 'Registration Event',
             img: event.img || 'https://via.placeholder.com/60',
           })),
           ...eventsRes.map(event => ({
+            id: event.id,
             title: event.title,
             category: 'Voting Event',
             img: event.img || 'https://via.placeholder.com/60',
           })),
           ...ticketsRes.map(event => ({
+            id: event.id,
             title: event.name,
             category: 'Ticket Event',
             img: event.img || 'https://via.placeholder.com/60',
@@ -52,6 +57,15 @@ function DashboardCalender() {
 
   const totalPages = Math.ceil(ongoingEvents.length / eventsPerPage);
   const currentEvents = ongoingEvents.slice(currentPage * eventsPerPage, (currentPage + 1) * eventsPerPage);
+
+  const handleViewEvent = (event) => {
+    if (event.category === 'Registration Event') {
+      navigate(`/viewreport/${event.id}`);
+    } else if (event.category === 'Voting Event') {
+      navigate(`/eventreport/${event.id}`);
+    }
+    // Handle other categories if needed
+  };
 
   return (
     <motion.div 
@@ -104,7 +118,7 @@ function DashboardCalender() {
                 <h3>{event.title}</h3>
                 <p className="category">{event.category}</p>
               </div>
-              <button className="view-event-button">
+              <button className="view-event-button" onClick={() => handleViewEvent(event)}>
                 View Event <span className="arrow">→</span>
               </button>
             </motion.div>

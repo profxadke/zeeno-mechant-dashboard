@@ -20,8 +20,8 @@ const CandidateTable = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    key: null, // 'name', 'misc_kv', 'votes'
-    direction: "asc", // 'asc' or 'desc'
+    key: null,
+    direction: "asc",
   });
   const itemsPerPage = 10;
 
@@ -121,7 +121,7 @@ const CandidateTable = () => {
           QAR: 2,
           MYR: 2,
           KWD: 2,
-          HKD: 30,
+          HKD: 1,
           CNY: 1,
           SAR: 2,
           OMR: 20,
@@ -363,9 +363,9 @@ const CandidateTable = () => {
             padding: "10px",
             borderRadius: "8px",
             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-            flexDirection: "row", // Default layout for larger screens
+            flexDirection: "row", 
             "@media (max-width: 768px)": {
-              flexDirection: "column", // Stack vertically on mobile
+              flexDirection: "column", 
               gap: "10px",
               width: "100%",
             },
@@ -373,57 +373,45 @@ const CandidateTable = () => {
         >
           {/* Sort by Dropdown */}
           <div
-            className="filter-group"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              width: "100%", // Full width on mobile
-              "@media (max-width: 768px)": {
-                flexDirection: "column", // Stack label and dropdown vertically
-                alignItems: "flex-start",
-              },
-            }}
-          >
-            <label
-              htmlFor="sort-by"
-              style={{
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#495057",
-                "@media (max-width: 768px)": {
-                  fontSize: "12px", // Smaller font size on mobile
-                },
-              }}
-            >
-              Filter:
-            </label>
-            <select
-              id="sort-by"
-              onChange={(e) => requestSort(e.target.value)}
-              value={sortConfig.key || ""}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: "1px solid #ced4da",
-                backgroundColor: "#fff",
-                fontSize: "14px",
-                color: "#495057",
-                cursor: "pointer",
-                outline: "none",
-                transition: "border-color 0.3s ease",
-                width: "100%", // Full width on mobile
-                "@media (max-width: 768px)": {
-                  fontSize: "12px", // Smaller font size on mobile
-                },
-              }}
-            >
-              <option value="">Select</option>
-              <option value="name">Name</option>
-              <option value="misc_kv">C.No.</option>
-              <option value="votes">Votes</option>
-            </select>
-          </div>
+  className="filter-group"
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    width: "100%", // Full width on mobile
+    "@media (max-width: 768px)": {
+      flexDirection: "column",
+      alignItems: "flex-start",
+    },
+  }}
+>
+  <select
+    id="sort-by"
+    onChange={(e) => requestSort(e.target.value)}
+    value={sortConfig.key || ""}
+    style={{
+      padding: "8px 12px",
+      borderRadius: "6px",
+      border: "1px solid #ced4da",
+      backgroundColor: "#fff",
+      fontSize: "14px",
+      color: "#495057",
+      cursor: "pointer",
+      outline: "none",
+      transition: "border-color 0.3s ease",
+      width: "150px", 
+      "@media (max-width: 768px)": {
+        width: "100%",
+        fontSize: "12px",
+      },
+    }}
+  >
+    <option value="">Sort By</option>
+    <option value="name">Name</option>
+    <option value="misc_kv">C.No.</option>
+    <option value="votes">Votes</option>
+  </select>
+</div>
 
           {/* Ascending/Descending Button */}
           <button

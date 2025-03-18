@@ -31,7 +31,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     QAR: 2,
     MYR: 2,
     KWD: 2,
-    HKD: 30,
+    HKD: 1,
     CNY: 1,
     SAR: 2,
     OMR: 20,

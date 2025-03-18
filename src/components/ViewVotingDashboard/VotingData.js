@@ -77,7 +77,7 @@ const VotingData = () => {
     QAR: 2,
     MYR: 2,
     KWD: 2,
-    HKD: 30,
+    HKD: 1,
     CNY: 1,
     SAR: 2,
     OMR: 20,
@@ -157,7 +157,7 @@ const VotingData = () => {
           const truncatedVotes = Math.floor(votes);
   
           const updatedAt = new Date(intent.updated_at);
-          const dateKey = updatedAt.toISOString().split("T")[0]; // Extract YYYY-MM-DD
+          const dateKey = updatedAt.toISOString().split("T")[0];
           const hours = updatedAt.getHours();
   
           if (!dailyVotes[dateKey]) {
@@ -214,6 +214,9 @@ const VotingData = () => {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Check if there is any voting data available
+  const hasVotingData = series.some((s) => s.data.some((vote) => vote > 0));
 
   if (error) return <p>{error}</p>;
 
@@ -350,13 +353,17 @@ const VotingData = () => {
           <h3>Today's Votes</h3>
           <div className="date-display">{currentDate}</div>
         </div>
-        <Chart
-          options={chartOptions}
-          series={series}
-          type="line"
-          height={isMobile ? 240 : 300}
-          className="chart"
-        />
+        {hasVotingData ? (
+          <Chart
+            options={chartOptions}
+            series={series}
+            type="line"
+            height={isMobile ? 240 : 300}
+            className="chart"
+          />
+        ) : (
+          <p>No Votes available for now.</p>
+        )}
       </div>
 
       {/* Pass event_id and token as props to CandidateList */}
