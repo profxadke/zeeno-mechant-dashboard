@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
 import * as XLSX from "xlsx";
-import { FaEdit } from "react-icons/fa"; // Import edit icon from react-icons
+import { FaEdit } from "react-icons/fa"; 
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
@@ -12,7 +12,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoadingVoters, setIsLoadingVoters] = useState(false);
   const [voterError, setVoterError] = useState(null);
-  const [newAvatar, setNewAvatar] = useState(null); // State to store the new image file
+  const [newAvatar, setNewAvatar] = useState(null); 
 
   useEffect(() => {
     setFormData(candidate || {});
@@ -74,33 +74,62 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     setVoterError(null);
   
     try {
-      const [paymentsResponse, eventsResponse] = await Promise.all([
-        fetch(`https://auth.zeenopay.com/payments/intents/`, {
+      // Fetch regular payment intents
+      const paymentsResponse = await fetch(
+        `https://auth.zeenopay.com/payments/intents/`,
+        {
           headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`https://auth.zeenopay.com/events/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+        }
+      );
   
-      if (!paymentsResponse.ok || !eventsResponse.ok) {
-        throw new Error("Failed to fetch data");
+      if (!paymentsResponse.ok) {
+        throw new Error("Failed to fetch payment intents data.");
       }
   
-      const [paymentIntents, events] = await Promise.all([
-        paymentsResponse.json(),
-        eventsResponse.json(),
-      ]);
+      const paymentIntents = await paymentsResponse.json();
+  
+      // Fetch QR/NQR payment intents
+      const qrPaymentsResponse = await fetch(
+        `https://auth.zeenopay.com/payments/qr/intents`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!qrPaymentsResponse.ok) {
+        throw new Error("Failed to fetch QR/NQR payment intents data.");
+      }
+  
+      const qrPaymentIntents = await qrPaymentsResponse.json();
+  
+      // Combine regular and QR/NQR payment intents
+      const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
   
       // Filter payment intents to include only successful transactions (status === 'S')
-      const successfulPaymentIntents = paymentIntents.filter(
+      const successfulPaymentIntents = allPaymentIntents.filter(
         (intent) => intent.status === 'S'
       );
   
+      // Fetch events data
+      const eventsResponse = await fetch(
+        `https://auth.zeenopay.com/events/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!eventsResponse.ok) {
+        throw new Error("Failed to fetch events data.");
+      }
+  
+      const events = await eventsResponse.json();
+  
+      // Match intents with the candidate's misc_kv and intent type "V"
       const matchedIntents = successfulPaymentIntents.filter(
         (intent) => String(intent.intent_id) === String(miscKv) && intent.intent === "V"
       );
   
+      // Calculate votes and prepare voter list
       const voterList = matchedIntents.map((intent) => {
         const event = events.find((event) => event.id === intent.event_id);
         let votes = 0;
@@ -129,9 +158,17 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   
         votes = Math.floor(votes);
   
-        const paymentMethod = ["PAYU", "PHONEPE", "STRIPE"].includes(intent.processor)
-          ? "International"
-          : intent.processor || "N/A";
+        // Determine payment method
+        let paymentMethod;
+        if (intent.processor === "NQR") {
+          paymentMethod = "NepalPayQR"; // Rename NQR to NepalPayQR
+        } else if (intent.processor === "QR") {
+          paymentMethod = "FonePayQR"; // Rename QR to FonePayQR
+        } else if (["PAYU", "PHONEPE", "STRIPE"].includes(intent.processor)) {
+          paymentMethod = "International";
+        } else {
+          paymentMethod = intent.processor || "N/A";
+        }
   
         return {
           name: intent.name,
@@ -142,6 +179,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         };
       });
   
+      // Sort voter list by transaction time (newest first)
       voterList.sort((a, b) => new Date(b.transactionTime) - new Date(a.transactionTime));
   
       setVoterDetails(voterList);
@@ -171,10 +209,10 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         return "#200a69";
       case "FONEPAY":
         return "red";
-      case "NQR":
+      case "NEPALPAYQR": 
         return "skyblue";
-      case "QR":
-        return "skyblue";
+      case "FONEPAYQR":
+        return "blue";
       case "STRIPE":
         return "#5433ff";
       case "PHONEPE":

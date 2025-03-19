@@ -116,6 +116,7 @@ const VotingData = () => {
   useEffect(() => {
     const fetchPaymentIntents = async () => {
       try {
+        // Fetch regular payment intents
         const response = await axios.get(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
@@ -126,7 +127,19 @@ const VotingData = () => {
           }
         );
   
-        const paymentIntents = response.data;
+        // Fetch QR/NQR payment intents
+        const qrResponse = await axios.get(
+          `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+  
+        // Combine both responses
+        const paymentIntents = [...response.data, ...qrResponse.data];
   
         // Filter payment intents to include only successful transactions (status === 'S')
         const successfulPaymentIntents = paymentIntents.filter(

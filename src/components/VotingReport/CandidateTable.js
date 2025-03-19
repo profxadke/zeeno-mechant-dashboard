@@ -88,7 +88,7 @@ const CandidateTable = () => {
   
         const contestants = await contestantsResponse.json();
   
-        // Fetch payment intents data
+        // Fetch regular payment intents data
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
@@ -105,8 +105,28 @@ const CandidateTable = () => {
   
         const paymentIntents = await paymentsResponse.json();
   
+        // Fetch QR/NQR payment intents data
+        const qrPaymentsResponse = await fetch(
+          `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+  
+        if (!qrPaymentsResponse.ok) {
+          throw new Error("Failed to fetch QR/NQR payment intents data.");
+        }
+  
+        const qrPaymentIntents = await qrPaymentsResponse.json();
+  
+        // Combine regular and QR/NQR payment intents
+        const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
+  
         // Filter payment intents to include only those with status "S"
-        const filteredPaymentIntents = paymentIntents.filter(
+        const filteredPaymentIntents = allPaymentIntents.filter(
           (intent) => intent.status === "S"
         );
   

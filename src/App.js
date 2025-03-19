@@ -21,6 +21,8 @@ import IndividualEventPage from "./pages/IndividualEventPage.js";
 import IndividualView from "./pages/Registration Management/IndividualView.js";
 import IndividualReportPage from "./pages/IndividualReportPage.js";
 import IndividualReport from "./pages/Registration Management/IndividualReport.js";
+import IndividualTicketDashboard from "./pages/Ticket Management/IndividualTicketDashboard.js";
+import IndividualTicketReport from "./pages/Ticket Management/IndividualTicketReport.js";
 // import ScrollButtons from "./components/ScrollButtons.js";
 
 function App() {
@@ -145,6 +147,23 @@ function App() {
               element={
                 <ProtectedRoute>
                   <IndividualView />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/ticketdashboard/:ticket_id"
+              element={
+                <ProtectedRoute>
+                  <IndividualTicketDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ticketreport/:ticket_id"
+              element={
+                <ProtectedRoute>
+                  <IndividualTicketReport />
                 </ProtectedRoute>
               }
             />

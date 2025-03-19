@@ -9,6 +9,7 @@ const Contestant = ({ event_id, token }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch event data
         const eventResponse = await fetch(`https://auth.zeenopay.com/events/`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -28,6 +29,7 @@ const Contestant = ({ event_id, token }) => {
   
         setPaymentInfo(event.payment_info);
   
+        // Fetch contestants data
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
           {
@@ -44,6 +46,7 @@ const Contestant = ({ event_id, token }) => {
   
         const contestants = await contestantsResponse.json();
   
+        // Fetch regular payment intents
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
@@ -60,8 +63,28 @@ const Contestant = ({ event_id, token }) => {
   
         const paymentIntents = await paymentsResponse.json();
   
+        // Fetch QR/NQR payment intents
+        const qrPaymentsResponse = await fetch(
+          `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+  
+        if (!qrPaymentsResponse.ok) {
+          throw new Error("Failed to fetch QR/NQR payment intents data");
+        }
+  
+        const qrPaymentIntents = await qrPaymentsResponse.json();
+  
+        // Combine regular and QR/NQR payment intents
+        const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
+  
         // Filter payment intents to include only successful transactions (status === 'S')
-        const successfulPaymentIntents = paymentIntents.filter(
+        const successfulPaymentIntents = allPaymentIntents.filter(
           (intent) => intent.status === 'S'
         );
   
@@ -130,6 +153,7 @@ const Contestant = ({ event_id, token }) => {
           };
         });
   
+        // Sort candidates by votes in descending order and limit to top 6
         const sortedCandidates = candidatesWithVotes
           .sort((a, b) => b.votes - a.votes)
           .slice(0, 6);

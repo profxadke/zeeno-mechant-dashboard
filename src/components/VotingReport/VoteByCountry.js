@@ -68,6 +68,7 @@ const VoteByCountry = () => {
 
     const fetchPaymentIntentsData = async () => {
       try {
+        // Fetch regular payment intents
         const response = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
           {
@@ -84,15 +85,37 @@ const VoteByCountry = () => {
         const data = await response.json();
         console.log("Fetched Data:", data); // Log the fetched data
     
-        
-        const successfulPaymentIntents = data.filter((item) => item.status === 'S');
-        console.log("Successful Payment Intents:", successfulPaymentIntents); 
+        // Fetch QR/NQR payment intents
+        const qrResponse = await fetch(
+          `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+    
+        if (!qrResponse.ok) {
+          throw new Error("Failed to fetch QR/NQR payment intents data");
+        }
+    
+        const qrData = await qrResponse.json();
+        console.log("Fetched QR/NQR Data:", qrData); // Log the fetched QR/NQR data
+    
+        // Combine regular and QR/NQR payment intents
+        const allPaymentIntents = [...data, ...qrData];
+    
+        // Filter payment intents to include only successful transactions (status === 'S')
+        const successfulPaymentIntents = allPaymentIntents.filter(
+          (item) => item.status === 'S'
+        );
+        console.log("Successful Payment Intents:", successfulPaymentIntents);
     
         // Process data for Nepal
         const nepalData = successfulPaymentIntents.filter((item) =>
           nepalProcessors.includes(item.processor)
         );
-        // console.log("Nepal Data (Successful):", nepalData);
+        console.log("Nepal Data (Successful):", nepalData);
     
         // Calculate votes for each Nepal processor
         const nepalVotesData = nepalProcessors.map((processor) => {
@@ -103,10 +126,10 @@ const VoteByCountry = () => {
           return totalVotes;
         });
     
-        // console.log("Nepal Votes Data:", nepalVotesData); 
+        console.log("Nepal Votes Data:", nepalVotesData);
     
         const totalNepalVotes = nepalVotesData.reduce((a, b) => a + b, 0);
-        // console.log("Total Nepal Votes:", totalNepalVotes); 
+        console.log("Total Nepal Votes:", totalNepalVotes);
     
         setNepalVotes(nepalVotesData);
         setTotalVotesNepal(totalNepalVotes);
@@ -157,8 +180,8 @@ const VoteByCountry = () => {
 
   // Update labels for Nepal chart
   const nepalLabels = nepalProcessors.map((processor) => {
-    if (processor === "NQR") return "S-QR";
-    if (processor === "QR") return "D-QR";
+    if (processor === "NQR") return "NepalPayQR";
+    if (processor === "QR") return "FonePayQR";
     return processor;
   });
 

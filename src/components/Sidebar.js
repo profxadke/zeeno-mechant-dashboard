@@ -59,24 +59,24 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
       section: "Voting Management",
       path: "/view-voting-report",
     },
-    {
-      title: "Create Ticketing Event",
-      icon: <FaTicketAlt />,
-      section: "Ticket Management",
-      path: "/create-ticket-event",
-    },
-    {
-      title: "View Dashboard",
-      icon: <FaCogs />,
-      section: "Ticket Management",
-      path: "/view-ticket-dashboard",
-    },
-    {
-      title: "View Reports",
-      icon: <FaRegFileAlt />,
-      section: "Ticket Management",
-      path: "/view-ticket-report",
-    },
+    // {
+    //   title: "Create Ticketing Event",
+    //   icon: <FaTicketAlt />,
+    //   section: "Ticket Management",
+    //   path: "/create-ticket-event",
+    // },
+    // {
+    //   title: "View Dashboard",
+    //   icon: <FaCogs />,
+    //   section: "Ticket Management",
+    //   path: "/view-ticket-dashboard",
+    // },
+    // {
+    //   title: "View Reports",
+    //   icon: <FaRegFileAlt />,
+    //   section: "Ticket Management",
+    //   path: "/view-ticket-report",
+    // },
     {
       title: "Customize Website",
       icon: <FaRegFileAlt />,

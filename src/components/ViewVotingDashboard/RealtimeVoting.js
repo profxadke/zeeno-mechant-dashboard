@@ -123,6 +123,7 @@ const RealtimeVoting = ({ id: event_id }) => {
       if (!eventData) return;
   
       try {
+        // Fetch data for non-QR/NQR processors
         const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -134,10 +135,25 @@ const RealtimeVoting = ({ id: event_id }) => {
         }
   
         const result = await response.json();
-        // console.log('API Response:', result);
+  
+        // Fetch data for QR/NQR processors
+        const qrResponse = await fetch(`https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!qrResponse.ok) {
+          throw new Error('Failed to fetch QR/NQR data');
+        }
+  
+        const qrResult = await qrResponse.json();
+  
+        // Combine both results
+        const combinedData = [...result, ...qrResult];
   
         // Filter and map the data
-        const filteredData = result
+        const filteredData = combinedData
           .filter((item) => item.event_id == event_id && item.status === 'S') // Only include successful transactions
           .map((item) => {
             let currency = 'USD';
@@ -183,7 +199,6 @@ const RealtimeVoting = ({ id: event_id }) => {
   
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   
-        // console.log('Sorted Data:', sortedData);
         setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);
