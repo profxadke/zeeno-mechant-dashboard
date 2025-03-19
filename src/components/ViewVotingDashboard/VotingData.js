@@ -289,7 +289,7 @@ const VotingData = () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: rgb(133, 219, 80);
+            background-color: rgb(52, 107, 18);
             border: 1px solid #E0E0E0;
             color: #fff;
             font-weight: 600;
