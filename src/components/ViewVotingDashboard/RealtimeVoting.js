@@ -201,9 +201,9 @@ const RealtimeVoting = ({ id: event_id }) => {
             // Determine payment type display value
             let paymentType;
             if (processor === 'NQR') {
-              paymentType = 'NepalPayQR'; // Rename NQR to NepalPayQR
+              paymentType = 'NepalPayQR'; 
             } else if (processor === 'QR') {
-              paymentType = 'FonePayQR'; // Rename QR to FonePayQR
+              paymentType = 'FonePayQR';
             } else if (['PAYU', 'PHONEPE', 'STRIPE'].includes(processor)) {
               paymentType = 'International';
             } else {
