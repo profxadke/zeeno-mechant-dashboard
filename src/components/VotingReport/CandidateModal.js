@@ -2,17 +2,15 @@ import React, { useState, useEffect } from "react";
 import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
 import * as XLSX from "xlsx";
-import { FaEdit } from "react-icons/fa"; 
+import { FaEdit } from "react-icons/fa";
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
   const [voterDetails, setVoterDetails] = useState([]);
   const { token } = useToken();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoadingVoters, setIsLoadingVoters] = useState(false);
   const [voterError, setVoterError] = useState(null);
-  const [newAvatar, setNewAvatar] = useState(null); 
+  const [newAvatar, setNewAvatar] = useState(null);
 
   useEffect(() => {
     setFormData(candidate || {});
@@ -50,8 +48,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewAvatar(reader.result); 
-        setFormData((prevData) => ({ ...prevData, avatar: reader.result })); 
+        setNewAvatar(reader.result);
+        setFormData((prevData) => ({ ...prevData, avatar: reader.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -60,19 +58,18 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Include newAvatar in formData if it exists
     const updatedFormData = {
       ...formData,
-      avatar: newAvatar || formData.avatar, 
+      avatar: newAvatar || formData.avatar,
     };
-    onUpdate(updatedFormData); 
+    onUpdate(updatedFormData);
   };
 
   // Fetch voter details and calculate votes
   const fetchVoterDetails = async (miscKv) => {
     setIsLoadingVoters(true);
     setVoterError(null);
-  
+
     try {
       // Fetch regular payment intents
       const paymentsResponse = await fetch(
@@ -81,13 +78,13 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (!paymentsResponse.ok) {
         throw new Error("Failed to fetch payment intents data.");
       }
-  
+
       const paymentIntents = await paymentsResponse.json();
-  
+
       // Fetch QR/NQR payment intents
       const qrPaymentsResponse = await fetch(
         `https://auth.zeenopay.com/payments/qr/intents`,
@@ -95,21 +92,21 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (!qrPaymentsResponse.ok) {
         throw new Error("Failed to fetch QR/NQR payment intents data.");
       }
-  
+
       const qrPaymentIntents = await qrPaymentsResponse.json();
-  
+
       // Combine regular and QR/NQR payment intents
       const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
-  
+
       // Filter payment intents to include only successful transactions (status === 'S')
       const successfulPaymentIntents = allPaymentIntents.filter(
-        (intent) => intent.status === 'S'
+        (intent) => intent.status === "S"
       );
-  
+
       // Fetch events data
       const eventsResponse = await fetch(
         `https://auth.zeenopay.com/events/`,
@@ -117,23 +114,23 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (!eventsResponse.ok) {
         throw new Error("Failed to fetch events data.");
       }
-  
+
       const events = await eventsResponse.json();
-  
+
       // Match intents with the candidate's misc_kv and intent type "V"
       const matchedIntents = successfulPaymentIntents.filter(
         (intent) => String(intent.intent_id) === String(miscKv) && intent.intent === "V"
       );
-  
+
       // Calculate votes and prepare voter list
       const voterList = matchedIntents.map((intent) => {
         const event = events.find((event) => event.id === intent.event_id);
         let votes = 0;
-  
+
         // Determine the currency based on the processor
         if (
           ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
@@ -155,21 +152,21 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           // Default to payment_info if no specific logic
           votes = event ? Number(intent.amount) / event.payment_info : 0;
         }
-  
+
         votes = Math.floor(votes);
-  
+
         // Determine payment method
         let paymentMethod;
         if (intent.processor === "NQR") {
-          paymentMethod = "NepalPayQR"; // Rename NQR to NepalPayQR
+          paymentMethod = "NepalPayQR";
         } else if (intent.processor === "QR") {
-          paymentMethod = "FonePayQR"; // Rename QR to FonePayQR
+          paymentMethod = "FonePayQR";
         } else if (["PAYU", "PHONEPE", "STRIPE"].includes(intent.processor)) {
           paymentMethod = "International";
         } else {
           paymentMethod = intent.processor || "N/A";
         }
-  
+
         return {
           name: intent.name,
           phone_no: intent.phone_no,
@@ -178,10 +175,10 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           transactionTime: intent.updated_at,
         };
       });
-  
+
       // Sort voter list by transaction time (newest first)
       voterList.sort((a, b) => new Date(b.transactionTime) - new Date(a.transactionTime));
-  
+
       setVoterDetails(voterList);
     } catch (error) {
       setVoterError(error.message);
@@ -191,12 +188,6 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   };
 
   const totalVotes = voterDetails.reduce((sum, voter) => sum + voter.votes, 0);
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentVoters = voterDetails.slice(indexOfFirstItem, indexOfLastItem);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Function to get processor color
   const getProcessorColor = (processor) => {
@@ -209,7 +200,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         return "#200a69";
       case "FONEPAY":
         return "red";
-      case "NEPALPAYQR": 
+      case "NEPALPAYQR":
         return "skyblue";
       case "FONEPAYQR":
         return "blue";
@@ -389,7 +380,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
                   <strong>Name:</strong> {candidate.name}
                 </p>
                 <p>
-                  <strong>Contestant No:</strong> {candidate.id}
+                  <strong>Contestant ID:</strong> {candidate.id}
                 </p>
                 <p>
                   <strong>Status:</strong>{" "}
@@ -445,7 +436,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             ) : voterError ? (
               <p className="error-message">{voterError}</p>
             ) : (
-              <div className="table-wrapper">
+              <div className="table-wrapper" style={{ maxHeight: "200px", overflowY: "auto" }}>
                 <table className="voters-table">
                   <thead>
                     <tr>
@@ -457,8 +448,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
                     </tr>
                   </thead>
                   <tbody>
-                    {currentVoters.length > 0 ? (
-                      currentVoters.map((voter, index) => (
+                    {voterDetails.length > 0 ? (
+                      voterDetails.map((voter, index) => (
                         <tr key={index}>
                           <td>{voter.name}</td>
                           <td>
@@ -487,28 +478,347 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
                 </table>
               </div>
             )}
-
-            {/* Pagination Controls */}
-            <div className="pagination">
-              <button
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-              <span>
-                Page {currentPage} of {Math.ceil(voterDetails.length / itemsPerPage)}
-              </span>
-              <button
-                onClick={() => paginate(currentPage + 1)}
-                disabled={indexOfLastItem >= voterDetails.length}
-              >
-                Next
-              </button>
-            </div>
           </div>
         )}
       </div>
+
+      <style>{`/* Import Poppins font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Modal Container */
+.modal-container {
+  background: #fff;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease;
+  overflow-y: auto;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Close Button */
+.modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  color: #e74c3c;
+}
+
+/* Modal Title */
+.modal-title {
+  margin-top: 0;
+  font-size: 1.5rem;
+  color: #333;
+  text-align: center;
+}
+
+/* Candidate Avatar Styling */
+.candidate-avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 3px solid #fff;
+  margin: 0 auto 20px;
+}
+
+.candidate-avatar-edit {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 3px solid #fff;
+  margin: 0 0 20px;
+}
+
+.candidate-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.candidate-avatar:hover .candidate-photo {
+  transform: scale(1.1);
+}
+
+.edit-avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.candidate-avatar:hover .edit-avatar-overlay {
+  opacity: 1;
+}
+
+.edit-avatar-icon {
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Candidate Details */
+.candidate-details {
+  text-align: center;
+}
+
+.candidate-details p {
+  margin: 10px 0;
+}
+
+/* Voting Information Header */
+.voting-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+  max-height: 200px; 
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Thin Scrollbar Styling */
+.table-wrapper::-webkit-scrollbar {
+  width: 4px; 
+  height: 4px; 
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px; 
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+/* Voters Table */
+.voters-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Poppins', sans-serif;
+}
+
+.voters-table thead {
+  position: sticky;
+  top: 0;
+  background-color: #028248;
+  color: #fff;
+  z-index: 1;
+}
+
+.voters-table th,
+.voters-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+  font-size: 14px;
+}
+
+.voters-table th {
+  background-color: #028248;
+  color: #fff;
+  font-weight: bold;
+}
+
+.voters-table td {
+  background-color: #fafafa;
+}
+
+/* Decrease width of Payment Method column */
+.voters-table th:nth-child(2),
+.voters-table td:nth-child(2) {
+  width: 140px;
+}
+
+.voters-table th:nth-child(3),
+.voters-table td:nth-child(3) {
+  width: 100px;
+}
+
+.voters-table th:nth-child(1),
+.voters-table td:nth-child(1) {
+  width: 140px;
+}
+
+/* Submit Button */
+.submit-btn {
+  background: #028248;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 10px;
+}
+
+.submit-btn:hover {
+  background: rgb(59, 177, 124);
+}
+
+/* Export Button */
+.export-btn {
+  background: #028248;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.export-btn:hover {
+  background: #016138;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-ongoing {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.status-eliminated {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.status-hidden {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.status-closed {
+  background-color: #ffc107;
+  color: #000;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Custom Dropdown Styling */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.custom-dropdown:hover {
+  border-color: #5433ff;
+}
+
+.custom-dropdown select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  appearance: none; /* Remove default arrow */
+  cursor: pointer;
+}
+
+.custom-dropdown .dropdown-arrow {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #5433ff;
+  font-size: 12px;
+}
+
+/* Styling for options */
+.custom-dropdown select option {
+  padding: 10px;
+  background-color: #fff;
+  color: #333;
+}
+
+.custom-dropdown select option:hover {
+  background-color: #f0f0f0;
+}`}</style>
     </div>
   );
 };
