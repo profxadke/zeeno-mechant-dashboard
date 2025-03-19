@@ -7,6 +7,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   const { token } = useToken();
   const [data, setData] = useState([]);
   const [eventData, setEventData] = useState(null);
+  const [contestants, setContestants] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
@@ -117,6 +118,30 @@ const RealtimeVoting = ({ id: event_id }) => {
     fetchEventData();
   }, [token, event_id]);
 
+  // Fetch contestant data
+  useEffect(() => {
+    const fetchContestants = async () => {
+      try {
+        const response = await fetch(`https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch contestant data');
+        }
+
+        const result = await response.json();
+        setContestants(result);
+      } catch (error) {
+        console.error('Error fetching contestant data:', error);
+      }
+    };
+
+    fetchContestants();
+  }, [token, event_id]);
+
   // Fetch payment intents data
   useEffect(() => {
     const fetchData = async () => {
@@ -154,7 +179,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   
         // Filter and map the data
         const filteredData = combinedData
-          .filter((item) => item.event_id == event_id && item.status === 'S') // Only include successful transactions
+          .filter((item) => item.event_id == event_id && item.status === 'S') 
           .map((item) => {
             let currency = 'USD';
             const processor = item.processor?.toUpperCase();
@@ -190,6 +215,10 @@ const RealtimeVoting = ({ id: event_id }) => {
                 : '';
             }
   
+            // Find the contestant name
+            const contestant = contestants.find(contestant => contestant.id === item.intent_id);
+            const contestantName = contestant ? contestant.name : 'Unknown';
+
             return {
               name: item.name,
               email: item.email || 'N/A',
@@ -201,6 +230,7 @@ const RealtimeVoting = ({ id: event_id }) => {
               paymentType: paymentType,
               votes: votes,
               currency: currency,
+              contestantName: contestantName,
             };
           });
   
@@ -213,7 +243,7 @@ const RealtimeVoting = ({ id: event_id }) => {
     };
   
     fetchData();
-  }, [token, event_id, eventData]);
+  }, [token, event_id, eventData, contestants]);
 
   // Handle CSV export
   const handleExport = async () => {
@@ -264,12 +294,14 @@ const RealtimeVoting = ({ id: event_id }) => {
         <table>
           <thead>
             <tr>
-              <th>Name</th>
+              <th>Vote By</th>
+              <th>Vote To</th>
               <th>Phone</th>
               <th>Votes</th>
               <th>Status</th>
               <th>Payment Type</th>
               <th>Currency</th>
+              
               <th>Transaction Time</th>
             </tr>
           </thead>
@@ -278,6 +310,7 @@ const RealtimeVoting = ({ id: event_id }) => {
               currentData.map((row, index) => (
                 <tr key={index}>
                   <td>{row.name}</td>
+                  <td>{row.contestantName}</td>
                   <td>{row.phone}</td>
                   <td>{row.votes}</td>
                   <td>
@@ -299,12 +332,13 @@ const RealtimeVoting = ({ id: event_id }) => {
                       <span>{row.currency}</span>
                     </div>
                   </td>
+                  
                   <td>{row.formattedCreatedAt}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center' }}>
+                <td colSpan="8" style={{ textAlign: 'center' }}>
                   No data available for this event.
                 </td>
               </tr>
