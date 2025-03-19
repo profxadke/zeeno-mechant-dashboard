@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useToken } from "../../context/TokenContext";
 import Modal from '../../components/modal';
-import { MdDelete } from 'react-icons/md';
-import { MdEdit } from 'react-icons/md';
-import { MdVisibility } from 'react-icons/md';
+import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md';
+import AddCandidateModal from '../../components/ViewRegistration/AddCandidate'; // Import the AddCandidateModal
 
 const ViewReport = () => {
   const [events, setEvents] = useState([]);
@@ -13,10 +12,11 @@ const ViewReport = () => {
   const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showAddCandidateModal, setShowAddCandidateModal] = useState(false); // State for AddCandidateModal
   const [message, setMessage] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
-  const [newImage, setNewImage] = useState(null); // State for the new image file
+  const [newImage, setNewImage] = useState(null);
   const { token } = useToken();
 
   useEffect(() => {
@@ -54,24 +54,24 @@ const ViewReport = () => {
 
       setEvents(events.filter((event) => event.id !== eventToDelete));
       setMessage({ type: 'success', text: 'Event deleted successfully' });
-      setShowDeleteConfirmation(false); // Close the delete confirmation popup
-      setShowModal(false); // Close the edit event popup
+      setShowDeleteConfirmation(false);
+      setShowModal(false);
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
-      setShowDeleteConfirmation(false); // Close the delete confirmation popup even if there's an error
+      setShowDeleteConfirmation(false);
     }
   };
 
   const handleEditClick = (event) => {
     setSelectedEvent(event);
     setShowModal(true);
-    setNewImage(null); // Reset the new image state when opening the modal
+    setNewImage(null);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedEvent(null);
-    setNewImage(null); // Reset the new image state when closing the modal
+    setNewImage(null);
   };
 
   const handleImageUpload = (e) => {
@@ -81,7 +81,7 @@ const ViewReport = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result;
-      setNewImage(base64); // Set the new image as a base64 string
+      setNewImage(base64);
     };
 
     reader.readAsDataURL(file);
@@ -93,9 +93,9 @@ const ViewReport = () => {
       formData.append('title', updatedEvent.title);
       formData.append('desc', updatedEvent.desc);
       formData.append('finaldate', updatedEvent.finaldate);
-      formData.append('org', updatedEvent.org); // Include the org field
+      formData.append('org', updatedEvent.org);
       if (newImage) {
-        formData.append('img', newImage); // Append the new image file if it exists
+        formData.append('img', newImage);
       }
 
       const response = await fetch(`https://auth.zeenopay.com/events/${updatedEvent.id}/`, {
@@ -103,7 +103,7 @@ const ViewReport = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        body: formData, // Use FormData for file upload
+        body: formData,
       });
 
       if (!response.ok) {
@@ -117,6 +117,15 @@ const ViewReport = () => {
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
     }
+  };
+
+  const handleAddCandidateClick = () => {
+    setShowModal(false); // Close the edit event modal
+    setShowAddCandidateModal(true); // Open the add candidate modal
+  };
+
+  const handleCloseAddCandidateModal = () => {
+    setShowAddCandidateModal(false); // Close the add candidate modal
   };
 
   if (loading) {
@@ -215,23 +224,34 @@ const ViewReport = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label>Current Image</label>
-                {selectedEvent.img ? (
-                  <img
-                    src={selectedEvent.img}
-                    alt="Current Event Image"
-                    style={styles.currentImage}
+                <label>{newImage ? 'Updated Image' : 'Current Image'}</label>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  {selectedEvent.img || newImage ? (
+                    <img
+                      src={newImage || selectedEvent.img}
+                      alt="Event Image"
+                      style={styles.currentImage}
+                    />
+                  ) : (
+                    <p>No image available</p>
+                  )}
+                  {/* Edit Button on Image */}
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('imageUpload').click()}
+                    style={styles.editImageButton}
+                  >
+                    <MdEdit style={styles.editIcon} />
+                  </button>
+                  {/* Hidden File Input */}
+                  <input
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
                   />
-                ) : (
-                  <p>No image available</p>
-                )}
-                <label>Update Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload} // Handle image upload
-                  style={styles.fileInput}
-                />
+                </div>
               </div>
               <div style={styles.formGroup}>
                 <label>Final Date</label>
@@ -247,17 +267,37 @@ const ViewReport = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setEventToDelete(selectedEvent.id); // Set the event to delete
-                    setShowDeleteConfirmation(true); // Open the delete confirmation popup
+                    setEventToDelete(selectedEvent.id);
+                    setShowDeleteConfirmation(true);
                   }}
                   style={styles.deleteButton}
                 >
                   Delete Event
                 </button>
+                <button
+                  type="button"
+                  onClick={handleAddCandidateClick}
+                  style={styles.addCandidateButton}
+                >
+                  Add Contestant
+                </button>
               </div>
             </form>
           </div>
         </Modal>
+      )}
+
+      {/* Add Candidate Modal */}
+      {showAddCandidateModal && (
+        <AddCandidateModal
+          events={events}
+          onClose={handleCloseAddCandidateModal}
+          onSubmit={(candidate) => {
+            // Handle the submission of the candidate
+            console.log('Candidate submitted:', candidate);
+            handleCloseAddCandidateModal();
+          }}
+        />
       )}
 
       {/* Delete Confirmation Modal */}
@@ -367,22 +407,37 @@ const styles = {
     marginRight: '10px',
   },
   updateButton: {
-    padding: '12px 30px',
+    padding: '12px 20px',
     backgroundColor: '#028248',
     color: '#fff',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: '600',
+    flex: 1,
+    minWidth: '120px',
   },
   deleteButton: {
-    padding: '12px 30px',
+    padding: '12px 20px',
     backgroundColor: '#e74c3c',
     color: '#fff',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: '600',
+    flex: 1,
+    minWidth: '120px',
+  },
+  addCandidateButton: {
+    padding: '12px 20px',
+    backgroundColor: '#3498db',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    flex: 1,
+    minWidth: '120px',
   },
   confirmDeleteButton: {
     padding: '12px 30px',
@@ -407,10 +462,9 @@ const styles = {
     fontSize: '14px',
     fontWeight: '600',
   },
-  // Responsive styles for the edit popup
   modalContent: {
-    maxHeight: '80vh', // Set a maximum height for the modal content
-    overflowY: 'auto', // Enable vertical scrolling
+    maxHeight: '80vh',
+    overflowY: 'auto',
     padding: '20px',
   },
   formGroup: {
@@ -434,56 +488,40 @@ const styles = {
   currentImage: {
     width: '100%',
     height: 'auto',
+    borderRadius: '8px',
     marginBottom: '10px',
   },
-  fileInput: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '6px',
-    border: '1px solid #ccc',
-    fontSize: '14px',
+  editImageButton: {
+    position: 'absolute',
+    top: '-10px',
+    right: '-10px',
+    backgroundColor: '#fff',
+    border: 'none',
+    borderRadius: '50%',
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '2px 2px 4px rgba(17, 185, 87, 0.2)',
+  },
+  editIcon: {
+    fontSize: '20px',
+    color: '#333',
   },
   buttonGroup: {
     display: 'flex',
     justifyContent: 'space-between',
+    gap: '10px',
     marginTop: '20px',
+    flexWrap: 'wrap',
   },
   confirmationButtons: {
     display: 'flex',
     gap: '10px',
     justifyContent: 'left',
     marginTop: '20px',
-  },
-  // Media queries for responsiveness
-  '@media (max-width: 768px)': {
-    card: {
-      width: '100%',
-      maxWidth: '300px',
-    },
-    input: {
-      fontSize: '12px',
-    },
-    textarea: {
-      fontSize: '12px',
-    },
-    fileInput: {
-      fontSize: '12px',
-    },
-  },
-  '@media (max-width: 480px)': {
-    card: {
-      width: '100%',
-      maxWidth: '250px',
-    },
-    input: {
-      fontSize: '10px',
-    },
-    textarea: {
-      fontSize: '10px',
-    },
-    fileInput: {
-      fontSize: '10px',
-    },
   },
 };
 

@@ -354,6 +354,7 @@ const VotingData = () => {
             .top-h3 {
               font-size: 16px;
             }
+              
             .chart {
               height: ${isMobile ? "250px" : "300px"};
             }

@@ -152,8 +152,7 @@ const Contestant = ({ event_id, token }) => {
             votes: totalVotes,
           };
         });
-  
-        // Sort candidates by votes in descending order and limit to top 6
+
         const sortedCandidates = candidatesWithVotes
           .sort((a, b) => b.votes - a.votes)
           .slice(0, 6);

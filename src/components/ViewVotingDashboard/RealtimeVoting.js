@@ -59,9 +59,6 @@ const RealtimeVoting = ({ id: event_id }) => {
     NPR: 'NP', // Nepalese Rupee
   };
 
-  // Log the event_id for debugging
-  // console.log('Event ID:', event_id, 'Type:', typeof event_id);
-
   // Function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -146,7 +143,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (!eventData) return;
-  
+
       try {
         // Fetch data for non-QR/NQR processors
         const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
@@ -154,36 +151,36 @@ const RealtimeVoting = ({ id: event_id }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
-  
+
         const result = await response.json();
-  
+
         // Fetch data for QR/NQR processors
         const qrResponse = await fetch(`https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (!qrResponse.ok) {
           throw new Error('Failed to fetch QR/NQR data');
         }
-  
+
         const qrResult = await qrResponse.json();
-  
+
         // Combine both results
         const combinedData = [...result, ...qrResult];
-  
+
         // Filter and map the data
         const filteredData = combinedData
-          .filter((item) => item.event_id == event_id && item.status === 'S') 
+          .filter((item) => item.event_id == event_id && item.status === 'S')
           .map((item) => {
             let currency = 'USD';
             const processor = item.processor?.toUpperCase();
-  
+
             if (['ESEWA', 'KHALTI', 'FONEPAY', 'PRABHUPAY', 'NQR', 'QR'].includes(processor)) {
               currency = 'NPR';
             } else if (['PHONEPE', 'PAYU'].includes(processor)) {
@@ -191,16 +188,16 @@ const RealtimeVoting = ({ id: event_id }) => {
             } else if (processor === 'STRIPE') {
               currency = item.currency?.toUpperCase() || 'USD';
             }
-  
+
             const currencyValue = currencyValues[currency] || 1;
-  
+
             let votes;
             if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
               votes = Math.floor(item.amount / currencyValue);
             } else {
               votes = Math.floor(item.amount * currencyValue);
             }
-  
+
             // Determine payment type display value
             let paymentType;
             if (processor === 'NQR') {
@@ -214,7 +211,7 @@ const RealtimeVoting = ({ id: event_id }) => {
                 ? processor.charAt(0).toUpperCase() + processor.slice(1)
                 : '';
             }
-  
+
             // Find the contestant name
             const contestant = contestants.find(contestant => contestant.id === item.intent_id);
             const contestantName = contestant ? contestant.name : 'Unknown';
@@ -233,15 +230,15 @@ const RealtimeVoting = ({ id: event_id }) => {
               contestantName: contestantName,
             };
           });
-  
+
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  
+
         setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-  
+
     fetchData();
   }, [token, event_id, eventData, contestants]);
 
@@ -301,7 +298,6 @@ const RealtimeVoting = ({ id: event_id }) => {
               <th>Status</th>
               <th>Payment Type</th>
               <th>Currency</th>
-              
               <th>Transaction Time</th>
             </tr>
           </thead>
@@ -332,7 +328,6 @@ const RealtimeVoting = ({ id: event_id }) => {
                       <span>{row.currency}</span>
                     </div>
                   </td>
-                  
                   <td>{row.formattedCreatedAt}</td>
                 </tr>
               ))
@@ -347,16 +342,27 @@ const RealtimeVoting = ({ id: event_id }) => {
         </table>
       </div>
 
+      {/* Pagination */}
       <div className="pagination">
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-          <button
-            key={page}
-            onClick={() => handlePageChange(page)}
-            className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
-          >
-            {page}
-          </button>
-        ))}
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="pagination-btn"
+        >
+          Prev
+        </button>
+
+        <span className="page-info">
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="pagination-btn"
+        >
+          Next
+        </button>
       </div>
 
       <style>{
@@ -429,6 +435,7 @@ const RealtimeVoting = ({ id: event_id }) => {
           margin-top: 20px;
           display: flex;
           justify-content: center;
+          align-items: center;
           gap: 10px;
         }
 
@@ -438,11 +445,18 @@ const RealtimeVoting = ({ id: event_id }) => {
           background: #f5f5f5;
           border-radius: 4px;
           cursor: pointer;
+          font-family: 'Poppins', sans-serif;
         }
 
-        .pagination-btn.active {
-          background: #028248;
-          color: white;
+        .pagination-btn:disabled {
+          background: #ddd;
+          cursor: not-allowed;
+        }
+
+        .page-info {
+          font-family: 'Poppins', sans-serif;
+          font-size: 14px;
+          color: #333;
         }
 
         .status {
@@ -454,7 +468,12 @@ const RealtimeVoting = ({ id: event_id }) => {
 
         @media screen and (max-width: 768px) {
           .table-container {
+            margin-top: -10px;
             padding: 10px;
+          }
+
+          .table-header {
+            margin-bottom: 0px;
           }
 
           table {
