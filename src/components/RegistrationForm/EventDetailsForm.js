@@ -86,6 +86,12 @@ const initialFormState = {
       isVisible: true,
     },
     {
+      title: 'What is your school name?',
+      type: 'text',
+      isRequired: true,
+      isVisible: true,
+    },
+    {
       title: 'Date of birth',
       type: 'date',
       isRequired: true,

@@ -44,10 +44,10 @@ const ViewRegistration = () => {
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => {
-        setMessage(null); // Clear the message after 3 seconds
+        setMessage(null); 
       }, 3000);
 
-      return () => clearTimeout(timer); // Cleanup the timer
+      return () => clearTimeout(timer);
     }
   }, [message]);
 
@@ -67,10 +67,10 @@ const ViewRegistration = () => {
 
       setEvents(events.filter((event) => event.id !== eventToDelete));
       setMessage({ type: 'success', text: 'Event deleted successfully' });
-      setShowDeleteConfirmation(false); // Close the delete confirmation modal
+      setShowDeleteConfirmation(false); 
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
-      setShowDeleteConfirmation(false); // Close the delete confirmation modal even if there's an error
+      setShowDeleteConfirmation(false); 
     }
   };
 

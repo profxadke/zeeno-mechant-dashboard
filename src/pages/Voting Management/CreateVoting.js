@@ -14,7 +14,7 @@ const CreateVoting = () => {
     services: "",
   });
 
-  const [events, setEvents] = useState([]); 
+  const [events, setEvents] = useState([]);
   const { token } = useToken();
 
   // Fetch events on component mount
@@ -51,29 +51,35 @@ const CreateVoting = () => {
       </div>
 
       <style jsx>{`
+        /* Ensure html and body take full height */
+        html, body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+          overflow-x: hidden;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* Dashboard container */
         .dashboard {
           padding: 20px;
           font-family: "Poppins", sans-serif;
+          min-height: 100vh; /* Ensure it takes at least the full viewport height */
+          overflow-y: auto; /* Enable vertical scrolling */
+          -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
 
-        html, body {
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        overflow-x: auto;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        }
-
+        /* Custom scrollbar for WebKit browsers */
         body::-webkit-scrollbar {
           width: 5px;
         }
 
         body::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 10px;
         }
-
       `}</style>
     </DashboardLayout>
   );
