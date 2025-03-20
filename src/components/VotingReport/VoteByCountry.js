@@ -83,7 +83,7 @@ const VoteByCountry = () => {
         }
     
         const data = await response.json();
-        console.log("Fetched Data:", data); // Log the fetched data
+        // console.log("Fetched Data:", data); 
     
         // Fetch QR/NQR payment intents
         const qrResponse = await fetch(
@@ -100,7 +100,7 @@ const VoteByCountry = () => {
         }
     
         const qrData = await qrResponse.json();
-        console.log("Fetched QR/NQR Data:", qrData); // Log the fetched QR/NQR data
+        // console.log("Fetched QR/NQR Data:", qrData);
     
         // Combine regular and QR/NQR payment intents
         const allPaymentIntents = [...data, ...qrData];
@@ -109,13 +109,13 @@ const VoteByCountry = () => {
         const successfulPaymentIntents = allPaymentIntents.filter(
           (item) => item.status === 'S'
         );
-        console.log("Successful Payment Intents:", successfulPaymentIntents);
+        // console.log("Successful Payment Intents:", successfulPaymentIntents);
     
         // Process data for Nepal
         const nepalData = successfulPaymentIntents.filter((item) =>
           nepalProcessors.includes(item.processor)
         );
-        console.log("Nepal Data (Successful):", nepalData);
+        // console.log("Nepal Data (Successful):", nepalData);
     
         // Calculate votes for each Nepal processor
         const nepalVotesData = nepalProcessors.map((processor) => {
@@ -126,10 +126,10 @@ const VoteByCountry = () => {
           return totalVotes;
         });
     
-        console.log("Nepal Votes Data:", nepalVotesData);
+        // console.log("Nepal Votes Data:", nepalVotesData);
     
         const totalNepalVotes = nepalVotesData.reduce((a, b) => a + b, 0);
-        console.log("Total Nepal Votes:", totalNepalVotes);
+        // console.log("Total Nepal Votes:", totalNepalVotes);
     
         setNepalVotes(nepalVotesData);
         setTotalVotesNepal(totalNepalVotes);

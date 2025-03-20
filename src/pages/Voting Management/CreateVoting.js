@@ -56,24 +56,24 @@ const CreateVoting = () => {
           font-family: "Poppins", sans-serif;
         }
 
-        html,
-        body {
-          width: 100%;
-          margin: 0;
-          padding: 0;
-          // overflow: scroll;
-          overflow-x: hidden;
-          overflow-y: auto;
-        }
-        body::-webkit-scrollbar {
-          display: none;
+        html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         }
 
-        /* Hide scrollbar for IE, Edge and Firefox */
-        body {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        body::-webkit-scrollbar {
+          width: 5px;
         }
+
+        body::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        }
+
       `}</style>
     </DashboardLayout>
   );

@@ -87,7 +87,7 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
 
   // Handle logout
   const handleLogout = () => {
-    console.log("Logout button clicked"); 
+    // console.log("Logout button clicked"); 
     updateToken(null); 
     sessionStorage.removeItem("token"); 
     sessionStorage.removeItem("username"); 
