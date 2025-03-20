@@ -470,426 +470,420 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
               <p className="error-message">{voterError}</p>
             ) : (
               <div className="table-wrapper" style={{ maxHeight: "200px", overflowY: "auto" }}>
-                <table className="voters-table">
-                  <thead>
-                    <tr>
-                      <th>Full Name</th>
-                      <th>Payment Method</th>
-                      <th>Votes</th>
-                      <th>Phone No</th>
-                      <th>Transaction Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {voterDetails.length > 0 ? (
-                      voterDetails.map((voter, index) => (
-                        <tr key={index}>
-                          <td>{voter.name}</td>
-                          <td>
-                            <span
-                              style={{
-                                fontWeight: "bold",
-                                color: getProcessorColor(voter.processor),
-                              }}
-                            >
-                              {voter.processor}
-                            </span>
-                          </td>
-                          <td>{voter.votes}</td>
-                          <td>{voter.phone_no}</td>
-                          <td>{formatTransactionTime(voter.transactionTime)}</td>
-                        </tr>
-                      ))
-                    ) : (
+                <div className="table-header-wrapper">
+                  <table className="voters-table">
+                    <thead>
                       <tr>
-                        <td colSpan="5" style={{ textAlign: "center" }}>
-                          No voters available.
-                        </td>
+                        <th>Full Name</th>
+                        <th>Payment Method</th>
+                        <th>Votes</th>
+                        <th>Phone No</th>
+                        <th>Transaction Time</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                  </table>
+                </div>
+                <div className="table-body-wrapper">
+                  <table className="voters-table">
+                    <tbody>
+                      {voterDetails.length > 0 ? (
+                        voterDetails.map((voter, index) => (
+                          <tr key={index}>
+                            <td>{voter.name}</td>
+                            <td>
+                              <span
+                                style={{
+                                  fontWeight: "bold",
+                                  color: getProcessorColor(voter.processor),
+                                }}
+                              >
+                                {voter.processor}
+                              </span>
+                            </td>
+                            <td>{voter.votes}</td>
+                            <td>{voter.phone_no}</td>
+                            <td>{formatTransactionTime(voter.transactionTime)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: "center" }}>
+                            No voters available.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <style>{`/* Import Poppins font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+      <style>{`
+        /* Import Poppins font from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-/* Modal Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-  font-family: 'Poppins', sans-serif;
-  padding: 16px; /* Add padding to leave gaps on all sides */
-  box-sizing: border-box; /* Ensure padding is included in width/height */
-}
+        /* Modal Overlay */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+          animation: fadeIn 0.3s ease;
+          font-family: 'Poppins', sans-serif;
+          padding: 16px; /* Add padding to leave gaps on all sides */
+          box-sizing: border-box; /* Ensure padding is included in width/height */
+        }
 
-/* Modal Container */
-.modal-container {
-  background: #fff;
-  border-radius: 8px;
-  width: calc(100% - 32px); /* Ensure gaps on both sides */
-  max-width: 600px; /* Maximum width for larger screens */
-  max-height: 90vh; /* Maximum height to ensure it fits on the screen */
-  padding: 20px;
-  position: relative;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  animation: slideIn 0.3s ease;
-  overflow-y: auto; /* Enable scrolling if content exceeds the height */
-  font-family: 'Poppins', sans-serif;
-  box-sizing: border-box; /* Ensure padding is included in width/height */
-}
+        /* Modal Container */
+        .modal-container {
+          background: #fff;
+          border-radius: 8px;
+          width: calc(100% - 32px); /* Ensure gaps on both sides */
+          max-width: 600px; /* Maximum width for larger screens */
+          max-height: 90vh; /* Maximum height to ensure it fits on the screen */
+          padding: 20px;
+          position: relative;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          animation: slideIn 0.3s ease;
+          overflow-y: auto; /* Enable scrolling if content exceeds the height */
+          font-family: 'Poppins', sans-serif;
+          box-sizing: border-box; /* Ensure padding is included in width/height */
+        }
 
-/* Close Button */
-.modal-close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #333;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
+        /* Close Button */
+        .modal-close-btn {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          color: #333;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        }
 
-.modal-close-btn:hover {
-  color: #e74c3c;
-}
+        .modal-close-btn:hover {
+          color: #e74c3c;
+        }
 
-/* Modal Title */
-.modal-title {
-  margin-top: 0;
-  font-size: 1.5rem;
-  color: #333;
-  text-align: center;
-}
+        /* Modal Title */
+        .modal-title {
+          margin-top: 0;
+          font-size: 1.5rem;
+          color: #333;
+          text-align: center;
+        }
 
-/* Candidate Avatar Styling */
-.candidate-avatar {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  border: 3px solid #fff;
-  margin: 0 auto 20px;
-}
+        /* Candidate Avatar Styling */
+        .candidate-avatar {
+          position: relative;
+          width: 120px;
+          height: 120px;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          border: 3px solid #fff;
+          margin: 0 auto 20px;
+        }
 
-.candidate-avatar-edit {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  border: 3px solid #fff;
-  margin: 0 0 20px;
-}
+        .candidate-avatar-edit {
+          position: relative;
+          width: 120px;
+          height: 120px;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          border: 3px solid #fff;
+          margin: 0 0 20px;
+        }
 
-.candidate-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
-}
+        .candidate-photo {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.3s ease;
+        }
 
-.candidate-avatar:hover .candidate-photo {
-  transform: scale(1.1);
-}
+        .candidate-avatar:hover .candidate-photo {
+          transform: scale(1.1);
+        }
 
-.edit-avatar-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
+        .edit-avatar-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
 
-.candidate-avatar:hover .edit-avatar-overlay {
-  opacity: 1;
-}
+        .candidate-avatar:hover .edit-avatar-overlay {
+          opacity: 1;
+        }
 
-.edit-avatar-icon {
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-}
+        .edit-avatar-icon {
+          color: #fff;
+          font-size: 24px;
+          cursor: pointer;
+        }
 
-/* Candidate Details */
-.candidate-details {
-  text-align: center;
-}
+        /* Candidate Details */
+        .candidate-details {
+          text-align: center;
+        }
 
-.candidate-details p {
-  margin: 10px 0;
-}
+        .candidate-details p {
+          margin: 10px 0;
+        }
 
-/* Voting Information Header */
-.voting-info-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+        /* Voting Information Header */
+        .voting-info-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
 
-/* Table Wrapper */
-.table-wrapper {
-  max-height: 200px; 
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
+        /* Table Wrapper */
+        .table-wrapper {
+          max-height: 200px; 
+          overflow-y: auto; /* Enable vertical scrolling */
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          position: relative;
+        }
 
-/* Thin Scrollbar Styling */
-.table-wrapper::-webkit-scrollbar {
-  width: 4px; 
-  height: 4px; 
-}
+        /* Table Header Wrapper */
+        .table-header-wrapper {
+          position: sticky;
+          top: 0;
+          z-index: 2; /* Ensure the header stays above the body */
+          background-color: #028248; /* Match the header background color */
+        }
 
-.table-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1; 
-  border-radius: 3px;
-}
+        /* Table Body Wrapper */
+        .table-body-wrapper {
+          overflow-x: auto; /* Enable horizontal scrolling */
+        }
 
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px; 
-}
+        /* Voters Table */
+        .voters-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: 'Poppins', sans-serif;
+        }
 
-.table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #555; 
-}
+        .voters-table th,
+        .voters-table td {
+          padding: 8px;
+          border: 1px solid #ddd;
+          text-align: left;
+          font-size: 14px;
+        }
 
-/* Voters Table */
-.voters-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Poppins', sans-serif;
-}
+        .voters-table th {
+          background-color: #028248;
+          color: #fff;
+          font-weight: bold;
+        }
 
-.voters-table thead {
-  position: sticky;
-  top: 0;
-  background-color: #028248;
-  color: #fff;
-  z-index: 1;
-}
+        .voters-table td {
+          background-color: #fafafa;
+        }
 
-.voters-table th,
-.voters-table td {
-  padding: 8px;
-  border: 1px solid #ddd;
-  text-align: left;
-  font-size: 14px;
-}
+        /* Decrease width of Payment Method column */
+        .voters-table th:nth-child(2),
+        .voters-table td:nth-child(2) {
+          width: 140px;
+        }
 
-.voters-table th {
-  background-color: #028248;
-  color: #fff;
-  font-weight: bold;
-}
+        .voters-table th:nth-child(3),
+        .voters-table td:nth-child(3) {
+          width: 100px;
+        }
 
-.voters-table td {
-  background-color: #fafafa;
-}
+        .voters-table th:nth-child(1),
+        .voters-table td:nth-child(1) {
+          width: 140px;
+        }
 
-/* Decrease width of Payment Method column */
-.voters-table th:nth-child(2),
-.voters-table td:nth-child(2) {
-  width: 140px;
-}
+        /* Submit Button */
+        .submit-btn {
+          background: #028248;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: background 0.3s ease;
+          margin-top: 10px;
+        }
 
-.voters-table th:nth-child(3),
-.voters-table td:nth-child(3) {
-  width: 100px;
-}
+        .submit-btn:hover {
+          background: rgb(59, 177, 124);
+        }
 
-.voters-table th:nth-child(1),
-.voters-table td:nth-child(1) {
-  width: 140px;
-}
+        /* Export Button */
+        .export-btn {
+          background: #028248;
+          color: #fff;
+          border: none;
+          padding: 6px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+        }
 
-/* Submit Button */
-.submit-btn {
-  background: #028248;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  margin-top: 10px;
-}
+        .export-btn:hover {
+          background: #016138;
+        }
 
-.submit-btn:hover {
-  background: rgb(59, 177, 124);
-}
+        /* Status Badges */
+        .status-badge {
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: bold;
+        }
 
-/* Export Button */
-.export-btn {
-  background: #028248;
-  color: #fff;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
+        .status-ongoing {
+          background-color: #28a745;
+          color: #fff;
+        }
 
-.export-btn:hover {
-  background: #016138;
-}
+        .status-eliminated {
+          background-color: #dc3545;
+          color: #fff;
+        }
 
-/* Status Badges */
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-}
+        .status-hidden {
+          background-color: #6c757d;
+          color: #fff;
+        }
 
-.status-ongoing {
-  background-color: #28a745;
-  color: #fff;
-}
+        .status-closed {
+          background-color: #ffc107;
+          color: #000;
+        }
 
-.status-eliminated {
-  background-color: #dc3545;
-  color: #fff;
-}
+        /* Animations */
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
 
-.status-hidden {
-  background-color: #6c757d;
-  color: #fff;
-}
+        @keyframes slideIn {
+          from {
+            transform: translateY(-20px);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
 
-.status-closed {
-  background-color: #ffc107;
-  color: #000;
-}
+        /* Custom Dropdown Styling */
+        .custom-dropdown {
+          position: relative;
+          width: 100%;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          background-color: #fff;
+          overflow: hidden;
+          transition: border-color 0.3s ease;
+        }
 
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+        .custom-dropdown:hover {
+          border-color: #5433ff;
+        }
 
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
+        .custom-dropdown select {
+          width: 100%;
+          padding: 10px 12px;
+          font-size: 14px;
+          border: none;
+          outline: none;
+          background-color: transparent;
+          appearance: none; /* Remove default arrow */
+          cursor: pointer;
+        }
 
-/* Custom Dropdown Styling */
-.custom-dropdown {
-  position: relative;
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #fff;
-  overflow: hidden;
-  transition: border-color 0.3s ease;
-}
+        .custom-dropdown .dropdown-arrow {
+          position: absolute;
+          top: 50%;
+          right: 12px;
+          transform: translateY(-50%);
+          pointer-events: none;
+          color: #5433ff;
+          font-size: 12px;
+        }
 
-.custom-dropdown:hover {
-  border-color: #5433ff;
-}
+        /* Styling for options */
+        .custom-dropdown select option {
+          padding: 10px;
+          background-color: #fff;
+          color: #333;
+        }
 
-.custom-dropdown select {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
-  border: none;
-  outline: none;
-  background-color: transparent;
-  appearance: none; /* Remove default arrow */
-  cursor: pointer;
-}
+        .custom-dropdown select option:hover {
+          background-color: #f0f0f0;
+        }
 
-.custom-dropdown .dropdown-arrow {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: #5433ff;
-  font-size: 12px;
-}
+        /* Media Queries for Mobile Responsiveness */
+        @media (max-width: 768px) {
+          .modal-container {
+            width: calc(100% - 32px); /* Ensure gaps on both sides for mobile */
+            max-height: 70vh; /* Adjust max-height for smaller screens */
+            padding: 16px; 
+          }
 
-/* Styling for options */
-.custom-dropdown select option {
-  padding: 10px;
-  background-color: #fff;
-  color: #333;
-}
+          .modal-title {
+            font-size: 1.2rem; /* Adjust font size for smaller screens */
+          }
 
-.custom-dropdown select option:hover {
-  background-color: #f0f0f0;
-}
+          .candidate-avatar,
+          .candidate-avatar-edit {
+            width: 100px; /* Adjust avatar size for smaller screens */
+            height: 100px;
+          }
 
-/* Media Queries for Mobile Responsiveness */
-@media (max-width: 768px) {
-  .modal-container {
-    width: calc(100% - 32px); /* Ensure gaps on both sides for mobile */
-    max-height: 60vh; /* Adjust max-height for smaller screens */
-    padding: 16px; /* Add padding for better spacing */
-  }
+          .candidate-details p {
+            font-size: 14px; /* Adjust font size for smaller screens */
+          }
 
-  .modal-title {
-    font-size: 1.2rem; /* Adjust font size for smaller screens */
-  }
+          .voters-table th,
+          .voters-table td {
+            font-size: 12px; /* Adjust font size for smaller screens */
+          }
 
-  .candidate-avatar,
-  .candidate-avatar-edit {
-    width: 100px; /* Adjust avatar size for smaller screens */
-    height: 100px;
-  }
-
-  .candidate-details p {
-    font-size: 14px; /* Adjust font size for smaller screens */
-  }
-
-  .voters-table th,
-  .voters-table td {
-    font-size: 12px; /* Adjust font size for smaller screens */
-  }
-
-  .submit-btn,
-  .export-btn {
-    padding: 8px 16px; /* Adjust button padding for smaller screens */
-    font-size: 12px; /* Adjust button font size for smaller screens */
-  }
-}`}</style>
+          .submit-btn,
+          .export-btn {
+            padding: 8px 16px; /* Adjust button padding for smaller screens */
+            font-size: 12px; /* Adjust button font size for smaller screens */
+          }
+        }
+      `}</style>
     </div>
   );
 };
