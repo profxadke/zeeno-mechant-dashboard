@@ -61,7 +61,9 @@ const CreateVoting = () => {
           width: 100%;
           margin: 0;
           padding: 0;
-          overflow: scroll;
+          // overflow: scroll;
+          overflow-x: hidden;
+          overflow-y: auto;
         }
         body::-webkit-scrollbar {
           display: none;

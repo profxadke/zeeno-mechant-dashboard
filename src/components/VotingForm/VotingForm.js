@@ -270,7 +270,7 @@ const VotingForm = ({ formData, setFormData, events, setEvents }) => {
         </div>
 
         {/* Set Voting Rules Section */}
-        <h2 className="section-title" style={{ fontSize: "14px" }}>
+        <h2 className="section-title" style={{ fontSize: "14px", textAlign: "left" }}>
           Set Voting Rules
         </h2>
         <div className="voting-setup">
@@ -310,7 +310,7 @@ const VotingForm = ({ formData, setFormData, events, setEvents }) => {
         </div>
 
         {/* Voting Options */}
-        <h2 className="section-title" style={{ fontSize: "14px" }}>
+        <h2 className="section-title" style={{ fontSize: "14px", textAlign: "left" }}>
           Voting Options
         </h2>
         <div className="voting-options">
