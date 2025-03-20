@@ -78,9 +78,9 @@ const CreateVoting = () => {
         .dashboard {
           padding: 20px;
           font-family: "Poppins", sans-serif;
-          min-height: 100vh; /* Ensure it takes at least the full viewport height */
-          overflow-y: auto; /* Enable vertical scrolling */
-          -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+          min-height: 100vh; 
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch; 
         }
 
         /* Custom scrollbar for WebKit browsers */

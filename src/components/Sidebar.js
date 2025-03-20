@@ -59,24 +59,6 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
       section: "Voting Management",
       path: "/view-voting-report",
     },
-    // {
-    //   title: "Create Ticketing Event",
-    //   icon: <FaTicketAlt />,
-    //   section: "Ticket Management",
-    //   path: "/create-ticket-event",
-    // },
-    // {
-    //   title: "View Dashboard",
-    //   icon: <FaCogs />,
-    //   section: "Ticket Management",
-    //   path: "/view-ticket-dashboard",
-    // },
-    // {
-    //   title: "View Reports",
-    //   icon: <FaRegFileAlt />,
-    //   section: "Ticket Management",
-    //   path: "/view-ticket-report",
-    // },
     {
       title: "Customize Website",
       icon: <FaRegFileAlt />,
@@ -87,7 +69,6 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
 
   // Handle logout
   const handleLogout = () => {
-    // console.log("Logout button clicked"); 
     updateToken(null); 
     sessionStorage.removeItem("token"); 
     sessionStorage.removeItem("username"); 
@@ -127,7 +108,8 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
       className={`sidebar ${collapsed ? "collapsed" : ""} ${open ? "open" : ""}`}
     >
       <div className="sidebar-header">
-        <div className="logo-container">
+        {/* Hide logo-container on mobile devices */}
+        <div className="logo-container mobile-hide">
           {collapsed ? (
             <>
               <img
@@ -182,6 +164,19 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
       </div>
       {/* Toast Container for Notifications */}
       <ToastContainer position="top-right" autoClose={5000} />
+
+      {/* Add CSS for mobile hide */}
+      <style jsx>{`
+        .mobile-hide {
+          display: block; /* Show by default */
+        }
+
+        @media (max-width: 768px) {
+          .mobile-hide {
+            display: none; /* Hide on mobile devices */
+          }
+        }
+      `}</style>
     </div>
   );
 };
