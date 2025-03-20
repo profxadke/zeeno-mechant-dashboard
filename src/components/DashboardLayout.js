@@ -25,15 +25,28 @@ const DashboardLayout = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Dynamically calculate viewport height
+  useEffect(() => {
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    window.addEventListener('resize', setViewportHeight);
+    setViewportHeight();
+
+    return () => window.removeEventListener('resize', setViewportHeight);
+  }, []);
+
   return (
-    <Box sx={{ display: 'flex', height: '100vh' }}>
+    <Box sx={{ display: 'flex', height: 'calc(var(--vh, 1vh) * 100)' }}>
       <Sidebar
         collapsed={collapsed}
         toggleCollapse={toggleCollapse}
         open={sidebarOpen} 
         toggleSidebar={toggleSidebar}
       />
-      <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <Navbar toggleSidebar={toggleSidebar} /> 
         <Box sx={{ marginTop: '0px', padding: '16px' }}>
           {children}
