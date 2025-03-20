@@ -294,7 +294,7 @@ const ViewRegistration = () => {
           onClose={handleCloseAddCandidateModal}
           onSubmit={(candidate) => {
             // Handle the submission of the candidate
-            console.log('Candidate submitted:', candidate);
+            // console.log('Candidate submitted:', candidate);
             handleCloseAddCandidateModal();
           }}
         />

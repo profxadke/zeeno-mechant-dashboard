@@ -17,6 +17,16 @@ const CreateVoting = () => {
   const [events, setEvents] = useState([]);
   const { token } = useToken();
 
+  useEffect(() => {
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    window.addEventListener('resize', setViewportHeight);
+    setViewportHeight();
+    return () => window.removeEventListener('resize', setViewportHeight);
+  }, []);
+
   // Fetch events on component mount
   useEffect(() => {
     const fetchEvents = async () => {
@@ -54,12 +64,14 @@ const CreateVoting = () => {
         /* Ensure html and body take full height */
         html, body {
           width: 100%;
-          height: 100%;
+          // height: 100%;
           margin: 0;
           padding: 0;
           overflow-x: hidden;
           overflow-y: auto;
+          overscroll-behavior: none;
           -webkit-overflow-scrolling: touch;
+          height: calc(var(--vh, 1vh) * 100);
         }
 
         /* Dashboard container */
