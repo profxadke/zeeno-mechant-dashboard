@@ -4,7 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { useToken } from "../../context/TokenContext";
 import Modal from '../../components/modal';
 import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md';
-import AddCandidateModal from '../../components/ViewRegistration/AddCandidate'; // Import the AddCandidateModal
+import AddCandidateModal from '../../components/ViewRegistration/AddCandidate'; 
 
 const ViewReport = () => {
   const [events, setEvents] = useState([]);
@@ -12,7 +12,7 @@ const ViewReport = () => {
   const [error, setError] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showAddCandidateModal, setShowAddCandidateModal] = useState(false); // State for AddCandidateModal
+  const [showAddCandidateModal, setShowAddCandidateModal] = useState(false); 
   const [message, setMessage] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
@@ -120,12 +120,12 @@ const ViewReport = () => {
   };
 
   const handleAddCandidateClick = () => {
-    setShowModal(false); // Close the edit event modal
-    setShowAddCandidateModal(true); // Open the add candidate modal
+    setShowModal(false); 
+    setShowAddCandidateModal(true); 
   };
 
   const handleCloseAddCandidateModal = () => {
-    setShowAddCandidateModal(false); // Close the add candidate modal
+    setShowAddCandidateModal(false); 
   };
 
   if (loading) {

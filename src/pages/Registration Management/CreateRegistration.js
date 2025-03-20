@@ -34,13 +34,23 @@ const CreateRegistration = () => {
           background-color:rgb(59, 177, 124);
         }
 
-        html,
-            body {
-                width: 100%;
-                margin: 0;
-                padding: 0;
-                overflow: scroll;
-            }
+        html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        }
+
+        body::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        body::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        }
       `}</style>
     </DashboardLayout>
   );
