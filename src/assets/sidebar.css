@@ -186,7 +186,8 @@ a {
     display: block; 
     margin-top: auto; 
     /* padding: 14px; */
-    margin-bottom: 18px;
+    margin-bottom: 30px;
+    margin-top: 10px;
     border-top: 1px solid #e0e0e0;
     background-color: #028248; 
     border-radius: 6px;
