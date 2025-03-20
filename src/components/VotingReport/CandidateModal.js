@@ -532,20 +532,24 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   z-index: 1000;
   animation: fadeIn 0.3s ease;
   font-family: 'Poppins', sans-serif;
+  padding: 16px; /* Add padding to leave gaps on all sides */
+  box-sizing: border-box; /* Ensure padding is included in width/height */
 }
 
 /* Modal Container */
 .modal-container {
   background: #fff;
   border-radius: 8px;
-  width: 80%;
-  max-width: 600px;
+  width: calc(100% - 32px); /* Ensure gaps on both sides */
+  max-width: 600px; /* Maximum width for larger screens */
+  max-height: 90vh; /* Maximum height to ensure it fits on the screen */
   padding: 20px;
   position: relative;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease;
-  overflow-y: auto;
+  overflow-y: auto; /* Enable scrolling if content exceeds the height */
   font-family: 'Poppins', sans-serif;
+  box-sizing: border-box; /* Ensure padding is included in width/height */
 }
 
 /* Close Button */
@@ -851,6 +855,40 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
 
 .custom-dropdown select option:hover {
   background-color: #f0f0f0;
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+  .modal-container {
+    width: calc(100% - 32px); /* Ensure gaps on both sides for mobile */
+    max-height: 80vh; /* Adjust max-height for smaller screens */
+    padding: 16px; /* Add padding for better spacing */
+  }
+
+  .modal-title {
+    font-size: 1.2rem; /* Adjust font size for smaller screens */
+  }
+
+  .candidate-avatar,
+  .candidate-avatar-edit {
+    width: 100px; /* Adjust avatar size for smaller screens */
+    height: 100px;
+  }
+
+  .candidate-details p {
+    font-size: 14px; /* Adjust font size for smaller screens */
+  }
+
+  .voters-table th,
+  .voters-table td {
+    font-size: 12px; /* Adjust font size for smaller screens */
+  }
+
+  .submit-btn,
+  .export-btn {
+    padding: 8px 16px; /* Adjust button padding for smaller screens */
+    font-size: 12px; /* Adjust button font size for smaller screens */
+  }
 }`}</style>
     </div>
   );
