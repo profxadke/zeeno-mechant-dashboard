@@ -11,7 +11,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  overflow: hidden; /* Ensure the sidebar itself does not overflow */
+  overflow: hidden; 
 }
 
 a {
@@ -86,8 +86,8 @@ a {
 .menu {
   margin-top: 10px;
   padding: 0 16px;
-  overflow-y: auto; /* Make the menu scrollable */
-  flex-grow: 1; /* Allow the menu to take up remaining space */
+  overflow-y: auto; 
+  flex-grow: 1; 
 }
 
 /* Ensure the scrollbar is visible and styled */
@@ -178,21 +178,21 @@ a {
 
 /* Mobile Logout Button */
 .mobile-logout {
-  display: none; /* Hide by default */
+  display: none; 
 }
 
 @media (max-width: 768px) {
   .mobile-logout {
     display: block; 
     margin-top: auto; 
-    padding: 14px;
+    /* padding: 14px; */
     margin-bottom: 18px;
     border-top: 1px solid #e0e0e0;
-    background-color: #028248; /* Green background */
+    background-color: #028248; 
     border-radius: 6px;
   }
 
-  .logout-button {
+  .log {
     width: 100%;
     display: flex;
     align-items: center;
@@ -209,16 +209,11 @@ a {
   }
 
   .logout-button:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Light hover effect */
-  }
-
-  .logout-button .menu-icon {
-    color: #fff; /* White icon color */
-    margin-right: 10px; /* Add spacing between icon and text */
+    background-color: rgba(255, 255, 255, 0.1); 
   }
 
   .logout-text {
-    color: #fff; /* Ensure text is white */
+    color: #fff; 
   }
 }
 
@@ -268,6 +263,15 @@ a {
 
   .collapse-button {
     display: none;
+  }
+
+  .menu-ico{
+    margin-left: 55px;
+  }
+
+  .log .menu-ico {
+    color: #fff;
+    margin-right: 10px; 
   }
 }
 

@@ -173,12 +173,12 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
         ))}
 
         {/* Logout Button for Mobile Screens */}
-        {/* <div className="mobile-logout">
-          <button className="logout-button" onClick={handleLogout}>
-            <FaSignOutAlt className="menu-icon" />
+        <div className="mobile-logout">
+          <button className="log"  onClick={handleLogout}>
+            <FaSignOutAlt className="menu-ico" />
             <span className="logout-text">Logout</span>
           </button>
-        </div> */}
+        </div>
       </div>
       {/* Toast Container for Notifications */}
       <ToastContainer position="top-right" autoClose={5000} />
