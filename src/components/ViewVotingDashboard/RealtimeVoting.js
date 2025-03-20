@@ -143,7 +143,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (!eventData) return;
-
+  
       try {
         // Fetch data for non-QR/NQR processors
         const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
@@ -151,36 +151,36 @@ const RealtimeVoting = ({ id: event_id }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-
+  
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
-
+  
         const result = await response.json();
-
+  
         // Fetch data for QR/NQR processors
         const qrResponse = await fetch(`https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
+  
         if (!qrResponse.ok) {
           throw new Error('Failed to fetch QR/NQR data');
         }
-
+  
         const qrResult = await qrResponse.json();
-
+  
         // Combine both results
         const combinedData = [...result, ...qrResult];
-
+  
         // Filter and map the data
         const filteredData = combinedData
           .filter((item) => item.event_id == event_id && item.status === 'S')
           .map((item) => {
             let currency = 'USD';
             const processor = item.processor?.toUpperCase();
-
+  
             if (['ESEWA', 'KHALTI', 'FONEPAY', 'PRABHUPAY', 'NQR', 'QR'].includes(processor)) {
               currency = 'NPR';
             } else if (['PHONEPE', 'PAYU'].includes(processor)) {
@@ -188,34 +188,36 @@ const RealtimeVoting = ({ id: event_id }) => {
             } else if (processor === 'STRIPE') {
               currency = item.currency?.toUpperCase() || 'USD';
             }
-
+  
             const currencyValue = currencyValues[currency] || 1;
-
+  
             let votes;
             if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
               votes = Math.floor(item.amount / currencyValue);
             } else {
               votes = Math.floor(item.amount * currencyValue);
             }
-
+  
             // Determine payment type display value
             let paymentType;
             if (processor === 'NQR') {
               paymentType = 'NepalPayQR'; 
             } else if (processor === 'QR') {
-              paymentType = 'FonePayQR';
-            } else if (['PAYU', 'PHONEPE', 'STRIPE'].includes(processor)) {
+              paymentType = 'iMobile Banking';
+            } else if (processor === 'PHONEPE') { // Add this condition
+              paymentType = 'India';
+            } else if (['PAYU', 'STRIPE'].includes(processor)) {
               paymentType = 'International';
             } else {
               paymentType = processor
                 ? processor.charAt(0).toUpperCase() + processor.slice(1)
                 : '';
             }
-
+  
             // Find the contestant name
             const contestant = contestants.find(contestant => contestant.id === item.intent_id);
             const contestantName = contestant ? contestant.name : 'Unknown';
-
+  
             return {
               name: item.name,
               email: item.email || 'N/A',
@@ -230,15 +232,15 @@ const RealtimeVoting = ({ id: event_id }) => {
               contestantName: contestantName,
             };
           });
-
+  
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+  
         setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
+  
     fetchData();
   }, [token, event_id, eventData, contestants]);
 

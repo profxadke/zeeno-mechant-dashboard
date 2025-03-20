@@ -181,7 +181,7 @@ const VoteByCountry = () => {
   // Update labels for Nepal chart
   const nepalLabels = nepalProcessors.map((processor) => {
     if (processor === "NQR") return "NepalPayQR";
-    if (processor === "QR") return "FonePayQR";
+    if (processor === "QR") return "iMobile Banking";
     return processor;
   });
 

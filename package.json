@@ -10,6 +10,7 @@
     "@tiptap/react": "^2.10.4",
     "@tiptap/starter-kit": "^2.10.4",
     "apexcharts": "^4.3.0",
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
     "chart.js": "^4.4.7",
     "cra-template": "1.2.0",

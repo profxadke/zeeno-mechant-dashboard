@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { useToken } from '../../context/TokenContext';
 import Modal from '../../components/modal';
 import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md';
+import useS3Upload from '../../hooks/useS3Upload'; // Import the hook
 
 const ViewRegistrationReport = () => {
   const [events, setEvents] = useState([]);
@@ -14,7 +15,12 @@ const ViewRegistrationReport = () => {
   const [message, setMessage] = useState(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // State for the selected file
+  const [uploadProgress, setUploadProgress] = useState(0); // State for upload progress
   const { token } = useToken();
+
+  // Call the hook at the top level
+  const { uploadFile } = useS3Upload();
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -44,10 +50,10 @@ const ViewRegistrationReport = () => {
   useEffect(() => {
     if (message) {
       const timer = setTimeout(() => {
-        setMessage(null); 
+        setMessage(null);
       }, 3000);
 
-      return () => clearTimeout(timer); 
+      return () => clearTimeout(timer);
     }
   }, [message]);
 
@@ -67,7 +73,7 @@ const ViewRegistrationReport = () => {
 
       setEvents(events.filter((event) => event.id !== eventToDelete));
       setMessage({ type: 'success', text: 'Event deleted successfully' });
-      setShowDeleteConfirmation(false); 
+      setShowDeleteConfirmation(false);
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
       setShowDeleteConfirmation(false);
@@ -82,26 +88,46 @@ const ViewRegistrationReport = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedEvent(null);
+    setSelectedFile(null); // Reset the selected file when closing the modal
+    setUploadProgress(0); // Reset the upload progress
   };
 
   const handleUpdateEvent = async (updatedEvent) => {
     try {
+      let imgUrl = updatedEvent.img;
+
+      // If a new file is selected, upload it to S3
+      if (selectedFile) {
+        imgUrl = await new Promise((resolve, reject) => {
+          uploadFile(
+            selectedFile,
+            (progress) => setUploadProgress(progress),
+            () => {
+              const url = `https://${process.env.REACT_APP_AWS_S3_BUCKET}.s3.${process.env.REACT_APP_AWS_REGION}.amazonaws.com/${selectedFile.name}`;
+              resolve(url);
+            },
+            (err) => reject(err)
+          );
+        });
+      }
+
+      // Update the event with the new image URL
       const response = await fetch(`https://auth.zeenopay.com/events/forms/${updatedEvent.id}/`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedEvent),
+        body: JSON.stringify({ ...updatedEvent, img: imgUrl }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update event');
       }
 
-      setEvents(events.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)));
+      setEvents(events.map((event) => (event.id === updatedEvent.id ? { ...updatedEvent, img: imgUrl } : event)));
       setMessage({ type: 'success', text: '🎉 Event updated successfully' });
-      handleCloseModal(); // Close the modal after successful update
+      handleCloseModal();
     } catch (err) {
       setMessage({ type: 'error', text: `Error: ${err.message}` });
     }
@@ -192,12 +218,30 @@ const ViewRegistrationReport = () => {
               />
             </div>
             <div>
-              <label>Image URL</label>
-              <input
-                type="text"
-                value={selectedEvent.img}
-                onChange={(e) => setSelectedEvent({ ...selectedEvent, img: e.target.value })}
-              />
+             <label>Current Image</label>
+                           <div style={styles.imageUploadContainer}>
+                             <img src={selectedEvent.img} alt="Current" style={{ width: '100%', height: '100%', borderRadius: '1%' }} />
+                             <label htmlFor="file-upload" style={styles.editIcon}>
+                               <MdEdit style={{ fontSize: '16px' }}/>
+                             </label>
+                             <input
+                               id="file-upload"
+                               type="file"
+                               style={{ display: 'none' }}
+                               onChange={(e) => {
+                                 const file = e.target.files[0];
+                                 if (file) {
+                                   setSelectedFile(file); 
+                                   const reader = new FileReader();
+                                   reader.onloadend = () => {
+                                     setSelectedEvent({ ...selectedEvent, img: reader.result }); 
+                                   };
+                                   reader.readAsDataURL(file);
+                                 }
+                               }}
+                             />
+                           </div>
+              {uploadProgress > 0 && <p>Upload Progress: {uploadProgress}%</p>}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
               <button type="submit" style={styles.updateButton}>
@@ -367,6 +411,21 @@ const styles = {
     borderRadius: '8px',
     fontSize: '14px',
     fontWeight: '600',
+  },
+  imageUploadContainer: {
+    position: 'relative',
+    display: 'inline-block',
+  },
+  editIcon: {
+    position: 'absolute',
+    top: '-10px',
+    right: '-10px',
+    cursor: 'pointer',
+    backgroundColor: 'white',
+    borderRadius: '50%',
+    padding: '15px',
+    boxShadow: '0 0 5px rgba(0,0,0,0.5)',
+    fontSize: "10px"
   },
 };
 

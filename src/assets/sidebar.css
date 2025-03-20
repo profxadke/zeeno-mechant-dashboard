@@ -231,7 +231,7 @@ a {
     min-height: 100vh;
     background-color: #f9f9f9;
     transition: width 0.3s ease, opacity 0.3s ease;
-    margin-top: 70px;
+    margin-top: 85px;
   }
 
   .sidebar.open {

@@ -63,9 +63,9 @@ const UploadCandidateDetails = ({ events }) => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
-        // Set the desired width and height (e.g., 50% of the original size)
-        const maxWidth = 800; // Maximum width for the resized image
-        const maxHeight = 800; // Maximum height for the resized image
+       
+        const maxWidth = 800; 
+        const maxHeight = 800; 
         let width = img.width;
         let height = img.height;
 
@@ -82,15 +82,12 @@ const UploadCandidateDetails = ({ events }) => {
           }
         }
 
-        // Set canvas dimensions
         canvas.width = width;
         canvas.height = height;
 
-        // Draw the image on the canvas with the new dimensions
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert the canvas content to a base64 string
-        const resizedImage = canvas.toDataURL("image/jpeg", 0.8); // Adjust quality (0.8 = 80%)
+        const resizedImage = canvas.toDataURL("image/jpeg", 0.8); 
 
         // Update the candidate's photo with the resized image
         const updatedCandidateList = [...candidates];

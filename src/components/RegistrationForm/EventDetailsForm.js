@@ -1,8 +1,9 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FaArrowUp, FaArrowDown, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useToken } from '../../context/TokenContext'; 
+import { useToken } from '../../context/TokenContext';
+import useS3Upload from '../../hooks/useS3Upload'; // Adjust the path as needed
 
 const API_URL = 'https://auth.zeenopay.com/events/forms/';
 
@@ -194,26 +195,46 @@ const EventDetailsForm = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const token = useToken(); 
-
-  const resetForm = () => {
-    setFormData(initialFormState);
-  };
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const token = useToken();
+  const { uploadFile } = useS3Upload();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setUploadError(null);
 
     try {
-      // Filter out invisible questions before submission
+      // Step 1: Upload the image (if a file is selected)
+      let imageUrl = formData.img; // Use existing image URL if no new file is selected
+      if (selectedFile) {
+        imageUrl = await new Promise((resolve, reject) => {
+          uploadFile(
+            selectedFile,
+            (progress) => setUploadProgress(progress),
+            () => {
+              const url = `https://${process.env.REACT_APP_AWS_S3_BUCKET}.s3.${process.env.REACT_APP_AWS_REGION}.amazonaws.com/${selectedFile.name}`;
+              resolve(url);
+            },
+            (err) => {
+              reject(err);
+            }
+          );
+        });
+        setFormData((prev) => ({ ...prev, img: imageUrl })); // Update formData with the new image URL
+      }
+
+      // Step 2: Submit the form data
       const visibleQuestions = formData.questions.filter((question) => question.isVisible);
 
       const submissionData = {
         title: formData.formTitle,
         description: formData.description,
         org: formData.org,
-        img: formData.img,
+        img: imageUrl,
         finaldate: formData.finaldate,
         fields: JSON.stringify({
           formLocation: formData.formLocation,
@@ -227,14 +248,13 @@ const EventDetailsForm = () => {
       };
 
       const response = await fetch('https://auth.zeenopay.com/events/forms/', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token.token}`, 
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(submissionData),
-});
-      console.log('Auth Token:', token);
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to submit form');
@@ -249,6 +269,12 @@ const EventDetailsForm = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setSelectedFile(null);
+    setUploadProgress(0);
   };
 
   const updateFormData = (field, value) => {
@@ -345,12 +371,14 @@ const EventDetailsForm = () => {
               <label>Upload Event Photos/Banners</label>
               <input
                 className="event-location"
-                type="text"
+                type="file"
                 id="file-input"
-                value={formData.img}
-                onChange={(e) => updateFormData('img', e.target.value)}
-                placeholder="Upload Image"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                accept="image/*"
               />
+              {/* {selectedFile && <p>Selected File: {selectedFile.name}</p>} */}
+              {uploadProgress > 0 && <p>Upload Progress: {uploadProgress}%</p>}
+              {uploadError && <p className="error-message">{uploadError}</p>}
             </div>
             <div>
               <label>Event Description</label>

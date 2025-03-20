@@ -3,6 +3,7 @@ import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
 import * as XLSX from "xlsx";
 import { FaEdit } from "react-icons/fa";
+import useS3Upload from "../../hooks/useS3Upload"; // Import the hook
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
@@ -10,7 +11,11 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const { token } = useToken();
   const [isLoadingVoters, setIsLoadingVoters] = useState(false);
   const [voterError, setVoterError] = useState(null);
-  const [newAvatar, setNewAvatar] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null); // State for the selected file
+  const [uploadProgress, setUploadProgress] = useState(0); // State for upload progress
+
+  // Call the hook at the top level
+  const { uploadFile } = useS3Upload();
 
   useEffect(() => {
     setFormData(candidate || {});
@@ -46,9 +51,9 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setSelectedFile(file); // Set the selected file
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewAvatar(reader.result);
         setFormData((prevData) => ({ ...prevData, avatar: reader.result }));
       };
       reader.readAsDataURL(file);
@@ -56,20 +61,45 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedFormData = {
-      ...formData,
-      avatar: newAvatar || formData.avatar,
-    };
-    onUpdate(updatedFormData);
+
+    try {
+      let imgUrl = formData.avatar;
+
+      // If a new file is selected, upload it to S3
+      if (selectedFile) {
+        imgUrl = await new Promise((resolve, reject) => {
+          uploadFile(
+            selectedFile,
+            (progress) => setUploadProgress(progress), 
+            () => {
+              const url = `https://${process.env.REACT_APP_AWS_S3_BUCKET}.s3.${process.env.REACT_APP_AWS_REGION}.amazonaws.com/${selectedFile.name}`;
+              resolve(url); 
+            },
+            (err) => reject(err) 
+          );
+        });
+      }
+
+      // Update the form data with the new image URL
+      const updatedFormData = {
+        ...formData,
+        avatar: imgUrl,
+      };
+
+      // Call the onUpdate function with the updated form data
+      onUpdate(updatedFormData);
+    } catch (err) {
+      console.error("Error uploading image:", err);
+    }
   };
 
   // Fetch voter details and calculate votes
   const fetchVoterDetails = async (miscKv) => {
     setIsLoadingVoters(true);
     setVoterError(null);
-
+  
     try {
       // Fetch regular payment intents
       const paymentsResponse = await fetch(
@@ -78,13 +108,13 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+  
       if (!paymentsResponse.ok) {
         throw new Error("Failed to fetch payment intents data.");
       }
-
+  
       const paymentIntents = await paymentsResponse.json();
-
+  
       // Fetch QR/NQR payment intents
       const qrPaymentsResponse = await fetch(
         `https://auth.zeenopay.com/payments/qr/intents`,
@@ -92,21 +122,21 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+  
       if (!qrPaymentsResponse.ok) {
         throw new Error("Failed to fetch QR/NQR payment intents data.");
       }
-
+  
       const qrPaymentIntents = await qrPaymentsResponse.json();
-
+  
       // Combine regular and QR/NQR payment intents
       const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
-
+  
       // Filter payment intents to include only successful transactions (status === 'S')
       const successfulPaymentIntents = allPaymentIntents.filter(
         (intent) => intent.status === "S"
       );
-
+  
       // Fetch events data
       const eventsResponse = await fetch(
         `https://auth.zeenopay.com/events/`,
@@ -114,23 +144,23 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+  
       if (!eventsResponse.ok) {
         throw new Error("Failed to fetch events data.");
       }
-
+  
       const events = await eventsResponse.json();
-
+  
       // Match intents with the candidate's misc_kv and intent type "V"
       const matchedIntents = successfulPaymentIntents.filter(
         (intent) => String(intent.intent_id) === String(miscKv) && intent.intent === "V"
       );
-
+  
       // Calculate votes and prepare voter list
       const voterList = matchedIntents.map((intent) => {
         const event = events.find((event) => event.id === intent.event_id);
         let votes = 0;
-
+  
         // Determine the currency based on the processor
         if (
           ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
@@ -152,21 +182,23 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           // Default to payment_info if no specific logic
           votes = event ? Number(intent.amount) / event.payment_info : 0;
         }
-
+  
         votes = Math.floor(votes);
-
+  
         // Determine payment method
         let paymentMethod;
         if (intent.processor === "NQR") {
           paymentMethod = "NepalPayQR";
         } else if (intent.processor === "QR") {
-          paymentMethod = "FonePayQR";
-        } else if (["PAYU", "PHONEPE", "STRIPE"].includes(intent.processor)) {
+          paymentMethod = "iMobileBanking";
+        } else if (intent.processor === "PHONEPE") { 
+          paymentMethod = "India";
+        } else if (["PAYU", "STRIPE"].includes(intent.processor)) {
           paymentMethod = "International";
         } else {
           paymentMethod = intent.processor || "N/A";
         }
-
+  
         return {
           name: intent.name,
           phone_no: intent.phone_no,
@@ -175,10 +207,10 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           transactionTime: intent.updated_at,
         };
       });
-
+  
       // Sort voter list by transaction time (newest first)
       voterList.sort((a, b) => new Date(b.transactionTime) - new Date(a.transactionTime));
-
+  
       setVoterDetails(voterList);
     } catch (error) {
       setVoterError(error.message);
@@ -202,7 +234,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         return "red";
       case "NEPALPAYQR":
         return "skyblue";
-      case "FONEPAYQR":
+      case "iMobileBanking":
         return "blue";
       case "STRIPE":
         return "#5433ff";
@@ -342,7 +374,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
               <label>Edit Contestant Avatar</label>
               <div className="candidate-avatar-edit">
                 <img
-                  src={newAvatar || formData.avatar}
+                  src={formData.avatar}
                   alt={`${formData.name}'s avatar`}
                   className="candidate-photo"
                 />
@@ -359,6 +391,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
                   />
                 </div>
               </div>
+              {uploadProgress > 0 && <p>Upload Progress: {uploadProgress}%</p>}
             </div>
 
             <button type="submit" className="submit-btn">
@@ -370,7 +403,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             <div className="candidate-info">
               <div className="candidate-avatar">
                 <img
-                  src={newAvatar || candidate.avatar}
+                  src={candidate.avatar}
                   alt={`${candidate.name}'s avatar`}
                   className="candidate-photo"
                 />

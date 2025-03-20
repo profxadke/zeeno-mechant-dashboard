@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useToken } from "../context/TokenContext";
+import ImageUploader from "./ImageUploader";
 
 const KycComponent = () => {
   const { token } = useToken();
@@ -226,6 +227,8 @@ const KycComponent = () => {
       <button type="submit" className="kyc-submit-button">
         Submit
       </button>
+
+      <ImageUploader/>
 
       <style>{`
         .section-title {
