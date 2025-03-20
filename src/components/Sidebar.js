@@ -175,6 +175,9 @@ const Sidebar = ({ collapsed, toggleCollapse, open, toggleSidebar }) => {
           .mobile-hide {
             display: none; /* Hide on mobile devices */
           }
+            .sidebar-header {
+            display: none; /* Hide on mobile devices */
+          }
         }
       `}</style>
     </div>
