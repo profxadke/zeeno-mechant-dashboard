@@ -854,12 +854,12 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         @media (max-width: 768px) {
           .modal-container {
             width: calc(100% - 32px); /* Ensure gaps on both sides for mobile */
-            max-height: 70vh; /* Adjust max-height for smaller screens */
+            max-height: 60vh; /* Adjust max-height for smaller screens */
             padding: 16px; 
           }
 
           .modal-title {
-            font-size: 1.2rem; /* Adjust font size for smaller screens */
+            font-size: 1.2rem; 
           }
 
           .candidate-avatar,
@@ -869,12 +869,12 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
           }
 
           .candidate-details p {
-            font-size: 14px; /* Adjust font size for smaller screens */
+            font-size: 14px; 
           }
 
           .voters-table th,
           .voters-table td {
-            font-size: 12px; /* Adjust font size for smaller screens */
+            font-size: 12px; 
           }
 
           .submit-btn,
