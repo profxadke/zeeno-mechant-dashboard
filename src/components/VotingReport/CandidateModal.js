@@ -861,7 +861,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
 @media (max-width: 768px) {
   .modal-container {
     width: calc(100% - 32px); /* Ensure gaps on both sides for mobile */
-    max-height: 80vh; /* Adjust max-height for smaller screens */
+    max-height: 60vh; /* Adjust max-height for smaller screens */
     padding: 16px; /* Add padding for better spacing */
   }
 
