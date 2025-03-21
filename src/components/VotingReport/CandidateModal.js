@@ -473,7 +473,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             ) : voterError ? (
               <p className="error-message">{voterError}</p>
             ) : (
-              <div className="table-wrapper" style={{ maxHeight: "200px", overflowY: "auto" }}>
+              <div className="table-wrapper" style={{ maxHeight: "200px"}}>
                 <div className="table-header-wrapper">
                   <table className="voters-table">
                     <thead>
@@ -661,6 +661,21 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  /* Table Wrapper */
+  .table-wrapper {
+    max-height: 200px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+
+  /* Table Header Wrapper */
+  .table-header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #028248;
   }
 
 
