@@ -203,8 +203,11 @@ const RealtimeVoting = ({ id: event_id }) => {
             if (processor === 'NQR') {
               paymentType = 'NepalPayQR'; 
             } else if (processor === 'QR') {
+              paymentType = 'FonePayQR';
+            } else if (processor === 'FONEPAY') {
               paymentType = 'iMobile Banking';
-            } else if (processor === 'PHONEPE') { // Add this condition
+            }
+            else if (processor === 'PHONEPE') { 
               paymentType = 'India';
             } else if (['PAYU', 'STRIPE'].includes(processor)) {
               paymentType = 'International';
