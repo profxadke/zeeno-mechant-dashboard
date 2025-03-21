@@ -90,6 +90,7 @@ const VotingData = () => {
     NPR: 10,
   };
 
+  // Fetch event data to get payment_info
   useEffect(() => {
     const fetchEventData = async () => {
       try {
@@ -113,6 +114,7 @@ const VotingData = () => {
     fetchEventData();
   }, [event_id, token]);
 
+  // Fetch payment intents and calculate votes
   useEffect(() => {
     const fetchPaymentIntents = async () => {
       try {
@@ -153,7 +155,12 @@ const VotingData = () => {
           let currency = "USD";
           const processor = intent.processor?.toUpperCase();
 
-          if (["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(processor)) {
+          // Determine the currency based on the processor
+          if (
+            ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
+              processor
+            )
+          ) {
             currency = "NPR";
           } else if (["PHONEPE", "PAYU"].includes(processor)) {
             currency = "INR";
@@ -162,9 +169,14 @@ const VotingData = () => {
           }
 
           const currencyValue = currencyValues[currency] || 1;
-          const votes = ["JPY", "THB", "INR", "NPR"].includes(currency)
-            ? intent.amount / currencyValue
-            : intent.amount * currencyValue;
+
+          // Calculate votes based on currency
+          let votes;
+          if (["JPY", "THB", "INR", "NPR"].includes(currency)) {
+            votes = intent.amount / currencyValue;
+          } else {
+            votes = intent.amount * currencyValue;
+          }
 
           // Truncate decimal places using Math.floor
           const truncatedVotes = Math.floor(votes);
@@ -208,6 +220,7 @@ const VotingData = () => {
     }
   }, [event_id, token, paymentInfo]);
 
+  // Set current date and handle mobile view
   useEffect(() => {
     const date = new Date();
     const options = { year: "numeric", month: "long", day: "numeric" };

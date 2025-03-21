@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import ReactCountryFlag from 'react-country-flag';
-import { useToken } from "../../context/TokenContext";
+import { useToken } from '../../context/TokenContext';
 
 const RealtimeVoting = ({ id: event_id }) => {
   const { token } = useToken();
@@ -73,10 +73,14 @@ const RealtimeVoting = ({ id: event_id }) => {
     const ordinalSuffix = (d) => {
       if (d > 3 && d < 21) return 'th';
       switch (d % 10) {
-        case 1: return 'st';
-        case 2: return 'nd';
-        case 3: return 'rd';
-        default: return 'th';
+        case 1:
+          return 'st';
+        case 2:
+          return 'nd';
+        case 3:
+          return 'rd';
+        default:
+          return 'th';
       }
     };
 
@@ -143,7 +147,7 @@ const RealtimeVoting = ({ id: event_id }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (!eventData) return;
-  
+
       try {
         // Fetch data for non-QR/NQR processors
         const response = await fetch(`https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`, {
@@ -151,36 +155,36 @@ const RealtimeVoting = ({ id: event_id }) => {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
-  
+
         const result = await response.json();
-  
+
         // Fetch data for QR/NQR processors
         const qrResponse = await fetch(`https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (!qrResponse.ok) {
           throw new Error('Failed to fetch QR/NQR data');
         }
-  
+
         const qrResult = await qrResponse.json();
-  
+
         // Combine both results
         const combinedData = [...result, ...qrResult];
-  
+
         // Filter and map the data
         const filteredData = combinedData
           .filter((item) => item.event_id == event_id && item.status === 'S')
           .map((item) => {
             let currency = 'USD';
             const processor = item.processor?.toUpperCase();
-  
+
             if (['ESEWA', 'KHALTI', 'FONEPAY', 'PRABHUPAY', 'NQR', 'QR'].includes(processor)) {
               currency = 'NPR';
             } else if (['PHONEPE', 'PAYU'].includes(processor)) {
@@ -188,26 +192,25 @@ const RealtimeVoting = ({ id: event_id }) => {
             } else if (processor === 'STRIPE') {
               currency = item.currency?.toUpperCase() || 'USD';
             }
-  
+
             const currencyValue = currencyValues[currency] || 1;
-  
+
             let votes;
             if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
               votes = Math.floor(item.amount / currencyValue);
             } else {
               votes = Math.floor(item.amount * currencyValue);
             }
-  
+
             // Determine payment type display value
             let paymentType;
             if (processor === 'NQR') {
-              paymentType = 'NepalPayQR'; 
+              paymentType = 'NepalPayQR';
             } else if (processor === 'QR') {
               paymentType = 'FonePayQR';
             } else if (processor === 'FONEPAY') {
               paymentType = 'iMobile Banking';
-            }
-            else if (processor === 'PHONEPE') { 
+            } else if (processor === 'PHONEPE') {
               paymentType = 'India';
             } else if (['PAYU', 'STRIPE'].includes(processor)) {
               paymentType = 'International';
@@ -216,11 +219,11 @@ const RealtimeVoting = ({ id: event_id }) => {
                 ? processor.charAt(0).toUpperCase() + processor.slice(1)
                 : '';
             }
-  
+
             // Find the contestant name
-            const contestant = contestants.find(contestant => contestant.id === item.intent_id);
+            const contestant = contestants.find((contestant) => contestant.id === item.intent_id);
             const contestantName = contestant ? contestant.name : 'Unknown';
-  
+
             return {
               name: item.name,
               email: item.email || 'N/A',
@@ -235,31 +238,51 @@ const RealtimeVoting = ({ id: event_id }) => {
               contestantName: contestantName,
             };
           });
-  
+
         const sortedData = filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  
+
         setData(sortedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-  
+
     fetchData();
   }, [token, event_id, eventData, contestants]);
 
-  // Handle CSV export
-  const handleExport = async () => {
+  // Handle CSV export (Frontend-only)
+  const handleExport = () => {
     try {
-      const response = await fetch(`https://auth.zeenopay.com/report/csv?event_id=${event_id}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to export data');
-      }
-      const blob = await response.blob();
+      // Prepare the CSV headers
+      const headers = [
+        'Vote By',
+        'Vote To',
+        'Phone',
+        'Votes',
+        'Status',
+        'Payment Type',
+        'Currency',
+        'Transaction Time',
+      ];
+
+      // Prepare the CSV rows
+      const rows = data.map((row) => [
+        row.name,
+        row.contestantName,
+        row.phone,
+        row.votes,
+        row.status.label,
+        row.paymentType,
+        row.currency,
+        row.formattedCreatedAt,
+      ]);
+
+      // Combine headers and rows into a CSV string
+      const csvContent =
+        headers.join(',') + '\n' + rows.map((row) => row.join(',')).join('\n');
+
+      // Create a Blob and download the CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = 'realtime_voting_report.csv';

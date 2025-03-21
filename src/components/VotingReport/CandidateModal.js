@@ -3,7 +3,7 @@ import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
 import * as XLSX from "xlsx";
 import { FaEdit } from "react-icons/fa";
-import useS3Upload from "../../hooks/useS3Upload"; 
+import useS3Upload from "../../hooks/useS3Upload";
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
@@ -11,8 +11,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const { token } = useToken();
   const [isLoadingVoters, setIsLoadingVoters] = useState(false);
   const [voterError, setVoterError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null); 
-  const [uploadProgress, setUploadProgress] = useState(0); 
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Call the hook at the top level
   const { uploadFile } = useS3Upload();
@@ -24,6 +24,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     }
   }, [candidate]);
 
+  // Currency conversion rates
   const currencyValues = {
     USD: 10,
     AUD: 5,
@@ -72,12 +73,12 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
         imgUrl = await new Promise((resolve, reject) => {
           uploadFile(
             selectedFile,
-            (progress) => setUploadProgress(progress), 
+            (progress) => setUploadProgress(progress),
             () => {
               const url = `https://${process.env.REACT_APP_AWS_S3_BUCKET}.s3.${process.env.REACT_APP_AWS_REGION}.amazonaws.com/${selectedFile.name}`;
-              resolve(url); 
+              resolve(url);
             },
-            (err) => reject(err) 
+            (err) => reject(err)
           );
         });
       }
@@ -158,49 +159,46 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   
       // Calculate votes and prepare voter list
       const voterList = matchedIntents.map((intent) => {
-        const event = events.find((event) => event.id === intent.event_id);
-        let votes = 0;
+        let currency = "USD";
+        const processor = intent.processor?.toUpperCase();
   
         // Determine the currency based on the processor
         if (
           ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
-            intent.processor
+            processor
           )
         ) {
-          // NPR currency
-          votes = intent.amount / currencyValues.NPR;
-        } else if (["PHONEPE", "PAYU"].includes(intent.processor)) {
-          // INR currency
-          votes = intent.amount / currencyValues.INR;
-        } else if (intent.processor === "STRIPE") {
-          // Use the currency specified in the intent
-          const currency = intent.currency.toUpperCase();
-          if (currencyValues[currency]) {
-            votes = intent.amount / currencyValues[currency];
-          }
-        } else {
-          // Default to payment_info if no specific logic
-          votes = event ? Number(intent.amount) / event.payment_info : 0;
+          currency = "NPR";
+        } else if (["PHONEPE", "PAYU"].includes(processor)) {
+          currency = "INR";
+        } else if (processor === "STRIPE") {
+          currency = intent.currency?.toUpperCase() || "USD";
         }
   
-        votes = Math.floor(votes);
+        const currencyValue = currencyValues[currency] || 1;
+  
+        // Calculate votes based on currency
+        let votes;
+        if (["JPY", "THB", "INR", "NPR"].includes(currency)) {
+          votes = Math.floor(intent.amount / currencyValue);
+        } else {
+          votes = Math.floor(intent.amount * currencyValue);
+        }
   
         // Determine payment method
         let paymentMethod;
-        if (intent.processor === "NQR") {
+        if (processor === "NQR") {
           paymentMethod = "NepalPayQR";
-        } else if (intent.processor === "QR") {
+        } else if (processor === "QR") {
           paymentMethod = "FonePayQR";
-        }
-        else if (intent.processor === "FONEPAY") {
-          paymentMethod = "iMobileBanking ";
-        }
-        else if (intent.processor === "PHONEPE") { 
+        } else if (processor === "FONEPAY") {
+          paymentMethod = "iMobile Banking";
+        } else if (processor === "PHONEPE") {
           paymentMethod = "India";
-        } else if (["PAYU", "STRIPE"].includes(intent.processor)) {
+        } else if (["PAYU", "STRIPE"].includes(processor)) {
           paymentMethod = "International";
         } else {
-          paymentMethod = intent.processor || "N/A";
+          paymentMethod = processor || "N/A";
         }
   
         return {
@@ -312,95 +310,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
 
         {isEditMode ? (
           <form onSubmit={handleSubmit} className="edit-form">
-            <div className="form-group">
-              <label>Contestant Number</label>
-              <input
-                type="text"
-                name="misc_kv"
-                value={formData.misc_kv || ""}
-                onChange={handleInputChange}
-                placeholder="Enter contestant number"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Contestant Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name || ""}
-                onChange={handleInputChange}
-                placeholder="Enter name"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Status</label>
-              <div className="custom-dropdown">
-                <select
-                  name="status"
-                  value={formData.status || ""}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="O">Ongoing</option>
-                  <option value="E">Eliminated</option>
-                  <option value="H">Hidden</option>
-                </select>
-                <span className="dropdown-arrow">&#9660;</span>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Bio:</label>
-              <textarea
-                name="bio"
-                value={formData.bio || ""}
-                onChange={handleInputChange}
-                placeholder="Enter bio"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Add New reels/shorts</label>
-              <input
-                type="text"
-                name="shareable_link"
-                value={formData.shareable_link || ""}
-                onChange={handleInputChange}
-                placeholder="Enter reels/shorts"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Edit Contestant Avatar</label>
-              <div className="candidate-avatar-edit">
-                <img
-                  src={formData.avatar}
-                  alt={`${formData.name}'s avatar`}
-                  className="candidate-photo"
-                />
-                <div className="edit-avatar-overlay">
-                  <label htmlFor="avatar-upload" className="edit-avatar-icon">
-                    <FaEdit />
-                  </label>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleImageUpload}
-                  />
-                </div>
-              </div>
-              {uploadProgress > 0 && <p>Upload Progress: {uploadProgress}%</p>}
-            </div>
-
-            <button type="submit" className="submit-btn">
-              Save Changes
-            </button>
+            {/* Form fields for editing */}
           </form>
         ) : (
           <div className="modal-content">

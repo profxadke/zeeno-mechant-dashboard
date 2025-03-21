@@ -77,14 +77,13 @@ const VoteByCountry = () => {
             },
           }
         );
-    
+
         if (!response.ok) {
           throw new Error("Failed to fetch payment intents data");
         }
-    
+
         const data = await response.json();
-        // console.log("Fetched Data:", data); 
-    
+
         // Fetch QR/NQR payment intents
         const qrResponse = await fetch(
           `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
@@ -94,46 +93,39 @@ const VoteByCountry = () => {
             },
           }
         );
-    
+
         if (!qrResponse.ok) {
           throw new Error("Failed to fetch QR/NQR payment intents data");
         }
-    
+
         const qrData = await qrResponse.json();
-        // console.log("Fetched QR/NQR Data:", qrData);
-    
+
         // Combine regular and QR/NQR payment intents
         const allPaymentIntents = [...data, ...qrData];
-    
+
         // Filter payment intents to include only successful transactions (status === 'S')
         const successfulPaymentIntents = allPaymentIntents.filter(
           (item) => item.status === 'S'
         );
-        // console.log("Successful Payment Intents:", successfulPaymentIntents);
-    
+
         // Process data for Nepal
         const nepalData = successfulPaymentIntents.filter((item) =>
           nepalProcessors.includes(item.processor)
         );
-        // console.log("Nepal Data (Successful):", nepalData);
-    
+
         // Calculate votes for each Nepal processor
         const nepalVotesData = nepalProcessors.map((processor) => {
           const processorData = nepalData.filter((item) => item.processor === processor);
           const totalVotes = processorData.reduce((sum, item) => {
-            return sum + item.amount / currencyValues.NPR;
+            return sum + Math.floor(item.amount / currencyValues.NPR);
           }, 0);
           return totalVotes;
         });
-    
-        // console.log("Nepal Votes Data:", nepalVotesData);
-    
+
         const totalNepalVotes = nepalVotesData.reduce((a, b) => a + b, 0);
-        // console.log("Total Nepal Votes:", totalNepalVotes);
-    
         setNepalVotes(nepalVotesData);
         setTotalVotesNepal(totalNepalVotes);
-    
+
         // Process data for Global
         const indiaData = successfulPaymentIntents.filter((item) =>
           indiaProcessors.includes(item.processor)
@@ -141,29 +133,36 @@ const VoteByCountry = () => {
         const internationalData = successfulPaymentIntents.filter((item) =>
           internationalProcessors.includes(item.processor)
         );
-    
+
         // Calculate votes for India (INR currency)
         const indiaVotes = indiaData
-          .map((item) => item.amount / currencyValues.INR)
+          .map((item) => Math.floor(item.amount / currencyValues.INR))
           .reduce((a, b) => a + b, 0);
-    
+
         // Calculate votes for International (other currencies)
         const internationalVotes = internationalData
           .map((item) => {
-            if (item.processor === "STRIPE") {
-              // Use the currency specified in the intent
-              const currency = item.currency.toUpperCase();
-              if (currencyValues[currency]) {
-                return item.amount / currencyValues[currency];
-              }
-            } else if (item.processor === "PAYU") {
-              // Use INR currency for PAYU
-              return item.amount / currencyValues.INR;
+            let currency = "USD";
+            const processor = item.processor?.toUpperCase();
+
+            // Determine the currency based on the processor
+            if (processor === "STRIPE") {
+              currency = item.currency?.toUpperCase() || "USD";
+            } else if (processor === "PAYU") {
+              currency = "INR"; // PAYU uses INR
             }
-            return 0;
+
+            const currencyValue = currencyValues[currency] || 1;
+
+            // Calculate votes based on currency
+            if (["JPY", "THB", "INR", "NPR"].includes(currency)) {
+              return Math.floor(item.amount / currencyValue);
+            } else {
+              return Math.floor(item.amount * currencyValue);
+            }
           })
           .reduce((a, b) => a + b, 0);
-    
+
         setGlobalVotes([indiaVotes, internationalVotes]);
         setTotalVotesGlobal(indiaVotes + internationalVotes);
       } catch (error) {

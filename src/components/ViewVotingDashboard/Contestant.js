@@ -16,19 +16,19 @@ const Contestant = ({ event_id, token }) => {
             Accept: "application/json",
           },
         });
-  
+
         if (!eventResponse.ok) {
           throw new Error("Failed to fetch event data");
         }
-  
+
         const eventData = await eventResponse.json();
         const event = eventData.find((event) => event.id === parseInt(event_id));
         if (!event) {
           throw new Error("Event not found");
         }
-  
+
         setPaymentInfo(event.payment_info);
-  
+
         // Fetch contestants data
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
@@ -39,13 +39,13 @@ const Contestant = ({ event_id, token }) => {
             },
           }
         );
-  
+
         if (!contestantsResponse.ok) {
           throw new Error("Failed to fetch contestants data");
         }
-  
+
         const contestants = await contestantsResponse.json();
-  
+
         // Fetch regular payment intents
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
@@ -56,13 +56,13 @@ const Contestant = ({ event_id, token }) => {
             },
           }
         );
-  
+
         if (!paymentsResponse.ok) {
           throw new Error("Failed to fetch payment intents data");
         }
-  
+
         const paymentIntents = await paymentsResponse.json();
-  
+
         // Fetch QR/NQR payment intents
         const qrPaymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
@@ -73,21 +73,21 @@ const Contestant = ({ event_id, token }) => {
             },
           }
         );
-  
+
         if (!qrPaymentsResponse.ok) {
           throw new Error("Failed to fetch QR/NQR payment intents data");
         }
-  
+
         const qrPaymentIntents = await qrPaymentsResponse.json();
-  
+
         // Combine regular and QR/NQR payment intents
         const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
-  
+
         // Filter payment intents to include only successful transactions (status === 'S')
         const successfulPaymentIntents = allPaymentIntents.filter(
           (intent) => intent.status === 'S'
         );
-  
+
         // Define currency conversion rates
         const currencyValues = {
           USD: 10,
@@ -111,52 +111,53 @@ const Contestant = ({ event_id, token }) => {
           INR: 10,
           NPR: 10,
         };
-  
+
         // Calculate votes by matching intent_id with id of contestants
         const candidatesWithVotes = contestants.map((contestant) => {
           let totalVotes = 0;
-  
+
           successfulPaymentIntents.forEach((intent) => {
             if (intent.intent_id.toString() === contestant.id.toString()) {
-              let votes = 0;
-  
+              let currency = 'USD';
+              const processor = intent.processor?.toUpperCase();
+
               // Determine the currency based on the processor
               if (
                 ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
-                  intent.processor
+                  processor
                 )
               ) {
-                // NPR currency
-                votes = intent.amount / currencyValues.NPR;
-              } else if (["PHONEPE", "PAYU"].includes(intent.processor)) {
-                // INR currency
-                votes = intent.amount / currencyValues.INR;
-              } else if (intent.processor === "STRIPE") {
-                // Use the currency specified in the intent
-                const currency = intent.currency.toUpperCase();
-                if (currencyValues[currency]) {
-                  votes = intent.amount / currencyValues[currency];
-                }
-              } else {
-                // Default to payment_info if no specific logic
-                votes = intent.amount / event.payment_info;
+                currency = 'NPR';
+              } else if (["PHONEPE", "PAYU"].includes(processor)) {
+                currency = 'INR';
+              } else if (processor === "STRIPE") {
+                currency = intent.currency?.toUpperCase() || 'USD';
               }
-  
-              // Truncate decimal places using Math.floor
-              totalVotes += Math.floor(votes);
+
+              const currencyValue = currencyValues[currency] || 1;
+
+              let votes;
+              if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
+                votes = Math.floor(intent.amount / currencyValue);
+              } else {
+                votes = Math.floor(intent.amount * currencyValue);
+              }
+
+              totalVotes += votes;
             }
           });
-  
+
           return {
             ...contestant,
             votes: totalVotes,
           };
         });
 
+        // Sort candidates by votes in descending order and take top 6
         const sortedCandidates = candidatesWithVotes
           .sort((a, b) => b.votes - a.votes)
-          .slice(0, 6);
-  
+          .slice(0, 6); // Only take the top 6 candidates
+
         setCandidates(sortedCandidates);
         setLoading(false);
       } catch (err) {
@@ -165,7 +166,7 @@ const Contestant = ({ event_id, token }) => {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, [event_id, token]);
 

@@ -35,16 +35,16 @@ const CandidateTable = () => {
         setLoading(false);
         return;
       }
-  
+
       if (!token) {
         setError("Token not found. Please log in again.");
         setLoading(false);
         return;
       }
-  
+
       setLoading(true);
       setError(null);
-  
+
       try {
         // Fetch event data to get payment_info
         const eventResponse = await fetch(
@@ -56,21 +56,21 @@ const CandidateTable = () => {
             },
           }
         );
-  
+
         if (!eventResponse.ok) {
           throw new Error("Failed to fetch event data.");
         }
-  
+
         const eventData = await eventResponse.json();
         const event = eventData.find((event) => event.id === parseInt(event_id));
-  
+
         if (!event) {
           throw new Error("Event not found.");
         }
-  
+
         // Set payment_info
         setPaymentInfo(event.payment_info);
-  
+
         // Fetch contestants data
         const contestantsResponse = await fetch(
           `https://auth.zeenopay.com/events/contestants/?event_id=${event_id}`,
@@ -81,13 +81,13 @@ const CandidateTable = () => {
             },
           }
         );
-  
+
         if (!contestantsResponse.ok) {
           throw new Error("Failed to fetch contestants data.");
         }
-  
+
         const contestants = await contestantsResponse.json();
-  
+
         // Fetch regular payment intents data
         const paymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/intents/?event_id=${event_id}`,
@@ -98,13 +98,13 @@ const CandidateTable = () => {
             },
           }
         );
-  
+
         if (!paymentsResponse.ok) {
           throw new Error("Failed to fetch payment intents data.");
         }
-  
+
         const paymentIntents = await paymentsResponse.json();
-  
+
         // Fetch QR/NQR payment intents data
         const qrPaymentsResponse = await fetch(
           `https://auth.zeenopay.com/payments/qr/intents?event_id=${event_id}`,
@@ -115,21 +115,21 @@ const CandidateTable = () => {
             },
           }
         );
-  
+
         if (!qrPaymentsResponse.ok) {
           throw new Error("Failed to fetch QR/NQR payment intents data.");
         }
-  
+
         const qrPaymentIntents = await qrPaymentsResponse.json();
-  
+
         // Combine regular and QR/NQR payment intents
         const allPaymentIntents = [...paymentIntents, ...qrPaymentIntents];
-  
+
         // Filter payment intents to include only those with status "S"
         const filteredPaymentIntents = allPaymentIntents.filter(
           (intent) => intent.status === "S"
         );
-  
+
         // Define currency conversion rates
         const currencyValues = {
           USD: 10,
@@ -153,49 +153,51 @@ const CandidateTable = () => {
           INR: 10,
           NPR: 10,
         };
-  
+
         // Calculate votes for each contestant using filtered payment intents
         const candidatesWithVotes = contestants.map((contestant) => {
           let totalVotes = 0;
-  
+
           // Find matching payment intents
           filteredPaymentIntents.forEach((intent) => {
             if (intent.intent_id.toString() === contestant.id.toString()) {
-              let votes = 0;
-  
+              let currency = "USD";
+              const processor = intent.processor?.toUpperCase();
+
               // Determine the currency based on the processor
               if (
                 ["ESEWA", "KHALTI", "FONEPAY", "PRABHUPAY", "NQR", "QR"].includes(
-                  intent.processor
+                  processor
                 )
               ) {
-                // NPR currency
-                votes = intent.amount / currencyValues.NPR;
-              } else if (["PHONEPE", "PAYU"].includes(intent.processor)) {
-                // INR currency
-                votes = intent.amount / currencyValues.INR;
-              } else if (intent.processor === "STRIPE") {
-                // Use the currency specified in the intent
-                const currency = intent.currency.toUpperCase();
-                if (currencyValues[currency]) {
-                  votes = intent.amount / currencyValues[currency];
-                }
-              } else {
-                // Default to payment_info if no specific logic
-                votes = intent.amount / event.payment_info;
+                currency = "NPR";
+              } else if (["PHONEPE", "PAYU"].includes(processor)) {
+                currency = "INR";
+              } else if (processor === "STRIPE") {
+                currency = intent.currency?.toUpperCase() || "USD";
               }
-  
+
+              const currencyValue = currencyValues[currency] || 1;
+
+              // Calculate votes based on currency
+              let votes;
+              if (["JPY", "THB", "INR", "NPR"].includes(currency)) {
+                votes = intent.amount / currencyValue;
+              } else {
+                votes = intent.amount * currencyValue;
+              }
+
               // Truncate decimal places using Math.floor
               totalVotes += Math.floor(votes);
             }
           });
-  
+
           return {
             ...contestant,
             votes: totalVotes,
           };
         });
-  
+
         setData(candidatesWithVotes);
       } catch (err) {
         setError(err.message);
@@ -203,7 +205,7 @@ const CandidateTable = () => {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, [event_id, token, paymentInfo]);
 
@@ -383,55 +385,30 @@ const CandidateTable = () => {
             padding: "10px",
             borderRadius: "8px",
             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-            flexDirection: "row", 
-            "@media (max-width: 768px)": {
-              flexDirection: "column", 
-              gap: "10px",
-              width: "100%",
-            },
           }}
         >
           {/* Sort by Dropdown */}
-          <div
-  className="filter-group"
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    width: "100%", // Full width on mobile
-    "@media (max-width: 768px)": {
-      flexDirection: "column",
-      alignItems: "flex-start",
-    },
-  }}
->
-  <select
-    id="sort-by"
-    onChange={(e) => requestSort(e.target.value)}
-    value={sortConfig.key || ""}
-    style={{
-      padding: "8px 12px",
-      borderRadius: "6px",
-      border: "1px solid #ced4da",
-      backgroundColor: "#fff",
-      fontSize: "14px",
-      color: "#495057",
-      cursor: "pointer",
-      outline: "none",
-      transition: "border-color 0.3s ease",
-      width: "150px", 
-      "@media (max-width: 768px)": {
-        width: "100%",
-        fontSize: "12px",
-      },
-    }}
-  >
-    <option value="">Sort By</option>
-    <option value="name">Name</option>
-    <option value="misc_kv">C.No.</option>
-    <option value="votes">Votes</option>
-  </select>
-</div>
+          <select
+            id="sort-by"
+            onChange={(e) => requestSort(e.target.value)}
+            value={sortConfig.key || ""}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1px solid #ced4da",
+              backgroundColor: "#fff",
+              fontSize: "14px",
+              color: "#495057",
+              cursor: "pointer",
+              outline: "none",
+              transition: "border-color 0.3s ease",
+            }}
+          >
+            <option value="">Sort By</option>
+            <option value="name">Name</option>
+            <option value="misc_kv">C.No.</option>
+            <option value="votes">Votes</option>
+          </select>
 
           {/* Ascending/Descending Button */}
           <button
@@ -453,10 +430,6 @@ const CandidateTable = () => {
               alignItems: "center",
               gap: "8px",
               transition: "background-color 0.3s ease, border-color 0.3s ease",
-              width: "100%", // Full width on mobile
-              "@media (max-width: 768px)": {
-                fontSize: "12px", // Smaller font size on mobile
-              },
             }}
           >
             <FaSort style={{ fontSize: "14px" }} />
@@ -473,7 +446,7 @@ const CandidateTable = () => {
               <th>S.No.</th>
               <th>Avatar</th>
               <th>Name</th>
-              <th>C.No.</th> 
+              <th>C.No.</th>
               <th>Status</th>
               <th>Votes</th>
               <th>Action</th>
@@ -497,13 +470,12 @@ const CandidateTable = () => {
                       style={{
                         width: "50px",
                         height: "50px",
-                        borderRadius: "50%", 
+                        borderRadius: "50%",
                       }}
                     />
                   </td>
                   <td>{candidate.name}</td>
-                  <td>{candidate.misc_kv}</td> 
-
+                  <td>{candidate.misc_kv}</td>
                   <td>
                     <span
                       className={`status-badge 
