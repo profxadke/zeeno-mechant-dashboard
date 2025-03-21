@@ -12,7 +12,7 @@ const UploadCandidateDetails = ({ events }) => {
   const [selectedEvent, setSelectedEvent] = useState("");
   const { token } = useToken();
   const modalRef = useRef(null);
-  const fileInputRefs = useRef([]); // Refs for file input fields
+  const fileInputRefs = useRef([]); 
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -103,7 +103,7 @@ const UploadCandidateDetails = ({ events }) => {
 
   const handleRemoveImage = (index) => {
     const updatedCandidateList = [...candidates];
-    updatedCandidateList[index].photo = ""; // Clear the photo
+    updatedCandidateList[index].photo = ""; 
     setCandidates(updatedCandidateList);
 
     // Clear the file input value
@@ -123,7 +123,7 @@ const UploadCandidateDetails = ({ events }) => {
 
     const candidatesData = candidates.map((candidate) => ({
       name: candidate.name,
-      misc_kv: candidate.misc_kv || "N/A", // Allow misc_kv to be blank
+      misc_kv: candidate.misc_kv || "N/A", 
       avatar: candidate.photo,
       bio: candidate.description,
       status: "O",

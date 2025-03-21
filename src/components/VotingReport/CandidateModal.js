@@ -3,7 +3,7 @@ import "../../assets/modal.css";
 import { useToken } from "../../context/TokenContext";
 import * as XLSX from "xlsx";
 import { FaEdit } from "react-icons/fa";
-import useS3Upload from "../../hooks/useS3Upload"; // Import the hook
+import useS3Upload from "../../hooks/useS3Upload"; 
 
 const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpdate }) => {
   const [formData, setFormData] = useState(candidate || {});
@@ -11,8 +11,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   const { token } = useToken();
   const [isLoadingVoters, setIsLoadingVoters] = useState(false);
   const [voterError, setVoterError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null); // State for the selected file
-  const [uploadProgress, setUploadProgress] = useState(0); // State for upload progress
+  const [selectedFile, setSelectedFile] = useState(null); 
+  const [uploadProgress, setUploadProgress] = useState(0); 
 
   // Call the hook at the top level
   const { uploadFile } = useS3Upload();
@@ -473,7 +473,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
             ) : voterError ? (
               <p className="error-message">{voterError}</p>
             ) : (
-              <div className="table-wrapper" style={{ maxHeight: "200px"}}>
+              <div className="table-wrapper">
                 <div className="table-header-wrapper">
                   <table className="voters-table">
                     <thead>

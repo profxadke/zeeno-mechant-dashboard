@@ -21,7 +21,6 @@ const PopupModal = ({ data, onClose }) => {
     if (buttons) buttons.style.display = "none";
     if (closeIcon) closeIcon.style.display = "none";
 
-    // Generate and download the PDF
     html2pdf()
       .from(element)
       .set(opt)
@@ -161,7 +160,7 @@ const PopupModal = ({ data, onClose }) => {
           position: absolute;
           top: 10px;
           right: 10px;
-          margin-top: 30px; /* Space below the close button */
+          margin-top: 30px; 
         }
 
         .profile-image {
@@ -188,8 +187,8 @@ const PopupModal = ({ data, onClose }) => {
 
         .modal-actions {
           display: flex;
-          justify-content: flex-start; /* Align buttons to the left */
-          gap: 10px; /* Space between buttons */
+          justify-content: flex-start;
+          gap: 10px;
           margin-top: 20px;
         }
 
@@ -210,7 +209,7 @@ const PopupModal = ({ data, onClose }) => {
         @media print {
           .modal-actions,
           .modal-close-btn {
-            display: none; /* Hide buttons and close icon when printing */
+            display: none; 
           }
         }
       `}</style>
