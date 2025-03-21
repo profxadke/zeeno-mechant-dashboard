@@ -667,6 +667,7 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   .table-wrapper {
     max-height: 200px;
     overflow-y: auto;
+    overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 8px;
     position: relative;
@@ -680,51 +681,6 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     background-color: #028248;
   }
 
-  /* Table Body Wrapper */
-  .table-body-wrapper {
-    overflow-x: auto;
-  }
-
-  /* Voters Table */
-  .voters-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Poppins', sans-serif;
-  }
-
-  .voters-table th,
-  .voters-table td {
-    padding: 8px;
-    border: 1px solid #ddd;
-    text-align: left;
-    font-size: 14px;
-  }
-
-  .voters-table th {
-    background-color: #028248;
-    color: #fff;
-    font-weight: bold;
-  }
-
-  .voters-table td {
-    background-color: #fafafa;
-  }
-
-  /* Column Widths */
-  .voters-table th:nth-child(2),
-  .voters-table td:nth-child(2) {
-    width: 140px;
-  }
-
-  .voters-table th:nth-child(3),
-  .voters-table td:nth-child(3) {
-    width: 100px;
-  }
-
-  .voters-table th:nth-child(1),
-  .voters-table td:nth-child(1) {
-    width: 140px;
-  }
 
   /* Submit Button */
   .submit-btn {
