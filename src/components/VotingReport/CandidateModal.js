@@ -666,11 +666,8 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
   /* Table Wrapper */
   .table-wrapper {
     max-height: 200px;
-    overflow-y: auto;
-    overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 8px;
-    position: relative;
   }
 
   /* Table Header Wrapper */
