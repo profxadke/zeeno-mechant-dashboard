@@ -663,21 +663,6 @@ const CandidateModel = ({ visible, onClose, title, candidate, isEditMode, onUpda
     align-items: center;
   }
 
-  /* Table Wrapper */
-  .table-wrapper {
-    max-height: 200px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-  }
-
-  /* Table Header Wrapper */
-  .table-header-wrapper {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: #028248;
-  }
-
 
   /* Submit Button */
   .submit-btn {
