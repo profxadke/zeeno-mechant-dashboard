@@ -137,7 +137,7 @@ const Contestant = ({ event_id, token }) => {
               const currencyValue = currencyValues[currency] || 1;
 
               let votes;
-              if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
+              if (['JPY', 'KRW', 'THB', 'INR', 'NPR'].includes(currency)) {
                 votes = Math.floor(intent.amount / currencyValue);
               } else {
                 votes = Math.floor(intent.amount * currencyValue);
