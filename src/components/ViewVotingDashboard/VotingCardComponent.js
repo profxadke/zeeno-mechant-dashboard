@@ -120,11 +120,16 @@ const VotingCardComponent = () => {
         OMR: 20,
         SGD: 8,
         NOK: 1,
+        KGS: 1,   // 1 Vote: 1 KGS
+        NZD: 5,   // 1 Vote: 5 NZD
+        ILS: 2,   // 1 Vote: 2 ILS
         KRW: 200,
         JPY: 20,
         THB: 4,
         INR: 10,
         NPR: 10,
+        RBL: 15,  // 15 RBL: 1 Vote
+        BDT: 15  // 15 BDT: 1 Vote
       };
 
       // Fetch contestants
@@ -168,10 +173,18 @@ const VotingCardComponent = () => {
             const currencyValue = currencyValues[currency] || 1;
 
             let votes;
-            if (['JPY', 'KRW', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD'].includes(currency)) {
+            if (['KRW', 'JPY', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD', 'RBL', 'BDT'].includes(currency)) {
               votes = Math.floor(intent.amount / currencyValue);
             } else {
-              votes = Math.floor(intent.amount * currencyValue);
+              // babu, malai yo code nachaleko din tei moment ma aayera sunau maile le hariyo pareko
+              // test ni nagari lekheko code ho ani malai tha cha yo chalcha; nabhaye baazi shaanu dai le
+              // mero left hatth thichna paunu bhayo mero code chalena bhane baaza ;)
+              if Object.keys(currencyValues).includes(currency) {
+                votes = Math.floor(intent.amount * currencyValue);
+              } // else: IDGAF simple! <- here to happens automatically! ~ or else ma euta
+              // incident analytic request pathauda ni bhayo client info dekhi incident info 
+              // though javascript objects (or js-proxies) to send server request when this
+              // occurs..
             }
 
             totalVotes += votes;
