@@ -168,7 +168,7 @@ const VotingCardComponent = () => {
             const currencyValue = currencyValues[currency] || 1;
 
             let votes;
-            if (['JPY', 'KRW', 'THB', 'INR', 'NPR'].includes(currency)) {
+            if (['JPY', 'KRW', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD'].includes(currency)) {
               votes = Math.floor(intent.amount / currencyValue);
             } else {
               votes = Math.floor(intent.amount * currencyValue);
