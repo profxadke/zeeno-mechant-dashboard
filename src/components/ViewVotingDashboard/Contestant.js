@@ -145,7 +145,9 @@ const Contestant = ({ event_id, token }) => {
               if (['KRW', 'JPY', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD', 'RBL', 'BDT'].includes(currency)) {
                 votes = Math.floor(intent.amount / currencyValue);
               } else {
-                votes = Math.floor(intent.amount * currencyValue);
+                if ( Object.keys(currencyValues).includes(currency) ) {
+                  votes = Math.floor(intent.amount * currencyValue);
+                }
               }
 
               totalVotes += votes;

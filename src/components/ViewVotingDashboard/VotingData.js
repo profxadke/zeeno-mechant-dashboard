@@ -66,7 +66,7 @@ const VotingData = () => {
   const [paymentInfo, setPaymentInfo] = useState(0);
   const [error, setError] = useState(null);
 
-  // Currency mapping
+  /* Currency mapping
   const currencyValues = {
     USD: 10,
     AUD: 5,
@@ -88,7 +88,35 @@ const VotingData = () => {
     THB: 4,
     INR: 10,
     NPR: 10,
-  };
+  }; */
+const currencyValues = {
+  USD: 10,
+  AUD: 5,
+  GBP: 10,
+  CAD: 5,
+  EUR: 10,
+  AED: 2,
+  QAR: 2,
+  MYR: 2,
+  KWD: 2,
+  HKD: 1,
+  CNY: 1,
+  SAR: 2,
+  OMR: 20,
+  SGD: 8,
+  NOK: 1,
+  KGS: 1,   // 1 Vote: 1 KGS
+  NZD: 5,   // 1 Vote: 5 NZD
+  ILS: 2,   // 1 Vote: 2 ILS
+  KRW: 200,
+  JPY: 20,
+  THB: 4,
+  INR: 10,
+  NPR: 10,
+  RBL: 15,  // 15 RBL: 1 Vote
+  BDT: 15  // 15 BDT: 1 Vote
+};
+
 
   // Fetch event data to get payment_info
   useEffect(() => {
@@ -172,10 +200,12 @@ const VotingData = () => {
 
           // Calculate votes based on currency
           let votes;
-          if (["JPY", "THB", "INR", "NPR"].includes(currency)) {
+          if (['KRW', 'JPY', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD', 'RBL', 'BDT'].includes(currency)) {
             votes = intent.amount / currencyValue;
           } else {
-            votes = intent.amount * currencyValue;
+            if ( Object.keys(currencyValues).includes(currency) ) {
+              votes = intent.amount * currencyValue;
+            }
           }
 
           // Truncate decimal places using Math.floor

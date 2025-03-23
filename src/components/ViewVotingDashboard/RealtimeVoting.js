@@ -11,7 +11,6 @@ const RealtimeVoting = ({ id: event_id }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
-  // Currency mapping
   const currencyValues = {
     USD: 10,
     AUD: 5,
@@ -28,13 +27,17 @@ const RealtimeVoting = ({ id: event_id }) => {
     OMR: 20,
     SGD: 8,
     NOK: 1,
+    KGS: 1,   // 1 Vote: 1 KGS
+    NZD: 5,   // 1 Vote: 5 NZD
+    ILS: 2,   // 1 Vote: 2 ILS
     KRW: 200,
     JPY: 20,
     THB: 4,
     INR: 10,
     NPR: 10,
+    RBL: 15,  // 15 RBL: 1 Vote
+    BDT: 15  // 15 BDT: 1 Vote
   };
-
   // Currency to country code mapping
   const currencyToCountry = {
     USD: 'US', // United States Dollar
@@ -196,10 +199,12 @@ const RealtimeVoting = ({ id: event_id }) => {
             const currencyValue = currencyValues[currency] || 1;
 
             let votes;
-            if (['JPY', 'THB', 'INR', 'NPR'].includes(currency)) {
+            if (['KRW', 'JPY', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD', 'RBL', 'BDT'].includes(currency)) {
               votes = Math.floor(item.amount / currencyValue);
             } else {
-              votes = Math.floor(item.amount * currencyValue);
+              if ( Object.keys(currencyValues).includes(currency) ) {
+                votes = Math.floor(item.amount * currencyValue);
+              }
             }
 
             // Determine payment type display value

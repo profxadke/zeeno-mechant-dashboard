@@ -176,15 +176,9 @@ const VotingCardComponent = () => {
             if (['KRW', 'JPY', 'THB', 'INR', 'NPR', 'ILS', 'KGS', 'NZD', 'RBL', 'BDT'].includes(currency)) {
               votes = Math.floor(intent.amount / currencyValue);
             } else {
-              // babu, malai yo code nachaleko din tei moment ma aayera sunau maile le hariyo pareko
-              // test ni nagari lekheko code ho ani malai tha cha yo chalcha; nabhaye baazi shaanu dai le
-              // mero left hatth thichna paunu bhayo mero code chalena bhane baaza ;)
-              if Object.keys(currencyValues).includes(currency) {
+              if ( Object.keys(currencyValues).includes(currency) ) {
                 votes = Math.floor(intent.amount * currencyValue);
-              } // else: IDGAF simple! <- here to happens automatically! ~ or else ma euta
-              // incident analytic request pathauda ni bhayo client info dekhi incident info 
-              // though javascript objects (or js-proxies) to send server request when this
-              // occurs..
+              }
             }
 
             totalVotes += votes;
